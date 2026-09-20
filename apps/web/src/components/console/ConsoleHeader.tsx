@@ -70,11 +70,10 @@ export const ConsoleHeader: React.FC<ConsoleHeaderProps> = ({ onToggleMobileNav 
 
       {/* Right: Technical Metadata Cluster */}
       <div className="flex items-center gap-3 flex-wrap text-xs font-sans">
-        {/* Network & Chain ID */}
+        {/* Network & Node Status */}
         <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-dark-bg-2 border border-dark-border-subtle/70 text-xs shadow-depth-subtle">
           <AnimatedSyncPulse color="emerald" />
           <span className="text-dark-text-secondary">EVM Localhost</span>
-          <span className="text-dark-text-muted font-mono">({activeChainId})</span>
         </div>
 
         {/* Current Block Height */}

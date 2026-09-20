@@ -118,8 +118,8 @@ export const CryptoBlock3D: React.FC<CryptoBlock3DProps> = ({
           </div>
 
           <div className="text-[9px] font-mono text-dark-text-muted flex justify-between border-t border-dark-border-subtle pt-2">
-            <span>CHAIN: 31337</span>
-            <span>EVM HARDHAT</span>
+            <span>CONSENSUS VERIFIED</span>
+            <span>EVM ACTIVE</span>
           </div>
         </div>
 

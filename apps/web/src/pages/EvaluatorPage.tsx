@@ -107,24 +107,21 @@ export const EvaluatorPage: React.FC = () => {
   return (
     <div className="space-y-6 max-w-6xl mx-auto pb-12">
       {/* Page Header */}
-      <div className="border-b border-slate-200 pb-5">
+      <div className="border-b border-white/10 pb-5">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <div className="flex items-center gap-2">
-              <span className="p-1.5 rounded-md bg-indigo-50 text-indigo-700">
+            <div className="flex items-center gap-2.5">
+              <span className="p-2 rounded-xl bg-[#0071e3]/15 text-[#2997ff] border border-blue-500/25">
                 <Terminal className="w-5 h-5" />
               </span>
-              <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Evaluator & Academic Console</h1>
+              <h1 className="text-2xl font-bold text-white tracking-tight">Evaluator & Academic Console</h1>
             </div>
-            <p className="text-xs text-slate-500 mt-1">
+            <p className="text-xs text-[#86868b] mt-1.5">
               Independent examination tools: review credential verification queue, inspect on-chain contracts, and test using pre-funded deterministic accounts.
             </p>
           </div>
 
           <div className="flex items-center gap-2">
-            <Badge variant="outline" className="font-mono text-xs">
-              Localhost 31337
-            </Badge>
             <Button
               size="sm"
               variant="outline"
@@ -158,8 +155,8 @@ export const EvaluatorPage: React.FC = () => {
               <span>{health?.ok ? 'Connected' : 'Offline'}</span>
             </div>
           </div>
-          <div className="text-base font-bold text-dark-text-primary mt-1 font-mono">
-            {healthLoading ? <Skeleton className="h-5 w-20" /> : `Chain ID: ${health?.chainId || 31337}`}
+          <div className="text-base font-bold text-dark-text-primary mt-1">
+            {healthLoading ? <Skeleton className="h-5 w-20" /> : (health?.ok ? 'Local Node Active' : 'Disconnected')}
           </div>
           <span className="text-xs text-dark-text-muted font-mono truncate block">{HARDHAT_RPC_URL}</span>
         </Card>
@@ -233,9 +230,9 @@ export const EvaluatorPage: React.FC = () => {
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-sm font-semibold text-slate-900">Verification Requests & Attestations</h2>
-              <p className="text-xs text-slate-500 mt-0.5">
-                Evaluator verifier queue. Approving a request executes a live transaction on the <code className="font-mono text-slate-700">KYCRegistry</code> smart contract.
+              <h2 className="text-sm font-semibold text-white">Verification Requests & Attestations</h2>
+              <p className="text-xs text-[#86868b] mt-0.5">
+                Evaluator verifier queue. Approving a request executes a live transaction on the <code className="font-mono text-white bg-white/10 px-1.5 py-0.5 rounded border border-white/10">KYCRegistry</code> smart contract.
               </p>
             </div>
             <Button
@@ -436,14 +433,14 @@ export const EvaluatorPage: React.FC = () => {
       {activeTab === 'accounts' && (
         <div className="space-y-4">
           <div>
-            <h2 className="text-sm font-semibold text-slate-900">Deterministic Hardhat Test Accounts</h2>
-            <p className="text-xs text-slate-500 mt-0.5">
+            <h2 className="text-sm font-semibold text-white">Deterministic Hardhat Test Accounts</h2>
+            <p className="text-xs text-[#86868b] mt-0.5">
               These deterministic accounts are funded with local test ETH on the running Hardhat node. Copy a private key to import it into your browser MetaMask extension.
             </p>
           </div>
 
-          <Card className="p-0 overflow-hidden">
-            <div className="divide-y divide-slate-100 text-xs">
+          <Card className="p-0 overflow-hidden bg-dark-bg-1 border-white/10">
+            <div className="divide-y divide-white/10 text-xs">
               {DEMO_ACCOUNTS.map((acc, index) => {
                 const isCurrentInWallet =
                   currentWalletAddress && currentWalletAddress.toLowerCase() === acc.address.toLowerCase();
@@ -451,16 +448,16 @@ export const EvaluatorPage: React.FC = () => {
                 return (
                   <div
                     key={acc.id}
-                    className={`p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-slate-50 transition-colors ${
-                      isCurrentInWallet ? 'bg-indigo-50/40' : ''
+                    className={`p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-white/[0.03] transition-colors ${
+                      isCurrentInWallet ? 'bg-blue-500/10 border-l-2 border-l-blue-500' : ''
                     }`}
                   >
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center font-bold text-xs text-slate-700 shrink-0">
+                      <div className="w-8 h-8 rounded-full bg-white/10 border border-white/15 flex items-center justify-center font-bold text-xs text-white shrink-0">
                         {acc.displayName[0]}
                       </div>
                       <div>
-                        <div className="font-semibold text-slate-900 flex items-center gap-2">
+                        <div className="font-semibold text-white flex items-center gap-2">
                           <span>{acc.displayName}</span>
                           <Badge
                             variant={
@@ -481,18 +478,12 @@ export const EvaluatorPage: React.FC = () => {
                             </Badge>
                           )}
                         </div>
-                        <div className="text-[11px] text-slate-500 flex flex-wrap items-center gap-2 mt-1">
+                        <div className="text-[11px] text-[#86868b] flex flex-wrap items-center gap-2 mt-1">
                           <AddressBadge address={acc.address} chars={6} />
                           <span>·</span>
-                          <span className="text-slate-400">{acc.description}</span>
+                          <span className="text-[#86868b]">{acc.description}</span>
                         </div>
                       </div>
-                    </div>
-
-                    <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
-                      <span className="text-xs font-mono text-slate-400">
-                        Chain 31337
-                      </span>
                     </div>
                   </div>
                 );
@@ -501,12 +492,12 @@ export const EvaluatorPage: React.FC = () => {
           </Card>
 
           <Alert variant="info" title="How to import into MetaMask">
-            <ol className="list-decimal list-inside space-y-1 text-xs text-slate-600 mt-1">
+            <ol className="list-decimal list-inside space-y-1 text-xs text-dark-text-secondary mt-1">
               <li>Click "Copy Private Key" for any account above.</li>
               <li>Open your MetaMask browser extension and click the account selector at the top.</li>
               <li>Click <strong>Add account or hardware wallet</strong> &rarr; <strong>Import account</strong>.</li>
               <li>Paste the private key string and click <strong>Import</strong>.</li>
-              <li>Ensure MetaMask is connected to <strong>Hardhat Localhost (Chain ID 31337)</strong>.</li>
+              <li>Ensure MetaMask is connected to <strong>Hardhat Localhost</strong> (RPC: http://127.0.0.1:8545).</li>
             </ol>
           </Alert>
         </div>
@@ -516,41 +507,41 @@ export const EvaluatorPage: React.FC = () => {
       {activeTab === 'contracts' && (
         <div className="space-y-4">
           <div>
-            <h2 className="text-sm font-semibold text-slate-900">Deployed Contracts & EVM Parameters</h2>
-            <p className="text-xs text-slate-500 mt-0.5">
-              Live smart contract addresses deployed by the initialization migration script on Chain ID 31337.
+            <h2 className="text-sm font-semibold text-white">Deployed Contracts & EVM Parameters</h2>
+            <p className="text-xs text-[#86868b] mt-0.5">
+              Live smart contract addresses deployed by the initialization migration script on the local EVM network.
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Core Contracts */}
-            <Card>
+            <Card className="bg-dark-bg-1 border-white/10">
               <CardHeader>
-                <CardTitle className="text-sm">Protocol Core Contracts</CardTitle>
-                <CardDescription>Deployed factory and registry singletons</CardDescription>
+                <CardTitle className="text-sm text-white">Protocol Core Contracts</CardTitle>
+                <CardDescription className="text-[#86868b]">Deployed factory and registry singletons</CardDescription>
               </CardHeader>
               <CardContent className="p-0">
-                <div className="divide-y divide-slate-100 text-xs">
+                <div className="divide-y divide-white/10 text-xs">
                   <div className="p-3 flex items-center justify-between">
                     <div>
-                      <div className="font-semibold text-slate-900">LoanFactory</div>
-                      <div className="text-[11px] text-slate-400">Deploys new isolated LoanPool contracts</div>
+                      <div className="font-semibold text-white">LoanFactory</div>
+                      <div className="text-[11px] text-[#86868b]">Deploys new isolated LoanPool contracts</div>
                     </div>
                     <AddressBadge address={evaluatorData?.contracts.loanFactory || '0x'} chars={6} />
                   </div>
 
                   <div className="p-3 flex items-center justify-between">
                     <div>
-                      <div className="font-semibold text-slate-900">KYCRegistry</div>
-                      <div className="text-[11px] text-slate-400">On-chain credential attestation store</div>
+                      <div className="font-semibold text-white">KYCRegistry</div>
+                      <div className="text-[11px] text-[#86868b]">On-chain credential attestation store</div>
                     </div>
                     <AddressBadge address={evaluatorData?.contracts.kycRegistry || '0x'} chars={6} />
                   </div>
 
                   <div className="p-3 flex items-center justify-between">
                     <div>
-                      <div className="font-semibold text-slate-900">ReputationRegistry</div>
-                      <div className="text-[11px] text-slate-400">Borrower repayment scoring engine</div>
+                      <div className="font-semibold text-white">ReputationRegistry</div>
+                      <div className="text-[11px] text-[#86868b]">Borrower repayment scoring engine</div>
                     </div>
                     <AddressBadge address={evaluatorData?.contracts.reputationRegistry || '0x'} chars={6} />
                   </div>
@@ -559,31 +550,31 @@ export const EvaluatorPage: React.FC = () => {
             </Card>
 
             {/* Network Parameters */}
-            <Card>
+            <Card className="bg-dark-bg-1 border-white/10">
               <CardHeader>
-                <CardTitle className="text-sm">EVM Node Configuration</CardTitle>
-                <CardDescription>Local development node settings</CardDescription>
+                <CardTitle className="text-sm text-white">EVM Node Configuration</CardTitle>
+                <CardDescription className="text-[#86868b]">Local development node settings</CardDescription>
               </CardHeader>
               <CardContent className="space-y-3 text-xs">
-                <div className="flex justify-between py-1.5 border-b border-slate-100">
-                  <span className="text-slate-500">Network Name:</span>
-                  <span className="font-mono font-medium text-slate-900">Hardhat Localhost</span>
+                <div className="flex justify-between py-1.5 border-b border-white/10">
+                  <span className="text-[#86868b]">Network Name:</span>
+                  <span className="font-mono font-medium text-white">Hardhat Localhost</span>
                 </div>
-                <div className="flex justify-between py-1.5 border-b border-slate-100">
-                  <span className="text-slate-500">RPC Endpoint:</span>
-                  <span className="font-mono font-medium text-slate-900">{HARDHAT_RPC_URL}</span>
+                <div className="flex justify-between py-1.5 border-b border-white/10">
+                  <span className="text-[#86868b]">RPC Endpoint:</span>
+                  <span className="font-mono font-medium text-white">{HARDHAT_RPC_URL}</span>
                 </div>
-                <div className="flex justify-between py-1.5 border-b border-slate-100">
-                  <span className="text-slate-500">Chain ID:</span>
-                  <span className="font-mono font-medium text-slate-900">{HARDHAT_CHAIN_ID}</span>
+                <div className="flex justify-between py-1.5 border-b border-white/10">
+                  <span className="text-[#86868b]">Chain ID:</span>
+                  <span className="font-mono font-medium text-white">{HARDHAT_CHAIN_ID}</span>
                 </div>
-                <div className="flex justify-between py-1.5 border-b border-slate-100">
-                  <span className="text-slate-500">Currency Symbol:</span>
-                  <span className="font-mono font-medium text-slate-900">ETH</span>
+                <div className="flex justify-between py-1.5 border-b border-white/10">
+                  <span className="text-[#86868b]">Currency Symbol:</span>
+                  <span className="font-mono font-medium text-white">ETH</span>
                 </div>
                 <div className="pt-2">
                   <Button size="sm" variant="secondary" onClick={handleAddNetwork} className="w-full text-xs">
-                    <PlusCircle className="mr-1.5 h-3.5 w-3.5 text-indigo-500" />
+                    <PlusCircle className="mr-1.5 h-3.5 w-3.5 text-blue-400" />
                     {networkAdded ? 'Request Sent to MetaMask' : 'Add / Switch Network in MetaMask'}
                   </Button>
                 </div>
@@ -596,19 +587,19 @@ export const EvaluatorPage: React.FC = () => {
       {/* TAB 4: RESET PROJECTIONS */}
       {activeTab === 'reset' && (
         <div className="space-y-4">
-          <Card className="border-amber-200 bg-amber-50/20">
+          <Card className="border-amber-500/30 bg-amber-500/10">
             <CardHeader>
-              <CardTitle className="text-amber-950 flex items-center gap-2 text-sm">
-                <RefreshCw className="w-4 h-4 text-amber-700" />
+              <CardTitle className="text-amber-400 flex items-center gap-2 text-sm">
+                <RefreshCw className="w-4 h-4 text-amber-400" />
                 <span>Event Projection Store Reset</span>
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="text-[#86868b]">
                 Resets the Fastify API indexer database and re-indexes all on-chain events from block 0 of the running node.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <p className="text-xs text-slate-600 leading-relaxed">
-                This operation resets the read projection database (<code className="font-mono">apps/api/data/projection.json</code>) without resetting the underlying EVM node.
+              <p className="text-xs text-[#a1a1a6] leading-relaxed">
+                This operation resets the read projection database (<code className="font-mono text-white bg-white/10 px-1.5 py-0.5 rounded border border-white/10">apps/api/data/projection.json</code>) without resetting the underlying EVM node.
               </p>
               <div className="flex items-center gap-3">
                 <Button

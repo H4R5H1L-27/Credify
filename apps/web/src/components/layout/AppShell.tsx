@@ -205,19 +205,14 @@ export const AppShell: React.FC = () => {
             </nav>
           </div>
 
-          {/* Sidebar Footer: Clean, restrained metadata or Evaluator toggle (only in evaluator mode) */}
-          <div className="pt-3 border-t border-dark-border-subtle px-3 text-[11px] font-mono text-dark-text-muted flex items-center justify-between">
-            <span>Credify v1.0</span>
-            {isEvaluatorWorkspace ? (
-              <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20">
+          {/* Sidebar Footer (only shown in operator/evaluator mode) */}
+          {isEvaluatorWorkspace && (
+            <div className="pt-3 border-t border-dark-border-subtle px-3 flex items-center justify-between">
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 font-mono font-medium">
                 OPERATOR
               </span>
-            ) : (
-              <span className="text-[10px] text-dark-text-muted">
-                31337
-              </span>
-            )}
-          </div>
+            </div>
+          )}
         </aside>
 
         {/* Responsive Mobile Navigation Drawer */}
@@ -281,12 +276,7 @@ export const AppShell: React.FC = () => {
               </div>
 
               {/* Drawer Footer */}
-              <div className="pt-4 border-t border-dark-border-subtle space-y-2">
-                <div className="flex items-center justify-between text-[11px] font-mono text-dark-text-muted">
-                  <span>Network</span>
-                  <span className="text-emerald-400 font-medium">Localnet (31337)</span>
-                </div>
-              </div>
+              <div className="pt-4 border-t border-dark-border-subtle" />
             </div>
           </div>
         )}

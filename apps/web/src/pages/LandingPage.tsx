@@ -234,10 +234,7 @@ export const LandingPage: React.FC = () => {
           <div className="w-8 h-8 rounded-lg bg-brand-500 flex items-center justify-center text-white font-bold text-sm shadow-depth-card">
             C
           </div>
-          <span className="font-bold text-lg tracking-tight text-dark-text-primary">Credify</span>
-          <span className="hidden sm:inline-block px-2.5 py-0.5 rounded-full bg-dark-bg-2 border border-dark-border-subtle text-xs font-mono text-dark-text-muted ml-2">
-            EVM Protocol (31337)
-          </span>
+          <span className="font-bold text-lg tracking-tight text-white">Credify</span>
         </div>
 
         <div className="flex items-center gap-3">
@@ -264,18 +261,18 @@ export const LandingPage: React.FC = () => {
         <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full surface-glass text-xs font-medium border border-dark-border-subtle/80 shadow-depth-subtle">
           <Sparkles className="w-3.5 h-3.5 text-brand-400 shrink-0" />
           <AnimatedShinyText className="text-xs font-medium">
-            Local EVM • Decentralized Multi-Lender Credit Protocol
+            Decentralized Multi-Lender Credit Protocol
           </AnimatedShinyText>
         </div>
 
-        <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight text-dark-text-primary leading-[1.15]">
+        <h1 className="text-5xl sm:text-7xl font-bold tracking-[-0.03em] text-white leading-[1.08] max-w-4xl mx-auto">
           Shared credit agreements,<br />
-          <span className="bg-gradient-to-r from-brand-400 via-indigo-300 to-brand-300 bg-clip-text text-transparent">
+          <span className="bg-gradient-to-b from-white via-white/95 to-white/50 bg-clip-text text-transparent">
             enforced by code.
           </span>
         </h1>
 
-        <p className="text-base sm:text-lg text-dark-text-secondary max-w-2xl mx-auto leading-relaxed">
+        <p className="text-base sm:text-lg text-[#a1a1a6] max-w-2xl mx-auto leading-relaxed font-normal">
           Credify demonstrates how syndicated loan agreements transition from natural language terms into parameterized smart contract escrows—with policy-restricted spending, pro-rata dividend claims, and automated on-chain reputation.
         </p>
 
@@ -284,15 +281,16 @@ export const LandingPage: React.FC = () => {
           <ShimmerButton
             onClick={() => navigate('/app')}
             icon={<ArrowRight className="w-4 h-4" />}
-            className="px-6 py-3 text-base shadow-depth-card"
+            className="px-6 py-3 text-base shadow-depth-card rounded-full font-semibold"
           >
             Launch Application
           </ShimmerButton>
           <Button
-            variant="outline"
+            variant="secondary"
             size="lg"
             onClick={() => navigate('/console/evaluator')}
             icon={<Terminal className="w-4 h-4" />}
+            className="rounded-full px-6 text-sm font-semibold"
           >
             Evaluator Console
           </Button>
@@ -300,30 +298,30 @@ export const LandingPage: React.FC = () => {
 
         {/* Live Architectural Metrics Strip with Cursor Spotlight Cards and Number Tickers */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-10 max-w-3xl mx-auto text-left">
-          <SpotlightCard className="p-4 rounded-xl bg-dark-bg-1/80 border-dark-border-subtle space-y-1">
-            <span className="text-[11px] font-sans text-dark-text-muted uppercase tracking-wider block">Escrow Consensus</span>
-            <div className="text-xl font-mono font-bold text-dark-text-primary flex items-baseline gap-1">
+          <SpotlightCard className="p-4 rounded-2xl bg-dark-bg-1/80 border border-white/10 space-y-1">
+            <span className="text-[11px] font-sans text-[#86868b] uppercase tracking-wider block">Escrow Consensus</span>
+            <div className="text-xl font-mono font-bold text-white flex items-baseline gap-1">
               <NumberTicker value={100} duration={900} />
               <span className="text-sm font-sans text-emerald-400 font-semibold">% On-Chain</span>
             </div>
           </SpotlightCard>
-          <SpotlightCard className="p-4 rounded-xl bg-dark-bg-1/80 border-dark-border-subtle space-y-1">
-            <span className="text-[11px] font-sans text-dark-text-muted uppercase tracking-wider block">Syndicated Volume</span>
-            <div className="text-xl font-mono font-bold text-dark-text-primary flex items-baseline gap-1">
+          <SpotlightCard className="p-4 rounded-2xl bg-dark-bg-1/80 border border-white/10 space-y-1">
+            <span className="text-[11px] font-sans text-[#86868b] uppercase tracking-wider block">Syndicated Volume</span>
+            <div className="text-xl font-mono font-bold text-white flex items-baseline gap-1">
               <NumberTicker value={23} decimalPlaces={2} duration={1100} />
-              <span className="text-sm font-sans text-brand-400 font-semibold">ETH</span>
+              <span className="text-sm font-sans text-blue-400 font-semibold">ETH</span>
             </div>
           </SpotlightCard>
-          <SpotlightCard className="p-4 rounded-xl bg-dark-bg-1/80 border-dark-border-subtle space-y-1">
-            <span className="text-[11px] font-sans text-dark-text-muted uppercase tracking-wider block">Fixed Rate Benchmark</span>
-            <div className="text-xl font-mono font-bold text-dark-text-primary flex items-baseline gap-1">
+          <SpotlightCard className="p-4 rounded-2xl bg-dark-bg-1/80 border border-white/10 space-y-1">
+            <span className="text-[11px] font-sans text-[#86868b] uppercase tracking-wider block">Fixed Rate Benchmark</span>
+            <div className="text-xl font-mono font-bold text-white flex items-baseline gap-1">
               <NumberTicker value={8} decimalPlaces={1} duration={1300} />
-              <span className="text-sm font-sans text-dark-text-secondary font-semibold">% APR</span>
+              <span className="text-sm font-sans text-[#a1a1a6] font-semibold">% APR</span>
             </div>
           </SpotlightCard>
-          <SpotlightCard className="p-4 rounded-xl bg-dark-bg-1/80 border-dark-border-subtle space-y-1">
-            <span className="text-[11px] font-sans text-dark-text-muted uppercase tracking-wider block">Reputation Ceiling</span>
-            <div className="text-xl font-mono font-bold text-dark-text-primary flex items-baseline gap-1">
+          <SpotlightCard className="p-4 rounded-2xl bg-dark-bg-1/80 border border-white/10 space-y-1">
+            <span className="text-[11px] font-sans text-[#86868b] uppercase tracking-wider block">Reputation Ceiling</span>
+            <div className="text-xl font-mono font-bold text-white flex items-baseline gap-1">
               <NumberTicker value={100} duration={1400} />
               <span className="text-sm font-sans text-emerald-400 font-semibold">Score Cap</span>
             </div>
@@ -407,12 +405,10 @@ export const LandingPage: React.FC = () => {
 
       {/* Footer */}
       <footer className="mt-auto border-t border-dark-border-subtle bg-dark-bg-1/80 py-8 px-4 text-center text-xs text-dark-text-muted space-y-2">
-        <div className="flex items-center justify-center gap-2">
+        <div className="flex items-center justify-center gap-2 text-[#86868b]">
           <span>Credify Protocol</span>
           <span>•</span>
-          <span>Local EVM Hardhat Execution (Chain ID 31337)</span>
-          <span>•</span>
-          <Link to="/console/overview" className="text-brand-400 hover:underline inline-flex items-center gap-0.5">
+          <Link to="/console/overview" className="text-blue-400 hover:underline inline-flex items-center gap-0.5 font-medium">
             Technical Console <ArrowUpRight className="w-3 h-3" />
           </Link>
         </div>

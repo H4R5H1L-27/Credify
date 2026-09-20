@@ -97,8 +97,8 @@ export const LoanDetailPage: React.FC = () => {
     return (
       <div className="max-w-2xl mx-auto py-16 text-center space-y-4">
         <AlertCircle className="w-12 h-12 text-rose-500 mx-auto" />
-        <h2 className="text-xl font-bold text-slate-900">Agreement Not Found</h2>
-        <p className="text-xs text-slate-500">
+        <h2 className="text-xl font-bold text-white">Agreement Not Found</h2>
+        <p className="text-xs text-[#86868b]">
           The requested loan pool address does not exist on the local EVM or has not been deployed yet.
         </p>
         <div className="pt-2">
@@ -287,12 +287,12 @@ export const LoanDetailPage: React.FC = () => {
     <div className="space-y-8 max-w-4xl mx-auto pb-16">
       {/* Breadcrumb Navigation */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2 text-xs text-slate-500">
-          <Link to={breadcrumbLink} className="hover:text-slate-900 transition-colors font-medium">
+        <div className="flex items-center gap-2 text-xs text-[#86868b]">
+          <Link to={breadcrumbLink} className="hover:text-white transition-colors font-medium">
             {breadcrumbLabel}
           </Link>
           <span>/</span>
-          <span className="font-mono text-slate-800">{loan.address}</span>
+          <span className="font-mono text-white/80">{loan.address}</span>
         </div>
 
         <div className="flex items-center gap-2">

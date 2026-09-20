@@ -69,7 +69,7 @@ export const AuthLoginPage: React.FC = () => {
         {/* Security Notice */}
         <div className="p-3 bg-dark-bg-1 border border-dark-border-subtle rounded-lg text-center text-xs text-dark-text-secondary leading-relaxed">
           <ShieldCheck className="w-4 h-4 text-emerald-400 inline-block mr-1 mb-0.5" />
-          <span>Local network execution (Chain ID 31337) • Zero real money or financial credentials.</span>
+          <span>Local network execution • Zero real money or financial credentials required.</span>
         </div>
       </div>
     </div>

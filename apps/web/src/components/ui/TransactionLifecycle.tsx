@@ -138,9 +138,6 @@ export const TransactionLifecycle: React.FC<{
             <Key className="w-2.5 h-2.5" />
             MetaMask
           </span>
-          <span className="text-xs font-mono px-2 py-0.5 rounded bg-dark-bg-3 text-dark-text-muted border border-dark-border-subtle">
-            Chain 31337
-          </span>
         </div>
       </div>
 

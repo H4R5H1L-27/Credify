@@ -12,21 +12,21 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant = 'primary', size = 'md', loading = false, disabled, children, icon, ...props }, ref) => {
     const baseStyles =
-      'inline-flex items-center justify-center font-sans font-medium transition-all duration-micro focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/50 focus-visible:ring-offset-1 focus-visible:ring-offset-dark-bg-0 disabled:opacity-40 disabled:pointer-events-none rounded-lg select-none cursor-pointer';
+      'inline-flex items-center justify-center font-sans font-medium transition-all duration-micro focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50 focus-visible:ring-offset-1 focus-visible:ring-offset-black disabled:opacity-40 disabled:pointer-events-none rounded-xl select-none cursor-pointer tracking-tight';
 
     const variants = {
       primary:
-        'bg-brand-500 text-white hover:bg-brand-600 active:bg-brand-700 shadow-depth-subtle border border-brand-400/30',
+        'bg-[#0071e3] text-white hover:bg-[#0077ed] active:bg-[#0062c4] shadow-[0_2px_8px_rgba(0,113,227,0.35),inset_0_1px_0_rgba(255,255,255,0.25)] border border-blue-400/30',
       secondary:
-        'bg-dark-bg-2 text-dark-text-primary hover:bg-dark-bg-3 active:bg-dark-bg-4 border border-dark-border-subtle/80 hover:border-dark-border-default',
+        'bg-white/[0.08] text-white hover:bg-white/[0.12] active:bg-white/[0.16] border border-white/10 backdrop-blur-md shadow-sm',
       outline:
-        'bg-transparent text-dark-text-primary hover:bg-dark-bg-2 active:bg-dark-bg-3 border border-dark-border-subtle/80 hover:border-dark-border-default',
+        'bg-transparent text-white hover:bg-white/[0.06] active:bg-white/[0.10] border border-white/15',
       ghost:
-        'bg-transparent text-dark-text-secondary hover:text-dark-text-primary hover:bg-dark-bg-3/60 active:bg-dark-bg-4',
+        'bg-transparent text-dark-text-secondary hover:text-white hover:bg-white/[0.06] active:bg-white/[0.10]',
       danger:
-        'bg-rose-950/30 text-rose-300 hover:bg-rose-900/50 border border-rose-800/30 active:bg-rose-900/70',
+        'bg-[#ff453a]/15 text-[#ff453a] hover:bg-[#ff453a]/25 border border-[#ff453a]/30 active:bg-[#ff453a]/35',
       success:
-        'bg-emerald-950/30 text-emerald-300 hover:bg-emerald-900/50 border border-emerald-800/30 active:bg-emerald-900/70',
+        'bg-[#30d158]/15 text-[#30d158] hover:bg-[#30d158]/25 border border-[#30d158]/30 active:bg-[#30d158]/35',
     };
 
     const sizes = {

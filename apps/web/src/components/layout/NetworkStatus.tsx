@@ -23,8 +23,7 @@ export const NetworkStatus: React.FC<{ className?: string }> = ({ className }) =
         title="Click to switch to Hardhat local testnet (31337)"
       >
         <AlertCircle className="w-3.5 h-3.5 text-crimson-400 shrink-0" />
-        <span className="hidden sm:inline">Wrong Network:</span>
-        <span className="underline">Switch (31337)</span>
+        <span className="underline">Switch Network</span>
       </button>
     );
   }
@@ -32,21 +31,18 @@ export const NetworkStatus: React.FC<{ className?: string }> = ({ className }) =
   return (
     <div
       className={cn(
-        'flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-mono text-dark-text-secondary',
-        'bg-dark-bg-2 border border-dark-border-default',
+        'flex items-center gap-2 px-2.5 py-1 rounded-full text-xs font-sans text-dark-text-secondary',
+        'bg-white/5 border border-white/10 shadow-xs',
         className
       )}
-      title="Connected to Hardhat Local Node (Chain ID: 31337)"
+      title="Connected to Hardhat Local Node"
     >
       <span className="relative flex h-2 w-2">
         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
         <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400" />
       </span>
-      <span className="font-medium text-dark-text-primary hidden md:inline">
+      <span className="font-medium text-white text-xs hidden sm:inline">
         Localhost
-      </span>
-      <span className="text-dark-text-muted text-[10px]">
-        (31337)
       </span>
     </div>
   );

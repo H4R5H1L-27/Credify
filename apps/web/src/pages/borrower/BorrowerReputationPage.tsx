@@ -106,17 +106,17 @@ export const BorrowerReputationPage: React.FC = () => {
     <div className="space-y-8 max-w-4xl mx-auto">
       {/* Header */}
       <div className="space-y-2">
-        <Link to="/app/borrower/overview" className="inline-flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-900 transition-colors">
+        <Link to="/app/borrower/overview" className="inline-flex items-center gap-1.5 text-xs text-[#86868b] hover:text-white transition-colors">
           <ArrowLeft className="w-3.5 h-3.5" />
           <span>Back to Overview</span>
         </Link>
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+        <h1 className="text-2xl font-bold tracking-tight text-white">
           Reputation &amp; Outcome History
         </h1>
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <p className="text-xs text-slate-500 max-w-xl">
-            On-chain credit performance score recorded directly by the <span className="font-mono">ReputationRegistry</span> smart contract.
-            Score = <span className="font-mono">50 + (successful_agreements × 8) − (defaulted_agreements × 20)</span>, clamped 0–100.
+          <p className="text-xs text-[#86868b] max-w-xl">
+            On-chain credit performance score recorded directly by the <span className="font-mono text-white/90">ReputationRegistry</span> smart contract.
+            Score = <span className="font-mono text-white/90">50 + (successful_agreements × 8) − (defaulted_agreements × 20)</span>, clamped 0–100.
           </p>
           <Link
             to="/console/contracts"

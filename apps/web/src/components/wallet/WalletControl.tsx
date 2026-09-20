@@ -169,7 +169,7 @@ export const WalletControl: React.FC = () => {
                 <span className="text-dark-text-muted">Network:</span>
                 <span className="font-medium text-dark-text-primary flex items-center gap-1.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                  Local network (31337)
+                  Local EVM Network
                 </span>
               </div>
               <div className="flex justify-between items-center">

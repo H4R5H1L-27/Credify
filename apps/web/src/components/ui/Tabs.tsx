@@ -76,13 +76,13 @@ export const Tabs: React.FC<TabsProps> = ({
         ref={containerRef}
         role="tablist"
         className={cn(
-          'relative flex items-center p-1 rounded-xl bg-dark-bg-2 border border-dark-border-subtle overflow-x-auto no-scrollbar',
+          'relative flex items-center p-1 rounded-xl bg-[#141416] border border-white/10 overflow-x-auto no-scrollbar shadow-inner',
           className
         )}
       >
-        {/* Animated Sliding Pill Indicator */}
+        {/* Animated Sliding Pill Indicator (Apple Segmented Control) */}
         <div
-          className="absolute top-1 bottom-1 rounded-lg bg-brand-500/20 border border-brand-500/35 shadow-depth-subtle pointer-events-none transition-all duration-200 ease-expo-out"
+          className="absolute top-1 bottom-1 rounded-lg bg-[#242428] border border-white/15 shadow-[0_2px_8px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.15)] pointer-events-none transition-all duration-200 ease-expo-out"
           style={{
             transform: `translateX(${gliderStyle.left}px)`,
             width: `${gliderStyle.width}px`,
@@ -107,8 +107,8 @@ export const Tabs: React.FC<TabsProps> = ({
               className={cn(
                 'relative z-10 flex items-center justify-center gap-2 py-1.5 px-3.5 text-xs font-medium rounded-lg transition-colors whitespace-nowrap cursor-pointer select-none',
                 isActive
-                  ? 'text-brand-300 font-semibold shadow-xs'
-                  : 'text-dark-text-muted hover:text-dark-text-secondary'
+                  ? 'text-white font-semibold'
+                  : 'text-[#86868b] hover:text-white'
               )}
             >
               {tab.icon && <span className="w-3.5 h-3.5 shrink-0">{tab.icon}</span>}
@@ -118,8 +118,8 @@ export const Tabs: React.FC<TabsProps> = ({
                   className={cn(
                     'px-1.5 py-0.2 rounded-full text-[10px] font-mono font-semibold',
                     isActive
-                      ? 'bg-brand-500/30 text-brand-300'
-                      : 'bg-dark-bg-3 text-dark-text-muted'
+                      ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
+                      : 'bg-white/10 text-white/60'
                   )}
                 >
                   {tab.count}
@@ -138,13 +138,13 @@ export const Tabs: React.FC<TabsProps> = ({
       ref={containerRef}
       role="tablist"
       className={cn(
-        'relative flex border-b border-dark-border-subtle gap-2 overflow-x-auto no-scrollbar',
+        'relative flex border-b border-white/10 gap-2 overflow-x-auto no-scrollbar',
         className
       )}
     >
       {/* Animated Sliding Underline Indicator */}
       <div
-        className="absolute bottom-0 h-0.5 bg-brand-500 shadow-[0_0_8px_rgba(79,107,245,0.7)] pointer-events-none transition-all duration-200 ease-expo-out"
+        className="absolute bottom-0 h-0.5 bg-[#2997ff] shadow-[0_0_10px_rgba(41,151,255,0.8)] pointer-events-none transition-all duration-200 ease-expo-out"
         style={{
           transform: `translateX(${gliderStyle.left}px)`,
           width: `${gliderStyle.width}px`,
@@ -169,8 +169,8 @@ export const Tabs: React.FC<TabsProps> = ({
             className={cn(
               'relative z-10 flex items-center gap-2 py-2.5 px-3 text-xs font-medium transition-colors whitespace-nowrap cursor-pointer select-none',
               isActive
-                ? 'text-brand-400 font-semibold'
-                : 'text-dark-text-muted hover:text-dark-text-primary'
+                ? 'text-[#2997ff] font-semibold'
+                : 'text-[#86868b] hover:text-white'
             )}
           >
             {tab.icon && <span className="w-3.5 h-3.5 shrink-0">{tab.icon}</span>}

@@ -142,10 +142,6 @@ export const ContractInspectorModal: React.FC<ContractInspectorModalProps> = ({
                 >
                   {contract.type}
                 </span>
-
-                <span className="text-[10px] px-1.5 py-0.5 rounded bg-dark-bg-1 border border-dark-border-subtle text-dark-text-muted">
-                  Chain 31337
-                </span>
               </div>
 
               <div className="flex items-center gap-1.5 self-start sm:self-auto">

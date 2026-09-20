@@ -40,29 +40,29 @@ export const AccountImportModal: React.FC = () => {
             <div>
               <div className="font-semibold text-amber-300">Academic Demo Test Accounts Only</div>
               <p className="mt-1 text-xs text-amber-200/80 leading-relaxed">
-                These private keys are derived from the standard open-source Hardhat test mnemonic (<code className="bg-amber-950/60 px-1 py-0.5 rounded text-amber-300 font-mono">"test ... junk"</code>). They control simulated demo ETH on your local node (Chain ID 31337). <strong>Never send real funds to these addresses or import real mainnet private keys.</strong>
+                These private keys are derived from the standard open-source Hardhat test mnemonic (<code className="bg-amber-950/60 px-1 py-0.5 rounded text-amber-300 font-mono">"test ... junk"</code>). They control simulated demo ETH on your local node. <strong>Never send real funds to these addresses or import real mainnet private keys.</strong>
               </p>
             </div>
           </div>
         </div>
 
         {/* Step 1: Network Configuration */}
-        <div className="rounded-lg border border-slate-800 bg-slate-900/60 p-4">
+        <div className="rounded-xl border border-white/10 bg-dark-bg-1 p-4 shadow-sm">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
-              <div className="font-medium text-slate-100 flex items-center gap-2">
-                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-indigo-500/20 text-xs font-semibold text-indigo-400">1</span>
+              <div className="font-medium text-white flex items-center gap-2">
+                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-blue-500/20 text-xs font-semibold text-blue-400">1</span>
                 Add Localhost EVM to MetaMask
               </div>
-              <p className="mt-1 text-xs text-slate-400">
-                RPC: <span className="font-mono text-slate-300">{HARDHAT_RPC_URL}</span> · Chain ID: <span className="font-mono text-slate-300">{HARDHAT_CHAIN_ID}</span> · Currency: <span className="text-slate-300">ETH</span>
+              <p className="mt-1 text-xs text-[#86868b]">
+                RPC: <span className="font-mono text-white/90">{HARDHAT_RPC_URL}</span> · Chain ID: <span className="font-mono text-white/90">{HARDHAT_CHAIN_ID}</span> · Currency: <span className="text-white/90">ETH</span>
               </p>
             </div>
             <Button
               size="sm"
               variant="outline"
               onClick={handleAddNetwork}
-              className="shrink-0 border-indigo-500/40 text-indigo-300 hover:bg-indigo-500/10"
+              className="shrink-0 border-blue-500/40 text-blue-400 hover:bg-blue-500/10"
             >
               {networkAdded ? (
                 <>
@@ -82,21 +82,21 @@ export const AccountImportModal: React.FC = () => {
         {/* Step 2: Import Test Personas */}
         <div>
           <div className="mb-2 flex items-center justify-between">
-            <div className="font-medium text-slate-100 flex items-center gap-2">
-              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-indigo-500/20 text-xs font-semibold text-indigo-400">2</span>
+            <div className="font-medium text-white flex items-center gap-2">
+              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-blue-500/20 text-xs font-semibold text-blue-400">2</span>
               Deterministic Test Accounts
             </div>
-            <span className="text-xs text-slate-400">Copy a key $\rightarrow$ In MetaMask: Account $\rightarrow$ Add Account $\rightarrow$ Import</span>
+            <span className="text-xs text-[#86868b]">Copy a key $\rightarrow$ In MetaMask: Account $\rightarrow$ Add Account $\rightarrow$ Import</span>
           </div>
 
-          <div className="divide-y divide-slate-800/80 rounded-lg border border-slate-800 bg-slate-900/40 overflow-hidden">
+          <div className="divide-y divide-white/10 rounded-xl border border-white/10 bg-dark-bg-1 overflow-hidden shadow-sm">
             {DEMO_ACCOUNTS.map((acc, index) => {
               const isCurrent = address && address.toLowerCase() === acc.address.toLowerCase();
               return (
-                <div key={acc.id} className={`p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${isCurrent ? 'bg-indigo-950/20' : ''}`}>
+                <div key={acc.id} className={`p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${isCurrent ? 'bg-blue-500/10' : 'hover:bg-white/[0.03]'}`}>
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
-                      <span className="font-medium text-slate-200">{acc.displayName}</span>
+                      <span className="font-medium text-white">{acc.displayName}</span>
                       <Badge variant={acc.role === 'BORROWER' ? 'default' : acc.role === 'LENDER' ? 'success' : 'secondary'}>
                         {acc.role}
                       </Badge>
@@ -106,17 +106,11 @@ export const AccountImportModal: React.FC = () => {
                         </Badge>
                       )}
                     </div>
-                    <div className="flex items-center gap-2 text-xs text-slate-400">
+                    <div className="flex items-center gap-2 text-xs text-[#86868b]">
                       <AddressBadge address={acc.address} chars={6} />
                       <span>·</span>
-                      <span className="text-slate-400">{acc.description}</span>
+                      <span className="text-[#86868b]">{acc.description}</span>
                     </div>
-                  </div>
-
-                  <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
-                    <span className="text-xs font-mono text-dark-text-muted">
-                      Chain 31337
-                    </span>
                   </div>
                 </div>
               );
@@ -125,9 +119,9 @@ export const AccountImportModal: React.FC = () => {
         </div>
 
         {/* Dual Mode Note */}
-        <div className="rounded-lg border border-slate-800 bg-slate-900/30 p-3 text-xs text-slate-400 flex items-center justify-between">
+        <div className="rounded-xl border border-white/10 bg-dark-bg-1 p-3 text-xs text-[#86868b] flex items-center justify-between">
           <span>
-            <strong>Tip:</strong> If you prefer evaluating without MetaMask, simply close this dialog. Credify includes full backend persona simulation by default.
+            <strong className="text-white/90">Tip:</strong> If you prefer evaluating without MetaMask, simply close this dialog. Credify includes full backend persona simulation by default.
           </span>
           <Button size="sm" variant="secondary" onClick={closeImportModal}>
             Got it

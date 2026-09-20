@@ -283,7 +283,7 @@ export const ConsoleEvaluatorPage: React.FC = () => {
             </h1>
             <p className="text-sm text-dark-text-secondary leading-relaxed">
               This controlled evaluator environment demonstrates the complete Credify architecture without requiring technical blockchain setup.
-              Every contract, transaction, and event log is real and executed on the local Hardhat node (Chain ID: <code className="font-mono text-brand-300">31337</code>).
+              Every contract, transaction, and event log is real and executed on the local EVM node.
             </p>
           </div>
 
@@ -293,7 +293,7 @@ export const ConsoleEvaluatorPage: React.FC = () => {
               <div className="text-[11px] font-medium text-dark-text-muted">Node Status</div>
               <div className="text-sm font-bold font-mono text-emerald-400 flex items-center gap-1.5 mt-0.5">
                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                <span>Chain 31337</span>
+                <span>Operational</span>
               </div>
             </div>
 
@@ -588,7 +588,7 @@ export const ConsoleEvaluatorPage: React.FC = () => {
       {/* Deterministic Local Test Accounts & MetaMask Import Guide */}
       <TechnicalPanel
         title="Deterministic Test Accounts &amp; MetaMask Guide"
-        subtitle="Pre-funded local test accounts derived from the deterministic academic mnemonic on Chain 31337."
+        subtitle="Pre-funded local test accounts derived from the deterministic academic mnemonic."
         badge={
           <div className="flex items-center gap-2">
             <button
@@ -599,7 +599,6 @@ export const ConsoleEvaluatorPage: React.FC = () => {
               {showKeys ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
               <span>{showKeys ? 'Hide Private Keys' : 'Reveal Test Keys'}</span>
             </button>
-            <span className="font-mono text-[10px] text-brand-400">CHAIN 31337</span>
           </div>
         }
       >

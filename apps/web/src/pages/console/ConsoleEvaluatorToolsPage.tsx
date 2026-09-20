@@ -266,7 +266,6 @@ export const ConsoleEvaluatorToolsPage: React.FC = () => {
       <TechnicalPanel
         title="Local Node Test Accounts (Mnemonic Derivation)"
         subtitle="Standard Hardhat deterministic testing accounts derived from academic local mnemonic."
-        badge={<span className="font-mono text-[10px] text-dark-text-muted">CHAIN 31337</span>}
       >
         <div className="space-y-2 font-mono text-xs">
           {DEMO_ACCOUNTS.map((acc, idx) => (
