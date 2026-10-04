@@ -255,12 +255,12 @@ export const LandingPage: React.FC = () => {
       {/* Hero Section */}
       <section className="py-16 sm:py-24 px-4 sm:px-8 max-w-5xl mx-auto w-full text-center space-y-6 relative z-10">
         {/* Status Badge */}
-        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-yellow-100 border border-yellow-300 text-yellow-950 text-xs font-bold shadow-xs">
+        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-yellow-100 border border-yellow-300 text-yellow-950 text-xs font-fancy font-bold shadow-xs tracking-wide">
           <Sparkles className="w-3.5 h-3.5 text-yellow-700 shrink-0" />
           <span>Decentralized Multi-Lender Credit Protocol</span>
         </div>
 
-        <h1 className="text-5xl sm:text-7xl font-black tracking-[-0.03em] text-slate-950 leading-[1.08] max-w-4xl mx-auto">
+        <h1 className="text-5xl sm:text-7xl font-display font-black tracking-[-0.03em] text-slate-950 leading-[1.08] max-w-4xl mx-auto">
           Shared credit agreements,<br />
           <span className="bg-[#ffe600] text-black px-3 py-0.5 rounded-xl shadow-xs inline-block mt-2">
             enforced by code.
@@ -296,37 +296,37 @@ export const LandingPage: React.FC = () => {
         {/* Live Architectural Metrics Strip */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-10 max-w-3xl mx-auto text-left">
           <SpotlightCard className="p-4 rounded-2xl bg-white border border-slate-200 shadow-sm space-y-1">
-            <span className="text-xs font-bold font-sans text-slate-500 uppercase tracking-wider block">Escrow Consensus</span>
-            <div className="text-2xl font-mono font-black text-slate-950 flex items-baseline gap-1">
+            <span className="text-[11px] font-fancy font-bold text-slate-500 uppercase tracking-wider block">Escrow Consensus</span>
+            <div className="text-2xl font-display font-black text-slate-950 flex items-baseline gap-1">
               <NumberTicker value={100} duration={900} />
-              <span className="text-xs font-bold font-mono px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-300">
+              <span className="text-xs font-fancy font-bold px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-300">
                 100% On-Chain
               </span>
             </div>
           </SpotlightCard>
           <SpotlightCard className="p-4 rounded-2xl bg-white border border-slate-200 shadow-sm space-y-1">
-            <span className="text-xs font-bold font-sans text-slate-500 uppercase tracking-wider block">Syndicated Volume</span>
-            <div className="text-2xl font-mono font-black text-slate-950 flex items-baseline gap-1">
+            <span className="text-[11px] font-fancy font-bold text-slate-500 uppercase tracking-wider block">Syndicated Volume</span>
+            <div className="text-2xl font-display font-black text-slate-950 flex items-baseline gap-1">
               <NumberTicker value={23} decimalPlaces={2} duration={1100} />
-              <span className="text-xs font-bold font-mono px-1.5 py-0.5 rounded bg-yellow-100 text-yellow-950 border border-yellow-300">
+              <span className="text-xs font-fancy font-bold px-1.5 py-0.5 rounded bg-yellow-100 text-yellow-950 border border-yellow-300">
                 ETH
               </span>
             </div>
           </SpotlightCard>
           <SpotlightCard className="p-4 rounded-2xl bg-white border border-slate-200 shadow-sm space-y-1">
-            <span className="text-xs font-bold font-sans text-slate-500 uppercase tracking-wider block">Fixed Rate Benchmark</span>
-            <div className="text-2xl font-mono font-black text-slate-950 flex items-baseline gap-1">
+            <span className="text-[11px] font-fancy font-bold text-slate-500 uppercase tracking-wider block">Fixed Rate Benchmark</span>
+            <div className="text-2xl font-display font-black text-slate-950 flex items-baseline gap-1">
               <NumberTicker value={8} decimalPlaces={1} duration={1300} />
-              <span className="text-xs font-bold font-mono px-1.5 py-0.5 rounded bg-slate-100 text-slate-900 border border-slate-300">
+              <span className="text-xs font-fancy font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-900 border border-slate-300">
                 % APR
               </span>
             </div>
           </SpotlightCard>
           <SpotlightCard className="p-4 rounded-2xl bg-white border border-slate-200 shadow-sm space-y-1">
-            <span className="text-xs font-bold font-sans text-slate-500 uppercase tracking-wider block">Reputation Ceiling</span>
-            <div className="text-2xl font-mono font-black text-slate-950 flex items-baseline gap-1">
+            <span className="text-[11px] font-fancy font-bold text-slate-500 uppercase tracking-wider block">Reputation Ceiling</span>
+            <div className="text-2xl font-display font-black text-slate-950 flex items-baseline gap-1">
               <NumberTicker value={100} duration={1400} />
-              <span className="text-xs font-bold font-mono px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-300">
+              <span className="text-xs font-fancy font-bold px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-300">
                 Score Cap
               </span>
             </div>
@@ -337,7 +337,7 @@ export const LandingPage: React.FC = () => {
       {/* The Multi-Lender Lifecycle: Interactive Walkthrough */}
       <section className="py-12 px-4 sm:px-8 max-w-5xl mx-auto w-full relative z-10">
         <div className="text-center mb-8 space-y-1">
-          <h2 className="text-2xl font-bold text-slate-950 tracking-tight">The Multi-Lender Lifecycle</h2>
+          <h2 className="text-2xl sm:text-3xl font-display font-black text-slate-950 tracking-tight">The Multi-Lender Lifecycle</h2>
           <p className="text-xs text-slate-600 font-medium">
             Inspect the cryptographic enforcement mechanisms executed at each stage of the syndicated credit facility.
           </p>
@@ -362,7 +362,7 @@ export const LandingPage: React.FC = () => {
               >
                 <div className="flex items-center gap-2 text-xs">
                   <Icon className={`w-3.5 h-3.5 shrink-0 ${isSelected ? 'text-black' : 'text-slate-500'}`} />
-                  <span className="truncate">{step.title}</span>
+                  <span className="truncate font-display font-bold">{step.title}</span>
                 </div>
               </button>
             );
@@ -373,11 +373,13 @@ export const LandingPage: React.FC = () => {
         <SpotlightCard key={activeStep} spotlightSize={450} className="p-6 sm:p-8 bg-white border border-slate-200 shadow-sm">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
             <div className="space-y-4">
-              <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-yellow-50 border border-yellow-300 text-xs font-mono font-bold text-yellow-950">
-                <Layers className="w-3 h-3 text-yellow-700" />
-                <span>Stage 0{activeStep + 1} of 05</span>
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-yellow-100/90 border border-yellow-400 text-xs font-fancy font-bold text-yellow-950 shadow-xs tracking-wide">
+                <Layers className="w-3.5 h-3.5 text-yellow-800" />
+                <span className="font-bold">Stage 0{activeStep + 1}</span>
+                <span className="text-yellow-700/80 font-normal">/</span>
+                <span className="text-yellow-900 font-semibold">05</span>
               </div>
-              <h3 className="text-xl font-bold text-slate-950 tracking-tight">
+              <h3 className="text-2xl font-display font-black text-slate-950 tracking-tight">
                 {steps[activeStep].title}
               </h3>
               <p className="text-xs text-slate-600 leading-relaxed font-medium">
