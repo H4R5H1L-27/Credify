@@ -20,26 +20,29 @@ export const ConsoleBackendPage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-xl font-bold font-mono tracking-tight text-dark-text-primary uppercase flex items-center gap-2">
-            <Server className="w-5 h-5 text-brand-400" />
+    <div className="space-y-6 sm:space-y-8 min-w-0">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 min-w-0">
+        <div className="min-w-0">
+          <div className="flex items-center gap-2 text-xs font-sans font-bold uppercase tracking-wider text-yellow-950 bg-yellow-100 px-2 py-0.5 rounded border border-yellow-300 w-fit mb-1.5">
+            <Server className="w-3.5 h-3.5" />
+            <span>Process &amp; In-Memory Architecture</span>
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-black font-sans tracking-tight text-slate-950">
             Backend Runtime &amp; Indexer Diagnostics
           </h1>
-          <p className="text-xs text-dark-text-secondary mt-0.5">
+          <p className="text-xs text-slate-700 font-sans font-medium mt-1">
             Internal daemon health, read-model projections, and asynchronous EVM sync loop performance.
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2.5 shrink-0">
           <Button
             size="sm"
             variant="outline"
             onClick={() => refetch()}
             loading={isLoading}
             icon={<RefreshCw className="w-3.5 h-3.5" />}
-            className="text-xs font-mono"
+            className="text-xs font-sans bg-white border-slate-300 text-slate-900 hover:bg-slate-50 font-semibold"
           >
             Poll Runtime
           </Button>
@@ -50,7 +53,7 @@ export const ConsoleBackendPage: React.FC = () => {
             onClick={handleResetIndexer}
             loading={resetDemo.isPending}
             icon={<RotateCcw className="w-3.5 h-3.5" />}
-            className="text-xs font-mono"
+            className="text-xs font-sans font-bold"
           >
             Reset &amp; Reindex
           </Button>
@@ -58,7 +61,7 @@ export const ConsoleBackendPage: React.FC = () => {
       </div>
 
       {/* Backend Metrics Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 min-w-0">
         <SystemNode
           name="Fastify REST Engine"
           type="api-server"
@@ -100,36 +103,40 @@ export const ConsoleBackendPage: React.FC = () => {
       <TechnicalPanel
         title="Runtime Daemon Telemetry"
         subtitle="Internal metrics captured by health inspection endpoint."
-        badge={<span className="font-mono text-[10px] text-brand-400">GET /health</span>}
+        badge={
+          <span className="font-mono text-xs px-2.5 py-0.5 rounded-md bg-yellow-100 border border-yellow-300 text-yellow-950 font-bold">
+            GET /health
+          </span>
+        }
       >
-        <div className="border border-dark-border-subtle rounded-lg divide-y divide-dark-border-subtle bg-dark-bg-3 font-mono text-xs">
-          <div className="p-3.5 flex items-center justify-between">
-            <span className="text-dark-text-muted">Process Status:</span>
-            <span className={health?.ok ? 'text-emerald-400 font-bold' : 'text-crimson-400 font-bold'}>
+        <div className="border border-slate-200 rounded-xl divide-y divide-slate-200 bg-white font-mono text-xs shadow-xs">
+          <div className="p-4 flex items-center justify-between">
+            <span className="text-slate-700 font-sans font-semibold">Process Status:</span>
+            <span className={`px-2.5 py-0.5 rounded-md font-bold text-xs ${health?.ok ? 'text-emerald-900 bg-emerald-50 border border-emerald-300' : 'text-rose-900 bg-rose-50 border border-rose-300'}`}>
               {health?.ok ? 'HEALTHY' : 'DEGRADED'}
             </span>
           </div>
 
-          <div className="p-3.5 flex items-center justify-between">
-            <span className="text-dark-text-muted">Node Connection:</span>
-            <span className={health?.ok ? 'text-emerald-400 font-bold' : 'text-crimson-400 font-bold'}>
+          <div className="p-4 flex items-center justify-between">
+            <span className="text-slate-700 font-sans font-semibold">Node Connection:</span>
+            <span className={`px-2.5 py-0.5 rounded-md font-bold text-xs ${health?.ok ? 'text-emerald-900 bg-emerald-50 border border-emerald-300' : 'text-rose-900 bg-rose-50 border border-rose-300'}`}>
               {health?.ok ? 'CONNECTED (127.0.0.1:8545)' : 'DISCONNECTED'}
             </span>
           </div>
 
-          <div className="p-3.5 flex items-center justify-between">
-            <span className="text-dark-text-muted">Chain ID Detected:</span>
-            <span className="text-dark-text-primary font-bold">{health?.chainId || 31337}</span>
+          <div className="p-4 flex items-center justify-between">
+            <span className="text-slate-700 font-sans font-semibold">Chain ID Detected:</span>
+            <span className="text-slate-950 font-bold font-mono text-sm">{health?.chainId || 31337}</span>
           </div>
 
-          <div className="p-3.5 flex items-center justify-between">
-            <span className="text-dark-text-muted">Current Head Block:</span>
-            <span className="text-dark-text-primary font-bold">#{currentBlock}</span>
+          <div className="p-4 flex items-center justify-between">
+            <span className="text-slate-700 font-sans font-semibold">Current Head Block:</span>
+            <span className="text-slate-950 font-bold font-mono text-sm">#{currentBlock}</span>
           </div>
 
-          <div className="p-3.5 flex items-center justify-between">
-            <span className="text-dark-text-muted">Indexer Polling State:</span>
-            <span className={health?.ok ? 'text-emerald-400 font-bold' : 'text-amber-400 font-bold'}>
+          <div className="p-4 flex items-center justify-between">
+            <span className="text-slate-700 font-sans font-semibold">Indexer Polling State:</span>
+            <span className={`px-2.5 py-0.5 rounded-md font-bold text-xs ${health?.ok ? 'text-emerald-900 bg-emerald-50 border border-emerald-300' : 'text-amber-900 bg-yellow-100 border border-yellow-300'}`}>
               {health?.ok ? 'RUNNING (Synchronized with node)' : 'STOPPED'}
             </span>
           </div>

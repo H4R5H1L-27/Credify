@@ -30,21 +30,21 @@ export const TechnicalPanel: React.FC<TechnicalPanelProps> = ({
   return (
     <div
       className={cn(
-        'rounded-2xl border border-dark-border-subtle/80 bg-dark-bg-2 shadow-depth-card overflow-hidden transition-all duration-normal',
+        'rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden transition-all duration-normal',
         className
       )}
     >
       {/* Header */}
-      <div className="px-5 sm:px-6 py-4 border-b border-dark-border-subtle/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div className="px-5 sm:px-6 py-4 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white">
         <div className="space-y-1">
           <div className="flex items-center gap-2.5 flex-wrap">
-            <h3 className="text-base font-bold font-sans text-dark-text-primary tracking-tight">
+            <h3 className="text-base font-bold font-sans text-slate-900 tracking-tight">
               {title}
             </h3>
             {badge}
           </div>
           {subtitle && (
-            <p className="text-xs text-dark-text-secondary font-sans leading-relaxed">
+            <p className="text-xs text-slate-600 font-sans leading-relaxed font-medium">
               {subtitle}
             </p>
           )}

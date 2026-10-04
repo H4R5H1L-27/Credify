@@ -108,18 +108,18 @@ export const ConsoleArchitecturePage: React.FC = () => {
   const currentFlow = flowDescriptions[activeFlow];
 
   return (
-    <div className="space-y-8 font-sans">
+    <div className="space-y-6 sm:space-y-8 font-sans min-w-0">
       {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2 text-xs font-sans font-semibold uppercase tracking-wider text-brand-400 mb-1">
-            <Network className="w-4 h-4" />
-            <span>Interactive Spatial Model</span>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 min-w-0">
+        <div className="min-w-0">
+          <div className="flex items-center gap-2 text-xs font-sans font-bold uppercase tracking-wider text-yellow-950 bg-yellow-100 px-2 py-0.5 rounded border border-yellow-300 w-fit mb-1.5">
+            <Network className="w-3.5 h-3.5" />
+            <span>Interactive Spatial Architecture</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-dark-text-primary">
+          <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-950">
             System Architecture Topology
           </h1>
-          <p className="text-xs text-dark-text-secondary mt-1">
+          <p className="text-xs text-slate-700 font-sans font-medium mt-1">
             Spatial representation of Credify&apos;s 5 architectural strata, component boundaries, and live data flow vectors.
           </p>
         </div>
@@ -129,26 +129,26 @@ export const ConsoleArchitecturePage: React.FC = () => {
           variant="outline"
           onClick={handleRefresh}
           icon={<RefreshCw className="w-3.5 h-3.5" />}
-          className="text-xs font-sans shrink-0"
+          className="text-xs font-sans shrink-0 bg-white border-slate-300 text-slate-900 hover:bg-slate-50 font-semibold"
         >
           Refresh Telemetry
         </Button>
       </div>
 
       {/* Flow Path Selector Toolbar */}
-      <div className="p-5 bg-dark-bg-2 border border-dark-border-subtle/80 rounded-2xl shadow-depth-card space-y-4">
-        <div className="flex items-center justify-between">
-          <span className="text-xs font-semibold uppercase text-dark-text-muted flex items-center gap-2">
-            <Zap className="w-3.5 h-3.5 text-brand-400" />
+      <div className="p-5 bg-white border border-slate-200 rounded-2xl shadow-sm space-y-4 min-w-0">
+        <div className="flex items-center justify-between min-w-0">
+          <span className="text-xs font-bold uppercase text-slate-800 flex items-center gap-2">
+            <Zap className="w-3.5 h-3.5 text-yellow-900" />
             <span>Active Protocol Flow Highlighting</span>
           </span>
-          <span className="text-xs text-dark-text-secondary">
+          <span className="text-xs text-slate-600 font-medium">
             Click any stratum node to inspect invariants
           </span>
         </div>
 
         {/* Filter Pills */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 text-xs">
           {[
             { id: 'ALL', label: 'All Strata' },
             { id: 'CONTRIBUTION', label: 'Lender Funding' },
@@ -161,10 +161,10 @@ export const ConsoleArchitecturePage: React.FC = () => {
               key={flow.id}
               type="button"
               onClick={() => setActiveFlow(flow.id as TopologyFlowType)}
-              className={`px-3.5 py-1.5 rounded-xl text-xs font-medium whitespace-nowrap transition-all duration-micro cursor-pointer ${
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all duration-micro cursor-pointer ${
                 activeFlow === flow.id
-                  ? 'bg-brand-500/15 text-brand-400 border border-brand-500/30 font-semibold shadow-depth-subtle'
-                  : 'bg-dark-bg-3/60 text-dark-text-secondary border border-dark-border-subtle/60 hover:text-dark-text-primary'
+                  ? 'bg-[#ffe600] text-black border border-yellow-400 shadow-xs'
+                  : 'bg-slate-50 text-slate-700 border border-slate-200 hover:text-black hover:bg-slate-100'
               }`}
             >
               {flow.label}
@@ -173,17 +173,19 @@ export const ConsoleArchitecturePage: React.FC = () => {
         </div>
 
         {/* Narrative Box */}
-        <div className="p-4 rounded-xl bg-dark-bg-3/60 border border-dark-border-subtle/60 space-y-2">
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-bold text-dark-text-primary">
+        <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2 min-w-0">
+          <div className="flex items-center justify-between min-w-0">
+            <span className="text-sm font-bold text-slate-950 truncate">
               {currentFlow.title}
             </span>
-            <span className="text-xs font-mono text-brand-400">Active Path</span>
+            <span className="text-xs font-bold px-2 py-0.5 rounded bg-yellow-100 border border-yellow-300 text-yellow-950 font-mono shrink-0">
+              Active Path
+            </span>
           </div>
-          <p className="text-xs text-dark-text-secondary leading-relaxed">
+          <p className="text-xs text-slate-700 font-medium leading-relaxed">
             {currentFlow.narrative}
           </p>
-          <div className="text-xs font-mono text-dark-text-muted pt-1 border-t border-dark-border-subtle/40 truncate">
+          <div className="text-xs font-mono text-slate-600 pt-1.5 border-t border-slate-200 truncate font-semibold">
             {currentFlow.path}
           </div>
         </div>
@@ -201,60 +203,59 @@ export const ConsoleArchitecturePage: React.FC = () => {
         title="Protocol Security Invariants & Guarantees"
         subtitle="Immutable non-custodial constraints enforced cryptographically by smart contract bytecode."
         badge={
-          <span className="font-mono text-xs px-2.5 py-0.5 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-bold">
+          <span className="font-mono text-xs px-2.5 py-0.5 rounded-md bg-emerald-50 border border-emerald-300 text-emerald-900 font-bold">
             ENFORCED ON-CHAIN
           </span>
         }
       >
-        <div className="rounded-xl divide-y divide-dark-border-subtle/50 bg-dark-bg-3/40 border border-dark-border-subtle/60 text-xs">
+        <div className="rounded-xl divide-y divide-slate-200 bg-white border border-slate-200 text-xs shadow-xs">
           <div className="p-4 flex items-start gap-3.5">
-            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+            <CheckCircle2 className="w-4 h-4 text-emerald-700 shrink-0 mt-0.5" />
             <div className="space-y-1">
-              <div className="font-bold text-sm text-dark-text-primary">Controlled Disbursement Constraint</div>
-              <p className="text-xs text-dark-text-secondary leading-relaxed">
-                Funds deposited into a <code className="text-brand-300">LoanPool</code> can never be withdrawn directly to the borrower wallet. Capital can only flow to pre-authorized merchant addresses up to the specified spending cap.
+              <div className="font-bold text-sm text-slate-950">Controlled Disbursement Constraint</div>
+              <p className="text-xs text-slate-700 font-medium leading-relaxed">
+                Funds deposited into a <code className="bg-yellow-50 px-1 py-0.5 rounded border border-yellow-300 text-yellow-950 font-bold">LoanPool</code> can never be withdrawn directly to the borrower wallet. Capital can only flow to pre-authorized merchant addresses up to the specified spending cap.
               </p>
             </div>
           </div>
 
           <div className="p-4 flex items-start gap-3.5">
-            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+            <CheckCircle2 className="w-4 h-4 text-emerald-700 shrink-0 mt-0.5" />
             <div className="space-y-1">
-              <div className="font-bold text-sm text-dark-text-primary">Pull-Claim Distribution Engine</div>
-              <p className="text-xs text-dark-text-secondary leading-relaxed">
-                Borrower repayments do not push transfers to lenders (avoiding denial-of-service vectors). Lenders independently invoke <code className="text-brand-300">claimRepayment()</code> to withdraw their pro-rata share.
+              <div className="font-bold text-sm text-slate-950">Deterministic Pro-Rata Dividend Entitlement</div>
+              <p className="text-xs text-slate-700 font-medium leading-relaxed">
+                Repayments are distributed mathematically based on contribution share basis points (<code className="bg-slate-100 px-1 py-0.5 rounded border border-slate-300 text-slate-900 font-bold font-mono">shareBps</code>). Lenders execute pull-based withdrawals, preventing gas exhaustion denial of service.
               </p>
             </div>
           </div>
 
           <div className="p-4 flex items-start gap-3.5">
-            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+            <CheckCircle2 className="w-4 h-4 text-emerald-700 shrink-0 mt-0.5" />
             <div className="space-y-1">
-              <div className="font-bold text-sm text-dark-text-primary">Capital-Weighted Governance Quorum</div>
-              <p className="text-xs text-dark-text-secondary leading-relaxed">
-                Default consensus requires voting weight exceeding the contract&apos;s quorum threshold (&gt;50.01% of contributed funds). Only verified syndicate participants with active capital at risk may cast votes.
+              <div className="font-bold text-sm text-slate-950">Decentralized Default Consensus Protocol</div>
+              <p className="text-xs text-slate-700 font-medium leading-relaxed">
+                Default declarations require democratic majority vote by capital contributors (<code className="bg-slate-100 px-1 py-0.5 rounded border border-slate-300 text-slate-900 font-bold font-mono">&gt; 50% contributedWei</code>). Defaults permanently penalize the borrower&apos;s authoritative on-chain reputation score by -30 points.
               </p>
             </div>
           </div>
 
           <div className="p-4 flex items-start gap-3.5">
-            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+            <CheckCircle2 className="w-4 h-4 text-emerald-700 shrink-0 mt-0.5" />
             <div className="space-y-1">
-              <div className="font-bold text-sm text-dark-text-primary">Authoritative Non-Decorative Reputation</div>
-              <p className="text-xs text-dark-text-secondary leading-relaxed">
-                Reputation score updates can never be arbitrarily set. Increments (+8 pts) and penalties (−20 pts) require verifiable emission of <code className="text-brand-300">LoanRepaid</code> or <code className="text-brand-300">LoanDefaulted</code> contract events.
+              <div className="font-bold text-sm text-slate-950">Institutional Attestation Prerequisite</div>
+              <p className="text-xs text-slate-700 font-medium leading-relaxed">
+                All pool instantiation, capital contributions, and supplier disbursements require active verification in the <code className="bg-yellow-50 px-1 py-0.5 rounded border border-yellow-300 text-yellow-950 font-bold">KYCRegistry</code>, preventing unauthorized state manipulation.
               </p>
             </div>
           </div>
         </div>
       </TechnicalPanel>
 
-      {/* Node Inspector Drawer */}
+      {/* Node Inspector Modal */}
       <TopologyNodeInspector
         nodeId={selectedNode}
         isOpen={Boolean(selectedNode)}
         onClose={() => setSelectedNode(null)}
-        telemetry={telemetry}
       />
     </div>
   );

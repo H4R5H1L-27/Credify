@@ -16,17 +16,17 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 
     const variants = {
       primary:
-        'bg-[#0071e3] text-white hover:bg-[#0077ed] active:bg-[#0062c4] shadow-[0_2px_8px_rgba(0,113,227,0.35),inset_0_1px_0_rgba(255,255,255,0.25)] border border-blue-400/30',
+        'bg-[#ffe600] text-black hover:bg-[#facc15] active:bg-[#eab308] shadow-[0_2px_10px_rgba(250,204,21,0.35)] border border-yellow-400/80 font-bold',
       secondary:
-        'bg-white/[0.08] text-white hover:bg-white/[0.12] active:bg-white/[0.16] border border-white/10 backdrop-blur-md shadow-sm',
+        'bg-white text-slate-900 hover:bg-slate-50 active:bg-slate-100 border border-slate-200/90 shadow-sm font-semibold',
       outline:
-        'bg-transparent text-white hover:bg-white/[0.06] active:bg-white/[0.10] border border-white/15',
+        'bg-transparent text-slate-800 hover:bg-slate-100/80 active:bg-slate-200/80 border border-slate-300/90 font-medium',
       ghost:
-        'bg-transparent text-dark-text-secondary hover:text-white hover:bg-white/[0.06] active:bg-white/[0.10]',
+        'bg-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-100/80 active:bg-slate-200/80 font-medium',
       danger:
-        'bg-[#ff453a]/15 text-[#ff453a] hover:bg-[#ff453a]/25 border border-[#ff453a]/30 active:bg-[#ff453a]/35',
+        'bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200 active:bg-rose-200 font-semibold',
       success:
-        'bg-[#30d158]/15 text-[#30d158] hover:bg-[#30d158]/25 border border-[#30d158]/30 active:bg-[#30d158]/35',
+        'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 active:bg-emerald-200 font-semibold',
     };
 
     const sizes = {

@@ -12,16 +12,11 @@ import { Skeleton } from '../components/ui/Skeleton';
 import { Tabs } from '../components/ui/Tabs';
 import { DEMO_ACCOUNTS, HARDHAT_CHAIN_ID, HARDHAT_RPC_URL } from '@credify/shared';
 import {
-  Terminal,
   RefreshCw,
   CheckCircle2,
-  Wallet,
   Key,
   PlusCircle,
-  Check,
   ShieldCheck,
-  ShieldAlert,
-  AlertCircle,
   UserCheck,
   XCircle,
   Layers,
@@ -99,46 +94,40 @@ export const EvaluatorPage: React.FC = () => {
   };
 
   const pendingCount = verificationRequests.filter((r) => r.status === 'PENDING').length;
-
-  const filteredRequests = queueFilter === 'ALL'
-    ? verificationRequests
-    : verificationRequests.filter((r) => r.status === queueFilter);
+  const filteredRequests = verificationRequests.filter((r) => {
+    if (queueFilter === 'ALL') return true;
+    return r.status === queueFilter;
+  });
 
   return (
-    <div className="space-y-6 max-w-6xl mx-auto pb-12">
+    <div className="space-y-6 max-w-6xl mx-auto pb-12 animate-fade-in font-sans">
       {/* Page Header */}
-      <div className="border-b border-white/10 pb-5">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-2.5">
-              <span className="p-2 rounded-xl bg-[#0071e3]/15 text-[#2997ff] border border-blue-500/25">
-                <Terminal className="w-5 h-5" />
-              </span>
-              <h1 className="text-2xl font-bold text-white tracking-tight">Evaluator & Academic Console</h1>
-            </div>
-            <p className="text-xs text-[#86868b] mt-1.5">
-              Independent examination tools: review credential verification queue, inspect on-chain contracts, and test using pre-funded deterministic accounts.
-            </p>
-          </div>
-
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
           <div className="flex items-center gap-2">
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => {
-                refetchHealth();
-                refetchRequests();
-              }}
-              icon={<RefreshCw className="w-3.5 h-3.5" />}
-              className="text-xs"
-            >
-              Refresh
-            </Button>
+            <h1 className="text-2xl font-bold tracking-tight text-slate-950 font-sans">Evaluator Console</h1>
+            <span className="text-xs font-mono font-bold text-yellow-950 bg-yellow-100 px-2 py-0.5 rounded border border-yellow-300">
+              KYC &amp; RPC ADMIN
+            </span>
           </div>
+          <p className="text-xs text-slate-600 mt-1 font-medium">
+            Administrative console to inspect EVM node health, approve on-chain KYC attestations, and view pre-funded test accounts.
+          </p>
         </div>
+
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => { refetchHealth(); refetchRequests(); }}
+          loading={healthLoading || requestsLoading}
+          icon={<RefreshCw className="w-3.5 h-3.5" />}
+          className="text-xs shrink-0 self-start sm:self-auto bg-white border-slate-300 text-slate-900 hover:bg-slate-50 font-bold"
+        >
+          Refresh State
+        </Button>
       </div>
 
-      {/* Success Notification */}
+      {/* Success Notification Banner */}
       {successMessage && (
         <Alert variant="success" title="On-Chain Action Successful">
           {successMessage}
@@ -147,53 +136,53 @@ export const EvaluatorPage: React.FC = () => {
 
       {/* Chain Connectivity Strip */}
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-        <Card className="p-4 bg-dark-bg-1 border-dark-border-subtle">
+        <Card className="p-4 bg-white border-slate-200 shadow-sm">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-dark-text-muted uppercase tracking-wider">EVM Status</span>
-            <div className="flex items-center gap-1 text-emerald-400 text-xs font-bold">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">EVM Status</span>
+            <div className="flex items-center gap-1 text-emerald-700 text-xs font-bold font-mono">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
               <span>{health?.ok ? 'Connected' : 'Offline'}</span>
             </div>
           </div>
-          <div className="text-base font-bold text-dark-text-primary mt-1">
+          <div className="text-base font-black text-slate-950 mt-1">
             {healthLoading ? <Skeleton className="h-5 w-20" /> : (health?.ok ? 'Local Node Active' : 'Disconnected')}
           </div>
-          <span className="text-xs text-dark-text-muted font-mono truncate block">{HARDHAT_RPC_URL}</span>
+          <span className="text-xs text-slate-500 font-mono truncate block font-medium">{HARDHAT_RPC_URL}</span>
         </Card>
 
-        <Card className="p-4 bg-dark-bg-1 border-dark-border-subtle">
-          <span className="text-xs font-semibold text-dark-text-muted uppercase tracking-wider">Latest Block</span>
-          <div className="text-base font-bold text-dark-text-primary mt-1 font-mono">
+        <Card className="p-4 bg-white border-slate-200 shadow-sm">
+          <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Latest Block</span>
+          <div className="text-base font-black text-slate-950 mt-1 font-mono">
             {healthLoading ? <Skeleton className="h-5 w-20" /> : `#${health?.blockNumber || '0'}`}
           </div>
-          <span className="text-xs text-dark-text-muted">Deterministic local mining</span>
+          <span className="text-xs text-slate-500 font-medium">Deterministic local mining</span>
         </Card>
 
-        <Card className="p-4 bg-dark-bg-1 border-dark-border-subtle">
-          <span className="text-xs font-semibold text-dark-text-muted uppercase tracking-wider">Deployed Loan Pools</span>
-          <div className="text-base font-bold text-dark-text-primary mt-1 font-mono">
+        <Card className="p-4 bg-white border-slate-200 shadow-sm">
+          <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Deployed Loan Pools</span>
+          <div className="text-base font-black text-slate-950 mt-1 font-mono">
             {healthLoading ? <Skeleton className="h-5 w-12" /> : `${health?.poolCount || 0} pools`}
           </div>
-          <span className="text-xs text-dark-text-muted">Indexed from LoanFactory</span>
+          <span className="text-xs text-slate-500 font-medium">Indexed from LoanFactory</span>
         </Card>
 
-        <Card className="p-4 bg-dark-bg-1 border-dark-border-subtle">
+        <Card className="p-4 bg-white border-slate-200 shadow-sm">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-dark-text-muted uppercase tracking-wider">Verification Queue</span>
+            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Verification Queue</span>
             {pendingCount > 0 && (
-              <Badge variant="warning" className="text-xs px-1.5 py-0.5">
+              <Badge variant="warning" className="text-xs px-2 py-0.5">
                 {pendingCount} Pending
               </Badge>
             )}
           </div>
-          <div className="text-base font-bold text-dark-text-primary mt-1 font-mono">
+          <div className="text-base font-black text-slate-950 mt-1 font-mono">
             {requestsLoading ? <Skeleton className="h-5 w-12" /> : `${verificationRequests.length} total`}
           </div>
-          <span className="text-xs text-dark-text-muted">KYCRegistry attestations</span>
+          <span className="text-xs text-slate-500 font-medium">KYCRegistry attestations</span>
         </Card>
       </div>
 
-      {/* Main Tab Navigation with Animated Sliding Glider */}
+      {/* Main Tab Navigation */}
       <div>
         <Tabs
           variant="pill"
@@ -221,78 +210,77 @@ export const EvaluatorPage: React.FC = () => {
             },
           ]}
           activeTab={activeTab}
-          onChange={(id) => setActiveTab(id as 'queue' | 'accounts' | 'contracts' | 'reset')}
+          onChange={(tab) => setActiveTab(tab as any)}
         />
       </div>
 
       {/* TAB 1: VERIFICATION QUEUE */}
       {activeTab === 'queue' && (
         <div className="space-y-4">
-          <div className="flex items-center justify-between">
+          {/* Header & Sub-filter pills */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
-              <h2 className="text-sm font-semibold text-white">Verification Requests & Attestations</h2>
-              <p className="text-xs text-[#86868b] mt-0.5">
-                Evaluator verifier queue. Approving a request executes a live transaction on the <code className="font-mono text-white bg-white/10 px-1.5 py-0.5 rounded border border-white/10">KYCRegistry</code> smart contract.
+              <h2 className="text-base font-bold text-slate-950">Attestation Processing Queue</h2>
+              <p className="text-xs text-slate-600 mt-0.5 font-medium">
+                Pending institutional identity requests waiting for authorized operator signing on <code className="font-mono text-yellow-950 bg-yellow-100 px-1 py-0.5 rounded font-bold">KYCRegistry.sol</code>.
               </p>
             </div>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => refetchRequests()}
-              icon={<RefreshCw className="w-3.5 h-3.5" />}
-              className="text-xs"
-            >
-              Refresh Queue
-            </Button>
+
+            {/* Sub-filter pills */}
+            <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl self-start sm:self-auto border border-slate-200">
+              {(['ALL', 'PENDING', 'VERIFIED', 'REJECTED'] as const).map((f) => {
+                const isActive = queueFilter === f;
+                const count =
+                  f === 'ALL'
+                    ? verificationRequests.length
+                    : verificationRequests.filter((r) => r.status === f).length;
+                return (
+                  <button
+                    key={f}
+                    type="button"
+                    onClick={() => setQueueFilter(f)}
+                    className={`text-xs px-2.5 py-1 rounded-lg font-bold transition-all cursor-pointer ${
+                      isActive
+                        ? 'bg-[#ffe600] text-black border border-yellow-400 shadow-xs'
+                        : 'text-slate-600 hover:text-slate-950'
+                    }`}
+                  >
+                    <span>{f.charAt(0) + f.slice(1).toLowerCase()}</span>
+                    <span className={`ml-1 text-[10px] font-mono px-1 py-0.2 rounded-full ${
+                      isActive ? 'bg-black text-[#ffe600]' : 'bg-slate-200 text-slate-700'
+                    }`}>
+                      {count}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
-          {/* Status Filter Tabs */}
-          <div className="flex items-center gap-1 bg-dark-bg-2 border border-dark-border-subtle rounded-lg p-1">
-            {(['ALL', 'PENDING', 'VERIFIED', 'REJECTED'] as const).map((filter) => {
-              const count = filter === 'ALL'
-                ? verificationRequests.length
-                : verificationRequests.filter((r) => r.status === filter).length;
-              return (
-                <button
-                  key={filter}
-                  onClick={() => setQueueFilter(filter)}
-                  className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors cursor-pointer ${
-                    queueFilter === filter
-                      ? 'bg-dark-bg-3 text-dark-text-primary shadow-xs font-semibold'
-                      : 'text-dark-text-secondary hover:text-dark-text-primary'
-                  }`}
-                >
-                  {filter === 'ALL' ? 'All' : filter === 'PENDING' ? 'Pending Review' : filter === 'VERIFIED' ? 'Verified' : 'Rejected'}
-                  <span className="ml-1.5 text-xs font-mono text-dark-text-muted">{count}</span>
-                </button>
-              );
-            })}
-          </div>
-
-          <Card className="p-0 overflow-hidden bg-dark-bg-1 border-dark-border-subtle">
+          <Card className="p-0 overflow-hidden bg-white border-slate-200 shadow-sm">
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs">
-                <thead className="bg-dark-bg-2 text-dark-text-muted uppercase tracking-wider font-semibold border-b border-dark-border-subtle">
+              <table className="w-full text-left text-xs font-sans">
+                <thead className="bg-slate-50 text-slate-700 uppercase tracking-wider font-bold border-b border-slate-200">
                   <tr>
-                    <th className="py-3 px-4">Applicant</th>
+                    <th className="py-3 px-4">Subject &amp; Org</th>
                     <th className="py-3 px-4">Role</th>
                     <th className="py-3 px-4">Wallet Address</th>
                     <th className="py-3 px-4">Credential Hash</th>
-                    <th className="py-3 px-4">Status</th>
-                    <th className="py-3 px-4 text-right">Attestation Action</th>
+                    <th className="py-3 px-4">Current Status</th>
+                    <th className="py-3 px-4 text-right">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-dark-border-subtle font-sans">
+                <tbody className="divide-y divide-slate-200 font-sans">
                   {requestsLoading ? (
                     <tr>
-                      <td colSpan={6} className="py-8 text-center text-dark-text-muted">
-                        Loading verification queue...
+                      <td colSpan={6} className="py-8 text-center text-slate-500 font-medium">
+                        Loading attestation queue...
                       </td>
                     </tr>
                   ) : filteredRequests.length === 0 ? (
                     <tr>
-                      <td colSpan={6} className="py-8 text-center text-dark-text-secondary">
-                        {queueFilter === 'ALL' ? 'No verification requests found in the system.' : `No ${queueFilter.toLowerCase()} requests.`}
+                      <td colSpan={6} className="py-8 text-center text-slate-500 font-medium">
+                        No requests found in this filter category.
                       </td>
                     </tr>
                   ) : (
@@ -302,10 +290,10 @@ export const EvaluatorPage: React.FC = () => {
                       const isCurrentAction = reviewingId === req.id;
 
                       return (
-                        <tr key={req.id} className="hover:bg-dark-bg-2/50 transition-colors">
+                        <tr key={req.id} className="hover:bg-yellow-50/40 transition-colors">
                           <td className="py-3 px-4">
-                            <div className="font-semibold text-dark-text-primary">{req.profile?.fullName || 'Unknown Subject'}</div>
-                            <div className="text-xs text-dark-text-muted">{req.profile?.organization || req.profile?.businessCategory || 'N/A'}</div>
+                            <div className="font-bold text-slate-950">{req.profile?.fullName || 'Unknown Subject'}</div>
+                            <div className="text-xs text-slate-600 font-medium">{req.profile?.organization || req.profile?.businessCategory || 'N/A'}</div>
                           </td>
                           <td className="py-3 px-4">
                             <Badge
@@ -325,22 +313,22 @@ export const EvaluatorPage: React.FC = () => {
                           <td className="py-3 px-4 font-mono">
                             <AddressBadge address={req.walletAddress} chars={4} />
                           </td>
-                          <td className="py-3 px-4 font-mono text-xs text-dark-text-muted">
+                          <td className="py-3 px-4 font-mono text-xs text-slate-500">
                             <span title={req.credentialHash}>{req.credentialHash.slice(0, 10)}...</span>
                           </td>
                           <td className="py-3 px-4">
                             {isVerified ? (
-                              <span className="inline-flex items-center gap-1 font-semibold text-emerald-400 bg-emerald-950/40 border border-emerald-500/30 px-2 py-0.5 rounded text-xs">
+                              <span className="inline-flex items-center gap-1 font-bold text-emerald-800 bg-emerald-50 border border-emerald-300 px-2 py-0.5 rounded text-xs font-mono">
                                 <CheckCircle2 className="w-3.5 h-3.5" />
                                 Verified
                               </span>
                             ) : isPending ? (
-                              <span className="inline-flex items-center gap-1 font-semibold text-amber-400 bg-amber-950/40 border border-amber-500/30 px-2 py-0.5 rounded text-xs">
-                                <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+                              <span className="inline-flex items-center gap-1 font-bold text-yellow-950 bg-yellow-50 border border-yellow-300 px-2 py-0.5 rounded text-xs font-mono">
+                                <span className="w-1.5 h-1.5 rounded-full bg-yellow-500 animate-pulse" />
                                 Pending Review
                               </span>
                             ) : (
-                              <span className="inline-flex items-center gap-1 font-semibold text-rose-400 bg-rose-950/40 border border-rose-500/30 px-2 py-0.5 rounded text-xs">
+                              <span className="inline-flex items-center gap-1 font-bold text-rose-800 bg-rose-50 border border-rose-300 px-2 py-0.5 rounded text-xs font-mono">
                                 <XCircle className="w-3.5 h-3.5" />
                                 Rejected
                               </span>
@@ -355,7 +343,7 @@ export const EvaluatorPage: React.FC = () => {
                                   loading={isCurrentAction}
                                   onClick={() => handleReview(req.id, 'VERIFIED')}
                                   icon={<CheckCircle2 className="w-3.5 h-3.5" />}
-                                  className="text-xs h-7 bg-emerald-600 hover:bg-emerald-700"
+                                  className="text-xs h-7 font-bold"
                                 >
                                   Approve On-Chain
                                 </Button>
@@ -364,17 +352,17 @@ export const EvaluatorPage: React.FC = () => {
                                   variant="ghost"
                                   disabled={isCurrentAction}
                                   onClick={() => { setShowRejectDialog(req.id); setRejectionReason(''); }}
-                                  className="text-xs h-7 text-rose-400 hover:text-rose-300 hover:bg-rose-950/40"
+                                  className="text-xs h-7 font-semibold text-rose-700 hover:text-rose-900 hover:bg-rose-50"
                                 >
                                   Reject
                                 </Button>
                               </div>
                             ) : isVerified ? (
-                              <div className="text-xs font-mono text-dark-text-muted flex items-center justify-end gap-1">
+                              <div className="text-xs font-mono text-slate-500 flex items-center justify-end gap-1 font-medium">
                                 <span>Attested in block #{req.attestationBlock || '—'}</span>
                               </div>
                             ) : (
-                              <span className="text-xs text-dark-text-muted">Rejected</span>
+                              <span className="text-xs text-slate-500 font-medium">Rejected</span>
                             )}
                           </td>
                         </tr>
@@ -388,25 +376,25 @@ export const EvaluatorPage: React.FC = () => {
 
           {/* Rejection Reason Dialog */}
           {showRejectDialog && (
-            <div className="fixed inset-0 bg-dark-bg-0/75 backdrop-blur-sm flex items-center justify-center z-50">
-              <div className="surface-glass rounded-xl shadow-glass max-w-md w-full mx-4 p-6 space-y-4">
+            <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50">
+              <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 p-6 space-y-4 border border-slate-200">
                 <div className="space-y-1">
-                  <h3 className="text-sm font-bold text-dark-text-primary">Reject Verification Request</h3>
-                  <p className="text-xs text-dark-text-secondary">Provide a reason for rejection. The applicant will see this and can resubmit with updated credentials.</p>
+                  <h3 className="text-sm font-bold text-slate-950">Reject Verification Request</h3>
+                  <p className="text-xs text-slate-600 font-medium">Provide a reason for rejection. The applicant will see this and can resubmit with updated credentials.</p>
                 </div>
                 <textarea
                   value={rejectionReason}
                   onChange={(e) => setRejectionReason(e.target.value)}
                   rows={3}
                   placeholder="e.g. Institutional affiliation could not be verified. Please provide a valid department reference."
-                  className="w-full text-xs p-3 rounded-lg border border-dark-border-default bg-dark-bg-2 text-dark-text-primary focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-rose-500 placeholder:text-dark-text-muted"
+                  className="w-full text-xs p-3 rounded-xl border border-slate-300 bg-white text-slate-950 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-rose-500 placeholder:text-slate-400 font-medium"
                 />
                 <div className="flex items-center justify-end gap-2">
                   <Button
                     size="sm"
                     variant="outline"
                     onClick={() => setShowRejectDialog(null)}
-                    className="text-xs"
+                    className="text-xs font-bold bg-white border-slate-300 text-slate-900 hover:bg-slate-50"
                   >
                     Cancel
                   </Button>
@@ -418,7 +406,7 @@ export const EvaluatorPage: React.FC = () => {
                       handleReview(showRejectDialog, 'REJECTED', rejectionReason || undefined);
                       setShowRejectDialog(null);
                     }}
-                    className="text-xs bg-rose-600 hover:bg-rose-700"
+                    className="text-xs font-bold bg-rose-600 hover:bg-rose-700 text-white"
                   >
                     Confirm Rejection
                   </Button>
@@ -433,14 +421,14 @@ export const EvaluatorPage: React.FC = () => {
       {activeTab === 'accounts' && (
         <div className="space-y-4">
           <div>
-            <h2 className="text-sm font-semibold text-white">Deterministic Hardhat Test Accounts</h2>
-            <p className="text-xs text-[#86868b] mt-0.5">
+            <h2 className="text-base font-bold text-slate-950">Deterministic Hardhat Test Accounts</h2>
+            <p className="text-xs text-slate-600 mt-0.5 font-medium">
               These deterministic accounts are funded with local test ETH on the running Hardhat node. Copy a private key to import it into your browser MetaMask extension.
             </p>
           </div>
 
-          <Card className="p-0 overflow-hidden bg-dark-bg-1 border-white/10">
-            <div className="divide-y divide-white/10 text-xs">
+          <Card className="p-0 overflow-hidden bg-white border-slate-200 shadow-sm">
+            <div className="divide-y divide-slate-200 text-xs">
               {DEMO_ACCOUNTS.map((acc, index) => {
                 const isCurrentInWallet =
                   currentWalletAddress && currentWalletAddress.toLowerCase() === acc.address.toLowerCase();
@@ -448,16 +436,16 @@ export const EvaluatorPage: React.FC = () => {
                 return (
                   <div
                     key={acc.id}
-                    className={`p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-white/[0.03] transition-colors ${
-                      isCurrentInWallet ? 'bg-blue-500/10 border-l-2 border-l-blue-500' : ''
+                    className={`p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-yellow-50/40 transition-colors ${
+                      isCurrentInWallet ? 'bg-yellow-50/70 border-l-4 border-l-[#ffe600]' : ''
                     }`}
                   >
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-white/10 border border-white/15 flex items-center justify-center font-bold text-xs text-white shrink-0">
+                      <div className="w-8 h-8 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center font-bold text-xs text-slate-900 shrink-0">
                         {acc.displayName[0]}
                       </div>
                       <div>
-                        <div className="font-semibold text-white flex items-center gap-2">
+                        <div className="font-bold text-slate-950 flex items-center gap-2">
                           <span>{acc.displayName}</span>
                           <Badge
                             variant={
@@ -478,12 +466,23 @@ export const EvaluatorPage: React.FC = () => {
                             </Badge>
                           )}
                         </div>
-                        <div className="text-[11px] text-[#86868b] flex flex-wrap items-center gap-2 mt-1">
+                        <div className="text-xs text-slate-600 flex flex-wrap items-center gap-2 mt-1 font-medium">
                           <AddressBadge address={acc.address} chars={6} />
                           <span>·</span>
-                          <span className="text-[#86868b]">{acc.description}</span>
+                          <span className="text-slate-600">{acc.description}</span>
                         </div>
                       </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 self-end sm:self-auto">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleCopyKey(acc.privateKey, index)}
+                        className="text-xs font-mono font-bold bg-white border-slate-300 text-slate-900 hover:bg-slate-50"
+                      >
+                        {copiedKeyIndex === index ? 'Copied!' : 'Copy Key'}
+                      </Button>
                     </div>
                   </div>
                 );
@@ -492,8 +491,8 @@ export const EvaluatorPage: React.FC = () => {
           </Card>
 
           <Alert variant="info" title="How to import into MetaMask">
-            <ol className="list-decimal list-inside space-y-1 text-xs text-dark-text-secondary mt-1">
-              <li>Click "Copy Private Key" for any account above.</li>
+            <ol className="list-decimal list-inside space-y-1 text-xs text-slate-700 mt-1 font-medium">
+              <li>Click "Copy Key" for any account above.</li>
               <li>Open your MetaMask browser extension and click the account selector at the top.</li>
               <li>Click <strong>Add account or hardware wallet</strong> &rarr; <strong>Import account</strong>.</li>
               <li>Paste the private key string and click <strong>Import</strong>.</li>
@@ -507,41 +506,41 @@ export const EvaluatorPage: React.FC = () => {
       {activeTab === 'contracts' && (
         <div className="space-y-4">
           <div>
-            <h2 className="text-sm font-semibold text-white">Deployed Contracts & EVM Parameters</h2>
-            <p className="text-xs text-[#86868b] mt-0.5">
+            <h2 className="text-base font-bold text-slate-950">Deployed Contracts &amp; EVM Parameters</h2>
+            <p className="text-xs text-slate-600 mt-0.5 font-medium">
               Live smart contract addresses deployed by the initialization migration script on the local EVM network.
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Core Contracts */}
-            <Card className="bg-dark-bg-1 border-white/10">
+            <Card className="bg-white border-slate-200 shadow-sm">
               <CardHeader>
-                <CardTitle className="text-sm text-white">Protocol Core Contracts</CardTitle>
-                <CardDescription className="text-[#86868b]">Deployed factory and registry singletons</CardDescription>
+                <CardTitle className="text-sm font-bold text-slate-950">Protocol Core Contracts</CardTitle>
+                <CardDescription className="text-slate-600 font-medium">Deployed factory and registry singletons</CardDescription>
               </CardHeader>
               <CardContent className="p-0">
-                <div className="divide-y divide-white/10 text-xs">
-                  <div className="p-3 flex items-center justify-between">
+                <div className="divide-y divide-slate-200 text-xs">
+                  <div className="p-3.5 flex items-center justify-between">
                     <div>
-                      <div className="font-semibold text-white">LoanFactory</div>
-                      <div className="text-[11px] text-[#86868b]">Deploys new isolated LoanPool contracts</div>
+                      <div className="font-bold text-slate-950">LoanFactory</div>
+                      <div className="text-xs text-slate-600 font-medium">Deploys new isolated LoanPool contracts</div>
                     </div>
                     <AddressBadge address={evaluatorData?.contracts.loanFactory || '0x'} chars={6} />
                   </div>
 
-                  <div className="p-3 flex items-center justify-between">
+                  <div className="p-3.5 flex items-center justify-between">
                     <div>
-                      <div className="font-semibold text-white">KYCRegistry</div>
-                      <div className="text-[11px] text-[#86868b]">On-chain credential attestation store</div>
+                      <div className="font-bold text-slate-950">KYCRegistry</div>
+                      <div className="text-xs text-slate-600 font-medium">On-chain credential attestation store</div>
                     </div>
                     <AddressBadge address={evaluatorData?.contracts.kycRegistry || '0x'} chars={6} />
                   </div>
 
-                  <div className="p-3 flex items-center justify-between">
+                  <div className="p-3.5 flex items-center justify-between">
                     <div>
-                      <div className="font-semibold text-white">ReputationRegistry</div>
-                      <div className="text-[11px] text-[#86868b]">Borrower repayment scoring engine</div>
+                      <div className="font-bold text-slate-950">ReputationRegistry</div>
+                      <div className="text-xs text-slate-600 font-medium">Borrower repayment scoring engine</div>
                     </div>
                     <AddressBadge address={evaluatorData?.contracts.reputationRegistry || '0x'} chars={6} />
                   </div>
@@ -550,31 +549,31 @@ export const EvaluatorPage: React.FC = () => {
             </Card>
 
             {/* Network Parameters */}
-            <Card className="bg-dark-bg-1 border-white/10">
+            <Card className="bg-white border-slate-200 shadow-sm">
               <CardHeader>
-                <CardTitle className="text-sm text-white">EVM Node Configuration</CardTitle>
-                <CardDescription className="text-[#86868b]">Local development node settings</CardDescription>
+                <CardTitle className="text-sm font-bold text-slate-950">EVM Node Configuration</CardTitle>
+                <CardDescription className="text-slate-600 font-medium">Local development node settings</CardDescription>
               </CardHeader>
               <CardContent className="space-y-3 text-xs">
-                <div className="flex justify-between py-1.5 border-b border-white/10">
-                  <span className="text-[#86868b]">Network Name:</span>
-                  <span className="font-mono font-medium text-white">Hardhat Localhost</span>
+                <div className="flex justify-between py-1.5 border-b border-slate-200">
+                  <span className="text-slate-600 font-medium">Network Name:</span>
+                  <span className="font-mono font-bold text-slate-950">Hardhat Localhost</span>
                 </div>
-                <div className="flex justify-between py-1.5 border-b border-white/10">
-                  <span className="text-[#86868b]">RPC Endpoint:</span>
-                  <span className="font-mono font-medium text-white">{HARDHAT_RPC_URL}</span>
+                <div className="flex justify-between py-1.5 border-b border-slate-200">
+                  <span className="text-slate-600 font-medium">RPC Endpoint:</span>
+                  <span className="font-mono font-bold text-slate-950">{HARDHAT_RPC_URL}</span>
                 </div>
-                <div className="flex justify-between py-1.5 border-b border-white/10">
-                  <span className="text-[#86868b]">Chain ID:</span>
-                  <span className="font-mono font-medium text-white">{HARDHAT_CHAIN_ID}</span>
+                <div className="flex justify-between py-1.5 border-b border-slate-200">
+                  <span className="text-slate-600 font-medium">Chain ID:</span>
+                  <span className="font-mono font-bold text-slate-950">{HARDHAT_CHAIN_ID}</span>
                 </div>
-                <div className="flex justify-between py-1.5 border-b border-white/10">
-                  <span className="text-[#86868b]">Currency Symbol:</span>
-                  <span className="font-mono font-medium text-white">ETH</span>
+                <div className="flex justify-between py-1.5 border-b border-slate-200">
+                  <span className="text-slate-600 font-medium">Currency Symbol:</span>
+                  <span className="font-mono font-bold text-slate-950">ETH</span>
                 </div>
                 <div className="pt-2">
-                  <Button size="sm" variant="secondary" onClick={handleAddNetwork} className="w-full text-xs">
-                    <PlusCircle className="mr-1.5 h-3.5 w-3.5 text-blue-400" />
+                  <Button size="sm" variant="secondary" onClick={handleAddNetwork} className="w-full text-xs font-bold">
+                    <PlusCircle className="mr-1.5 h-3.5 w-3.5 text-yellow-700" />
                     {networkAdded ? 'Request Sent to MetaMask' : 'Add / Switch Network in MetaMask'}
                   </Button>
                 </div>
@@ -587,19 +586,19 @@ export const EvaluatorPage: React.FC = () => {
       {/* TAB 4: RESET PROJECTIONS */}
       {activeTab === 'reset' && (
         <div className="space-y-4">
-          <Card className="border-amber-500/30 bg-amber-500/10">
+          <Card className="border-amber-300 bg-amber-50">
             <CardHeader>
-              <CardTitle className="text-amber-400 flex items-center gap-2 text-sm">
-                <RefreshCw className="w-4 h-4 text-amber-400" />
+              <CardTitle className="text-amber-950 flex items-center gap-2 text-sm font-bold">
+                <RefreshCw className="w-4 h-4 text-amber-700" />
                 <span>Event Projection Store Reset</span>
               </CardTitle>
-              <CardDescription className="text-[#86868b]">
+              <CardDescription className="text-amber-900 font-medium">
                 Resets the Fastify API indexer database and re-indexes all on-chain events from block 0 of the running node.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <p className="text-xs text-[#a1a1a6] leading-relaxed">
-                This operation resets the read projection database (<code className="font-mono text-white bg-white/10 px-1.5 py-0.5 rounded border border-white/10">apps/api/data/projection.json</code>) without resetting the underlying EVM node.
+              <p className="text-xs text-amber-950 leading-relaxed font-medium">
+                This operation resets the read projection database (<code className="font-mono text-slate-900 bg-white px-1.5 py-0.5 rounded border border-amber-300 font-bold">apps/api/data/projection.json</code>) without resetting the underlying EVM node.
               </p>
               <div className="flex items-center gap-3">
                 <Button
@@ -610,7 +609,8 @@ export const EvaluatorPage: React.FC = () => {
                     setTimeout(() => setSuccessMessage(null), 4000);
                   }}
                   loading={resetDemoMutation.isPending}
-                  icon={<RefreshCw className="w-4 h-4" />}
+                  icon={<RefreshCw className="w-3.5 h-3.5" />}
+                  className="bg-white border-amber-300 text-amber-950 font-bold hover:bg-amber-100"
                 >
                   Re-Index Event Projection
                 </Button>

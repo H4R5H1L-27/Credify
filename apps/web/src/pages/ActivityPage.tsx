@@ -31,24 +31,24 @@ export const ActivityPage: React.FC = () => {
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
       {/* Page Header */}
-      <div className="border-b border-dark-border-subtle pb-5">
+      <div className="border-b border-slate-200 pb-5">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-dark-text-primary tracking-tight flex items-center gap-2">
-              <Layers className="w-6 h-6 text-credify-400" />
+            <h1 className="text-2xl font-black text-slate-950 tracking-tight flex items-center gap-2">
+              <Layers className="w-6 h-6 text-yellow-600" />
               <span>On-Chain Evidence &amp; Audit Log</span>
             </h1>
-            <p className="text-xs text-dark-text-secondary mt-1 max-w-2xl">
+            <p className="text-xs text-slate-500 mt-1 max-w-2xl font-medium">
               Deterministic, immutable audit trail of all contract state transitions emitted by the protocol.
               Every event provides a human-readable narrative along with expandable cryptographic verification proofs.
             </p>
           </div>
           <div className="flex items-center gap-2 text-xs font-mono">
-            <span className="text-emerald-400 bg-emerald-950/40 border border-emerald-500/30 px-2.5 py-1 rounded-full font-semibold flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+            <span className="text-emerald-800 bg-emerald-50 border border-emerald-300 px-2.5 py-1 rounded-full font-bold flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
               EVM Indexer Active
             </span>
-            <span className="bg-dark-bg-2 text-dark-text-secondary px-2.5 py-1 rounded-full border border-dark-border-subtle">
+            <span className="bg-white text-slate-800 px-2.5 py-1 rounded-full border border-slate-200 font-bold">
               {events.length} Events
             </span>
           </div>
@@ -57,8 +57,8 @@ export const ActivityPage: React.FC = () => {
 
       {/* Filter Row */}
       <div className="space-y-2">
-        <div className="flex items-center gap-1 text-xs font-semibold text-dark-text-muted uppercase tracking-wider">
-          <Filter className="w-3.5 h-3.5" />
+        <div className="flex items-center gap-1 text-xs font-bold text-slate-600 uppercase tracking-wider">
+          <Filter className="w-3.5 h-3.5 text-yellow-600" />
           <span>Filter by Event Type</span>
         </div>
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
@@ -69,15 +69,15 @@ export const ActivityPage: React.FC = () => {
                 key={type}
                 type="button"
                 onClick={() => setSelectedType(type)}
-                className={`px-3 py-1.5 rounded-lg font-medium transition-colors whitespace-nowrap cursor-pointer ${
+                className={`px-3 py-1.5 rounded-lg font-bold transition-all whitespace-nowrap cursor-pointer inline-flex items-center gap-1.5 ${
                   selectedType === type
-                    ? 'bg-credify-600 text-white font-semibold shadow-xs'
-                    : 'bg-dark-bg-1 border border-dark-border-subtle text-dark-text-secondary hover:bg-dark-bg-2 hover:text-dark-text-primary'
+                    ? 'bg-[#ffe600] text-black shadow-sm border border-yellow-400'
+                    : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-slate-900'
                 }`}
               >
                 <span>{type}</span>
-                <span className={`ml-1.5 font-mono text-[10px] px-1.5 py-0.2 rounded-full ${
-                  selectedType === type ? 'bg-credify-700/70 text-white' : 'bg-dark-bg-2 text-dark-text-muted'
+                <span className={`font-mono text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
+                  selectedType === type ? 'bg-black text-[#ffe600]' : 'bg-slate-100 text-slate-700'
                 }`}>
                   {count}
                 </span>
@@ -90,15 +90,15 @@ export const ActivityPage: React.FC = () => {
       {/* Evidence Cards Stream */}
       {isLoading ? (
         <div className="space-y-4">
-          <Skeleton className="h-28 w-full rounded-xl" />
-          <Skeleton className="h-28 w-full rounded-xl" />
-          <Skeleton className="h-28 w-full rounded-xl" />
+          <Skeleton className="h-28 w-full rounded-2xl" />
+          <Skeleton className="h-28 w-full rounded-2xl" />
+          <Skeleton className="h-28 w-full rounded-2xl" />
         </div>
       ) : filteredEvents.length === 0 ? (
-        <div className="py-16 text-center border border-dashed border-dark-border-subtle rounded-xl bg-dark-bg-1 space-y-2">
-          <ShieldCheck className="w-10 h-10 text-dark-text-muted mx-auto" />
-          <div className="text-sm font-semibold text-dark-text-primary">No events match filter</div>
-          <p className="text-xs text-dark-text-secondary">
+        <div className="py-16 text-center border border-dashed border-slate-200 rounded-2xl bg-white space-y-2">
+          <ShieldCheck className="w-10 h-10 text-slate-300 mx-auto" />
+          <div className="text-sm font-bold text-slate-950">No events match filter</div>
+          <p className="text-xs text-slate-500 font-medium">
             Select a different event filter above to view indexed transactions.
           </p>
         </div>

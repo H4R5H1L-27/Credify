@@ -31,17 +31,17 @@ export const NetworkStatus: React.FC<{ className?: string }> = ({ className }) =
   return (
     <div
       className={cn(
-        'flex items-center gap-2 px-2.5 py-1 rounded-full text-xs font-sans text-dark-text-secondary',
-        'bg-white/5 border border-white/10 shadow-xs',
+        'flex items-center gap-2 px-2.5 py-1 rounded-full text-xs font-sans text-slate-700',
+        'bg-slate-100 border border-slate-200 shadow-xs',
         className
       )}
       title="Connected to Hardhat Local Node"
     >
       <span className="relative flex h-2 w-2">
-        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-        <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400" />
+        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-500 opacity-75" />
+        <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
       </span>
-      <span className="font-medium text-white text-xs hidden sm:inline">
+      <span className="font-semibold text-slate-800 text-xs hidden sm:inline">
         Localhost
       </span>
     </div>

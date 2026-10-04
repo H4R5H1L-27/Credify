@@ -16,10 +16,10 @@ export interface SystemNodeProps {
 }
 
 const TYPE_ICONS: Record<SystemNodeType, React.ReactNode> = {
-  'evm-node': <Cpu className="w-4 h-4 text-brand-400" />,
-  indexer: <Radio className="w-4 h-4 text-purple-400" />,
-  'api-server': <Server className="w-4 h-4 text-emerald-400" />,
-  registry: <Database className="w-4 h-4 text-indigo-400" />,
+  'evm-node': <Cpu className="w-4 h-4 text-slate-950" />,
+  indexer: <Radio className="w-4 h-4 text-purple-800" />,
+  'api-server': <Server className="w-4 h-4 text-emerald-800" />,
+  registry: <Database className="w-4 h-4 text-indigo-800" />,
 };
 
 export const SystemNode: React.FC<SystemNodeProps> = ({
@@ -34,21 +34,21 @@ export const SystemNode: React.FC<SystemNodeProps> = ({
   return (
     <div
       className={cn(
-        'p-5 rounded-2xl border border-dark-border-subtle/80 bg-dark-bg-2 shadow-depth-card space-y-4 transition-all duration-normal hover:border-dark-border-strong',
+        'p-5 rounded-2xl border border-slate-200 bg-white shadow-sm space-y-4 transition-all duration-normal hover:border-yellow-400 hover:shadow-md min-w-0',
         className
       )}
     >
       <div className="flex items-start justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-xl bg-dark-bg-3 border border-dark-border-subtle/60 shrink-0">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="p-2.5 rounded-xl bg-yellow-50 border border-yellow-300 shrink-0">
             {TYPE_ICONS[type]}
           </div>
-          <div className="space-y-0.5">
-            <div className="text-sm font-bold font-sans text-dark-text-primary tracking-tight">
+          <div className="space-y-0.5 min-w-0">
+            <div className="text-sm font-bold font-sans text-slate-950 tracking-tight truncate">
               {name}
             </div>
             {endpoint && (
-              <div className="text-xs font-mono text-dark-text-secondary">
+              <div className="text-xs font-mono text-slate-700 font-medium truncate">
                 {endpoint}
               </div>
             )}
@@ -59,13 +59,13 @@ export const SystemNode: React.FC<SystemNodeProps> = ({
       </div>
 
       {metrics.length > 0 && (
-        <div className="grid grid-cols-2 gap-3 pt-3 border-t border-dark-border-subtle/50 text-xs">
+        <div className="grid grid-cols-2 gap-3 pt-3 border-t border-slate-200 text-xs">
           {metrics.map((m, idx) => (
-            <div key={idx} className="space-y-1">
-              <span className="text-xs font-sans text-dark-text-secondary block">
+            <div key={idx} className="space-y-0.5 min-w-0">
+              <span className="text-xs font-sans text-slate-700 font-medium block truncate">
                 {m.label}
               </span>
-              <span className="font-mono font-bold text-dark-text-primary text-sm block">
+              <span className="font-mono font-bold text-slate-950 text-sm block truncate">
                 {m.value}
               </span>
             </div>

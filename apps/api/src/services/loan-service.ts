@@ -128,7 +128,12 @@ export class LoanService {
   principal(id: string) { return principalById(this.chain, id); }
 
   async contribute(pool: Address, input: ContributeInput) {
-    if (!principalById(this.chain, input.lenderId)) throw new Error('UNKNOWN_PRINCIPAL');
+    const principal = principalById(this.chain, input.lenderId);
+    if (!principal) throw new Error('UNKNOWN_PRINCIPAL');
+    const raw = await this.chain.readLoan(pool);
+    if (raw.borrower && (raw.borrower as string).toLowerCase() === principal.walletAddress.toLowerCase()) {
+      throw new Error('BORROWER_CANNOT_CONTRIBUTE');
+    }
     return this.chain.contribute(input.lenderId, pool, BigInt(input.amountWei));
   }
 

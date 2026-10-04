@@ -59,14 +59,14 @@ export const ConsoleBlockchainPage: React.FC = () => {
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2 text-xs font-sans font-semibold uppercase tracking-wider text-brand-400 mb-1">
-            <Cpu className="w-4 h-4" />
+          <div className="flex items-center gap-2 text-xs font-sans font-bold uppercase tracking-wider text-yellow-900 bg-yellow-100 px-2 py-0.5 rounded border border-yellow-300 w-fit mb-2">
+            <Cpu className="w-4 h-4 text-yellow-700" />
             <span>Consensus &amp; State Trie</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-bold font-sans tracking-tight text-dark-text-primary">
+          <h1 className="text-2xl sm:text-3xl font-black font-sans tracking-tight text-slate-950">
             Blockchain &amp; Node Observability
           </h1>
-          <p className="text-xs text-dark-text-secondary font-sans mt-1">
+          <p className="text-xs text-slate-600 font-sans mt-1 font-medium">
             Real-time EVM block propagation, authoritative JSON-RPC telemetry, and cryptographic block header proofs.
           </p>
         </div>
@@ -77,77 +77,77 @@ export const ConsoleBlockchainPage: React.FC = () => {
           onClick={handleRefresh}
           loading={isRefreshing}
           icon={<RefreshCw className="w-3.5 h-3.5" />}
-          className="text-xs font-sans shrink-0"
+          className="text-xs font-sans shrink-0 bg-white border-slate-300 text-slate-900 hover:bg-slate-50 font-semibold"
         >
           Refresh Blocks
         </Button>
       </div>
 
       {/* Unified Elevated Telemetry Strip + 3D Cryptographic Block Hero */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 items-stretch min-w-0">
         {/* Telemetry Matrix (2/3 col) */}
-        <div className="lg:col-span-2 p-6 sm:p-7 rounded-2xl bg-dark-bg-2 border border-dark-border-subtle/80 shadow-depth-card flex flex-col justify-between space-y-6">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-6">
-            <div className="space-y-1">
-              <span className="text-xs font-sans text-dark-text-secondary block">
+        <div className="xl:col-span-2 p-6 sm:p-7 rounded-2xl bg-white border border-slate-200 shadow-sm flex flex-col justify-between space-y-6 min-w-0">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5 min-w-0">
+            <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
+              <span className="text-xs font-sans font-bold text-slate-700 block">
                 EXECUTION CLIENT
               </span>
-              <div className="text-sm font-bold font-sans text-dark-text-primary truncate" title={network?.clientVersion}>
+              <div className="text-sm font-bold font-sans text-slate-950 truncate" title={network?.clientVersion}>
                 {network?.clientVersion?.split('/')[0] || 'Hardhat Network'}
               </div>
-              <div className="text-xs font-mono text-dark-text-muted">Local In-Memory EVM</div>
+              <div className="text-xs font-mono text-slate-500 font-medium">Local In-Memory EVM</div>
             </div>
 
-            <div className="space-y-1">
-              <span className="text-xs font-sans text-dark-text-secondary block">
+            <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
+              <span className="text-xs font-sans font-bold text-slate-700 block">
                 CHAIN ID
               </span>
-              <div className="text-sm font-bold font-mono text-dark-text-primary">
+              <div className="text-sm font-bold font-mono text-slate-950">
                 {activeChainId}
               </div>
-              <div className="text-xs font-mono text-dark-text-muted">0x{activeChainId.toString(16)} (Hex)</div>
+              <div className="text-xs font-mono text-slate-500 font-medium">0x{activeChainId.toString(16)} (Hex)</div>
             </div>
 
-            <div className="space-y-1">
-              <span className="text-xs font-sans text-dark-text-secondary block">
+            <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
+              <span className="text-xs font-sans font-bold text-slate-700 block">
                 HEAD BLOCK HEIGHT
               </span>
-              <div className="text-sm font-bold font-mono text-emerald-400 flex items-center gap-1.5">
+              <div className="text-sm font-bold font-mono text-slate-950 flex items-center gap-1.5">
                 <span>#<NumberTicker value={Number(currentBlockNum) || 0} /></span>
                 <AnimatedSyncPulse color="emerald" />
               </div>
-              <div className="text-xs font-mono text-dark-text-muted truncate">
+              <div className="text-xs font-mono text-slate-500 truncate font-medium">
                 {network?.latestBlockHash ? `${network.latestBlockHash.slice(0, 12)}...` : 'Deterministic block head'}
               </div>
             </div>
 
-            <div className="space-y-1">
-              <span className="text-xs font-sans text-dark-text-secondary block">
+            <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
+              <span className="text-xs font-sans font-bold text-slate-700 block">
                 RPC NODE STATUS
               </span>
               <div className="pt-0.5">
                 <TechnicalStatus status={network ? 'ACTIVE' : 'DISCONNECTED'} size="sm" />
               </div>
-              <div className="text-xs font-mono text-dark-text-muted">http://127.0.0.1:8545</div>
+              <div className="text-xs font-mono text-slate-500 font-medium">http://127.0.0.1:8545</div>
             </div>
           </div>
 
-          <div className="pt-4 border-t border-dark-border-subtle/60 flex flex-wrap items-center justify-between gap-3 text-xs font-mono text-dark-text-secondary">
+          <div className="pt-4 border-t border-slate-200 flex flex-wrap items-center justify-between gap-3 text-xs font-mono text-slate-700">
             <div className="flex items-center gap-2">
-              <span className="text-dark-text-muted">Consensus Engine:</span>
-              <span className="text-dark-text-primary font-semibold">Proof of Authority (Instant Finality)</span>
+              <span className="text-slate-500 font-medium">Consensus Engine:</span>
+              <span className="text-slate-950 font-bold">Proof of Authority (Instant Finality)</span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-dark-text-muted">Block Target:</span>
-              <span className="text-emerald-400 font-semibold">0.0s Mining Delay</span>
+              <span className="text-slate-500 font-medium">Block Target:</span>
+              <span className="text-emerald-700 font-bold">0.0s Mining Delay</span>
             </div>
           </div>
         </div>
 
         {/* 3D Cryptographic Block Cube (1/3 col) */}
-        <div className="rounded-2xl bg-dark-bg-2 border border-dark-border-subtle/80 shadow-depth-card p-4 flex flex-col items-center justify-center overflow-hidden relative">
-          <div className="absolute top-3 left-4 text-[10px] font-mono text-dark-text-muted uppercase tracking-wider flex items-center gap-1.5">
-            <Box className="w-3.5 h-3.5 text-brand-400" />
+        <div className="rounded-2xl bg-white border border-slate-200 shadow-sm p-4 flex flex-col items-center justify-center overflow-hidden relative">
+          <div className="absolute top-3 left-4 text-[11px] font-mono text-slate-700 font-bold uppercase tracking-wider flex items-center gap-1.5">
+            <Box className="w-3.5 h-3.5 text-yellow-600" />
             <span>Interactive 3D EVM Block</span>
           </div>
           <CryptoBlock3D
@@ -158,7 +158,7 @@ export const ConsoleBlockchainPage: React.FC = () => {
             gasPercent={blocks[0] ? Math.round(Number((BigInt(blocks[0].gasUsed) * 100n) / BigInt(blocks[0].gasLimit || '1'))) : 0}
             size={160}
           />
-          <div className="text-[10px] font-mono text-dark-text-muted/70 -mt-2">
+          <div className="text-[11px] font-mono text-slate-500 font-medium -mt-2">
             Hover &amp; move cursor to rotate perspective
           </div>
         </div>
@@ -184,14 +184,14 @@ export const ConsoleBlockchainPage: React.FC = () => {
         isLoading={blocksLoading}
         isEmpty={blocks.length === 0}
         emptyState={
-          <div className="py-16 text-center text-xs font-sans text-dark-text-muted space-y-2">
-            <Box className="w-8 h-8 text-dark-text-muted mx-auto" />
+          <div className="py-16 text-center text-xs font-sans text-slate-500 font-medium space-y-2">
+            <Box className="w-8 h-8 text-slate-400 mx-auto" />
             <div>No blocks produced by local node yet.</div>
           </div>
         }
       >
         {feedMode === '3D' ? (
-          <div className="p-2 rounded-xl bg-dark-bg-1/40 border border-dark-border-subtle/50">
+          <div className="p-2 rounded-xl bg-slate-50 border border-slate-200">
             <IsometricBlockStream blocks={blocks} onSelectBlock={setSelectedBlock} />
           </div>
         ) : (
@@ -205,27 +205,27 @@ export const ConsoleBlockchainPage: React.FC = () => {
               return (
                 <div
                   key={blk.hash || blk.number}
-                  className="p-5 rounded-2xl bg-dark-bg-3/50 border border-dark-border-subtle/60 hover:border-brand-500/40 hover:bg-dark-bg-3/80 transition-all duration-micro space-y-3.5 cursor-pointer group shadow-depth-subtle"
+                  className="p-5 rounded-2xl bg-white border border-slate-200 hover:border-yellow-400 hover:shadow-md transition-all duration-micro space-y-3.5 cursor-pointer group shadow-xs"
                   onClick={() => setSelectedBlock(blk.number)}
                 >
                   {/* Block Number & Tx Count Badge */}
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2.5">
-                      <span className="font-mono font-bold text-dark-text-primary text-base group-hover:text-brand-400 transition-colors">
+                      <span className="font-mono font-bold text-slate-950 text-base group-hover:text-yellow-800 transition-colors">
                         #{blk.number}
                       </span>
                       <span
                         className={`text-xs px-2 py-0.5 rounded-md font-mono font-bold ${
                           hasTxs
-                            ? 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-400'
-                            : 'bg-dark-bg-2 border border-dark-border-subtle text-dark-text-muted'
+                            ? 'bg-emerald-50 border border-emerald-300 text-emerald-800'
+                            : 'bg-slate-100 border border-slate-200 text-slate-600'
                         }`}
                       >
                         {blk.transactionCount} {blk.transactionCount === 1 ? 'tx' : 'txs'}
                       </span>
                     </div>
 
-                    <span className="text-xs font-sans text-dark-text-muted flex items-center gap-1">
+                    <span className="text-xs font-sans text-slate-500 flex items-center gap-1 font-medium">
                       <Clock className="w-3.5 h-3.5" />
                       {new Date(blk.timestamp).toLocaleTimeString()}
                     </span>
@@ -233,32 +233,32 @@ export const ConsoleBlockchainPage: React.FC = () => {
 
                   {/* Hashes Provenance */}
                   <div className="space-y-1.5 text-xs font-sans">
-                    <div className="flex items-center justify-between text-dark-text-muted">
-                      <span className="text-xs text-dark-text-secondary">Hash:</span>
+                    <div className="flex items-center justify-between text-slate-600">
+                      <span className="text-xs text-slate-600 font-medium">Hash:</span>
                       <TechnicalValue value={blk.hash} type="hash" chars={8} />
                     </div>
-                    <div className="flex items-center justify-between text-dark-text-muted">
-                      <span className="text-xs text-dark-text-secondary">Parent:</span>
+                    <div className="flex items-center justify-between text-slate-600">
+                      <span className="text-xs text-slate-600 font-medium">Parent:</span>
                       <TechnicalValue value={blk.parentHash} type="hash" chars={8} />
                     </div>
                   </div>
 
                   {/* Gas Utilization Bar */}
-                  <div className="space-y-1.5 pt-2 border-t border-dark-border-subtle/50 font-sans">
-                    <div className="flex items-center justify-between text-xs text-dark-text-secondary">
+                  <div className="space-y-1.5 pt-2 border-t border-slate-200 font-sans">
+                    <div className="flex items-center justify-between text-xs text-slate-700 font-medium">
                       <span className="flex items-center gap-1.5">
-                        <Fuel className="w-3.5 h-3.5 text-dark-text-muted" /> Gas Utilized:
+                        <Fuel className="w-3.5 h-3.5 text-slate-500" /> Gas Utilized:
                       </span>
                       <span className="font-mono font-medium">{gasPercent}% ({Number(blk.gasUsed).toLocaleString()})</span>
                     </div>
-                    <div className="w-full h-1.5 rounded-full bg-dark-bg-1 overflow-hidden">
+                    <div className="w-full h-2 rounded-full bg-slate-100 overflow-hidden border border-slate-200">
                       <div
                         className={`h-full transition-all duration-state ${
                           gasPercent > 80
-                            ? 'bg-crimson-400'
+                            ? 'bg-rose-500'
                             : gasPercent > 40
-                            ? 'bg-amber-400'
-                            : 'bg-emerald-400'
+                            ? 'bg-amber-500'
+                            : 'bg-emerald-600'
                         }`}
                         style={{ width: `${Math.max(4, gasPercent)}%` }}
                       />
@@ -267,7 +267,7 @@ export const ConsoleBlockchainPage: React.FC = () => {
 
                   {/* Action Footer */}
                   <div className="pt-1 flex justify-end">
-                    <span className="text-xs font-sans text-brand-400 group-hover:text-brand-300 font-semibold inline-flex items-center gap-1 transition-colors">
+                    <span className="text-xs font-sans text-yellow-900 group-hover:text-black font-bold inline-flex items-center gap-1 transition-colors">
                       <span>Inspect Header Proof</span>
                       <ArrowRight className="w-3.5 h-3.5" />
                     </span>
@@ -286,23 +286,23 @@ export const ConsoleBlockchainPage: React.FC = () => {
         badge={<TechnicalStatus status="ACTIVE" size="sm" />}
       >
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 font-sans text-xs">
-          <div className="p-4 rounded-xl bg-dark-bg-3/50 border border-dark-border-subtle/60 space-y-2">
-            <div className="font-bold text-sm text-dark-text-primary">Automining Engine</div>
-            <p className="text-xs text-dark-text-secondary leading-relaxed">
+          <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
+            <div className="font-bold text-sm text-slate-950">Automining Engine</div>
+            <p className="text-xs text-slate-600 leading-relaxed font-medium">
               Mining mode is set to instant automine. Every valid transaction broadcast triggers an immediate block production event with 0 latency.
             </p>
           </div>
 
-          <div className="p-4 rounded-xl bg-dark-bg-3/50 border border-dark-border-subtle/60 space-y-2">
-            <div className="font-bold text-sm text-dark-text-primary">EVM Hardfork Target</div>
-            <p className="text-xs text-dark-text-secondary leading-relaxed">
+          <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
+            <div className="font-bold text-sm text-slate-950">EVM Hardfork Target</div>
+            <p className="text-xs text-slate-600 leading-relaxed font-medium">
               Running Shanghai / Cancun EVM specifications with EIP-1559 base fee calculation, transient storage (EIP-1153), and beacon root hash validation.
             </p>
           </div>
 
-          <div className="p-4 rounded-xl bg-dark-bg-3/50 border border-dark-border-subtle/60 space-y-2">
-            <div className="font-bold text-sm text-dark-text-primary">Deterministic State Root</div>
-            <p className="text-xs text-dark-text-secondary leading-relaxed">
+          <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
+            <div className="font-bold text-sm text-slate-950">Deterministic State Root</div>
+            <p className="text-xs text-slate-600 leading-relaxed font-medium">
               Merkle Patricia Trie computes cryptographic state roots for every block header, providing verifiable execution proofs for all credit facilities.
             </p>
           </div>

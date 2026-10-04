@@ -193,11 +193,11 @@ export const ConsoleTracePage: React.FC = () => {
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl font-bold tracking-tight text-dark-text-primary uppercase flex items-center gap-2">
-            <Binary className="w-5 h-5 text-brand-400" />
+          <h1 className="text-xl font-bold tracking-tight text-slate-950 uppercase flex items-center gap-2">
+            <Binary className="w-5 h-5 text-yellow-700" />
             End-to-End Action Trace Engine
           </h1>
-          <p className="text-xs text-dark-text-secondary mt-0.5">
+          <p className="text-xs text-slate-600 mt-0.5 font-medium font-sans">
             Connects real participant actions through wallet custody, EVM bytecode, block proofs, and backend synchronization.
           </p>
         </div>
@@ -216,16 +216,16 @@ export const ConsoleTracePage: React.FC = () => {
       </div>
 
       {/* Quick Workflow Preset Bar */}
-      <div className="p-3.5 bg-dark-bg-2 border border-dark-border-subtle rounded-xl space-y-3">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
-          <span className="text-[11px] font-bold uppercase text-dark-text-muted flex items-center gap-1.5">
-            <Zap className="w-3.5 h-3.5 text-brand-400" />
-            Verified Protocol Workflow Presets
+      <div className="p-4 bg-white border border-slate-200 rounded-xl shadow-sm space-y-3 min-w-0">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 min-w-0">
+          <span className="text-xs font-bold uppercase text-slate-800 flex items-center gap-1.5">
+            <Zap className="w-3.5 h-3.5 text-yellow-900" />
+            <span>Verified Protocol Workflow Presets</span>
           </span>
 
           {/* Search Tx Hash */}
           <div className="relative w-full sm:w-80">
-            <Search className="w-3.5 h-3.5 text-dark-text-muted absolute left-2.5 top-1/2 -translate-y-1/2" />
+            <Search className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               value={targetTxHash}
@@ -238,7 +238,7 @@ export const ConsoleTracePage: React.FC = () => {
                 }
               }}
               placeholder="Paste 0x... EVM transaction hash"
-              className="w-full pl-8 pr-3 py-1.5 text-xs font-mono bg-dark-bg-3 border border-dark-border-subtle rounded-md text-dark-text-primary placeholder:text-dark-text-muted focus:outline-none focus:border-brand-500/50"
+              className="w-full pl-8 pr-3 py-1.5 text-xs font-mono bg-slate-50 border border-slate-200 rounded-lg text-slate-950 placeholder:text-slate-500 focus:outline-none focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400 font-medium"
             />
           </div>
         </div>
@@ -251,12 +251,12 @@ export const ConsoleTracePage: React.FC = () => {
                 key={p.txHash + p.eventName}
                 type="button"
                 onClick={() => handleSelectPreset(p.txHash)}
-                className={`px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap cursor-pointer ${
+                className={`px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap cursor-pointer font-bold ${
                   isSelected
                     ? p.isRevert
-                      ? 'bg-rose-500 text-white font-bold'
-                      : 'bg-brand-500 text-white font-bold'
-                    : 'bg-dark-bg-3 border border-dark-border-subtle text-dark-text-secondary hover:text-dark-text-primary'
+                      ? 'bg-rose-600 text-white shadow-xs'
+                      : 'bg-[#ffe600] text-black border border-yellow-400 shadow-xs'
+                    : 'bg-slate-50 border border-slate-200 text-slate-700 hover:text-black hover:bg-slate-100'
                 }`}
               >
                 {p.label}
@@ -287,42 +287,42 @@ export const ConsoleTracePage: React.FC = () => {
 
       {/* Action Trace Banner */}
       {actionTrace && (
-        <div className="p-4 rounded-xl bg-dark-bg-2 border border-dark-border-subtle flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="font-bold text-dark-text-primary text-sm">
+        <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs min-w-0">
+          <div className="space-y-1 min-w-0">
+            <div className="flex items-center gap-2 flex-wrap min-w-0">
+              <span className="font-bold text-slate-950 text-sm">
                 {actionTrace.title}
               </span>
               <span
-                className={`px-2 py-0.5 rounded text-[10px] font-bold border uppercase ${
+                className={`px-2.5 py-0.5 rounded-md text-xs font-bold border uppercase font-sans ${
                   actionTrace.isReverted
-                    ? 'bg-rose-500/10 text-rose-400 border-rose-500/30'
-                    : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
+                    ? 'bg-rose-50 text-rose-900 border-rose-300'
+                    : 'bg-emerald-50 text-emerald-900 border-emerald-300'
                 }`}
               >
                 {actionTrace.isReverted ? '0x0 REVERTED' : '0x1 CONFIRMED'}
               </span>
             </div>
-            <div className="text-[11px] text-dark-text-secondary font-sans">
+            <div className="text-xs text-slate-700 font-sans font-medium">
               Initiated by {actionTrace.actorAddress} → Target contract {actionTrace.contractName} ({actionTrace.targetContract.slice(0, 10)}...)
             </div>
           </div>
 
-          <div className="flex items-center gap-3 text-[11px] text-dark-text-muted self-end md:self-auto shrink-0">
+          <div className="flex items-center gap-4 text-xs font-sans text-slate-700 self-end md:self-auto shrink-0 font-medium">
             <div>
-              <span className="text-dark-text-muted">Block: </span>
+              <span className="text-slate-600">Block: </span>
               <button
                 onClick={() => setModalBlock(actionTrace.blockNumber)}
-                className="text-brand-400 font-bold hover:underline"
+                className="text-slate-950 font-mono font-bold hover:underline"
               >
                 #{actionTrace.blockNumber}
               </button>
             </div>
             <div>
-              <span className="text-dark-text-muted">Tx: </span>
+              <span className="text-slate-600">Tx: </span>
               <button
                 onClick={() => setModalTxHash(actionTrace.txHash)}
-                className="text-brand-400 font-bold hover:underline"
+                className="text-slate-950 font-mono font-bold hover:underline"
               >
                 {actionTrace.txHash.slice(0, 10)}...
               </button>
@@ -415,22 +415,22 @@ export const ConsoleTracePage: React.FC = () => {
           maxWidth="lg"
         >
           <div className="space-y-4 font-mono text-xs">
-            <div className="p-3.5 rounded-lg bg-dark-bg-3 border border-dark-border-subtle space-y-1">
-              <span className="text-[10px] text-dark-text-muted uppercase">Stage Summary</span>
-              <div className="text-xs text-dark-text-primary font-sans leading-relaxed">
+            <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
+              <span className="text-[10px] text-slate-500 font-bold uppercase">Stage Summary</span>
+              <div className="text-xs text-slate-900 font-sans leading-relaxed font-medium">
                 {selectedStageEvidence.summary}
               </div>
             </div>
 
             <div className="space-y-2">
-              <span className="text-xs font-bold uppercase text-dark-text-primary">
+              <span className="text-xs font-bold uppercase text-slate-950 font-sans">
                 Captured Evidence Key-Values
               </span>
-              <div className="border border-dark-border-subtle rounded-lg divide-y divide-dark-border-subtle bg-dark-bg-3 overflow-hidden">
+              <div className="border border-slate-200 rounded-xl divide-y divide-slate-200 bg-white overflow-hidden">
                 {Object.entries(selectedStageEvidence.details || {}).map(([k, v]) => (
-                  <div key={k} className="p-2.5 flex items-center justify-between gap-3 text-[11px]">
-                    <span className="text-dark-text-muted">{k}:</span>
-                    <span className="text-dark-text-primary font-bold truncate max-w-[320px]">
+                  <div key={k} className="p-2.5 flex items-center justify-between gap-3 text-xs">
+                    <span className="text-slate-600 font-medium">{k}:</span>
+                    <span className="text-slate-950 font-bold truncate max-w-[320px]">
                       {String(v)}
                     </span>
                   </div>
@@ -438,7 +438,7 @@ export const ConsoleTracePage: React.FC = () => {
               </div>
             </div>
 
-            <div className="flex justify-end pt-2 border-t border-dark-border-subtle">
+            <div className="flex justify-end pt-2 border-t border-slate-200">
               <Button variant="outline" size="sm" onClick={() => setSelectedStageEvidence(null)}>
                 Close Evidence
               </Button>

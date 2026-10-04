@@ -29,36 +29,36 @@ export const ActivityItem: React.FC<ActivityItemProps> = ({
   return (
     <div
       className={cn(
-        'group flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-xl border border-dark-border-default bg-dark-bg-2 hover:bg-dark-bg-3/40 transition-colors',
+        'group flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-2xl border border-slate-200 bg-white hover:bg-slate-50/70 transition-colors shadow-xs',
         className
       )}
     >
       <div className="flex items-start gap-3 min-w-0">
         <div
           className={cn(
-            'mt-0.5 h-2 w-2 rounded-full shrink-0',
-            status === 'success' && 'bg-emerald-400',
-            status === 'warning' && 'bg-amber-400',
-            status === 'error' && 'bg-crimson-400',
-            status === 'info' && 'bg-brand-400'
+            'mt-1 h-2 w-2 rounded-full shrink-0',
+            status === 'success' && 'bg-emerald-500',
+            status === 'warning' && 'bg-amber-500',
+            status === 'error' && 'bg-rose-500',
+            status === 'info' && 'bg-yellow-500'
           )}
         />
 
         <div className="space-y-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <Badge variant="outline" className="text-[10px] uppercase font-mono px-1.5 py-0">
+            <Badge variant="outline" className="text-[10px] uppercase font-mono px-2 py-0.5 font-bold">
               {type}
             </Badge>
-            <span className="text-xs font-semibold text-dark-text-primary">
+            <span className="text-xs font-bold text-slate-950">
               {description}
             </span>
           </div>
 
-          <div className="flex items-center gap-2 text-[11px] text-dark-text-muted flex-wrap">
+          <div className="flex items-center gap-2 text-[11px] text-slate-500 flex-wrap font-medium">
             <span>By:</span>
             <AddressBadge address={actor} digits={5} />
             {actorRole && (
-              <span className="text-dark-text-secondary">({actorRole})</span>
+              <span className="text-slate-600 font-semibold">({actorRole})</span>
             )}
             {blockNumber && (
               <>
@@ -70,14 +70,14 @@ export const ActivityItem: React.FC<ActivityItemProps> = ({
         </div>
       </div>
 
-      <div className="flex sm:flex-col items-center sm:items-end justify-between gap-1 text-[11px] font-mono text-dark-text-muted shrink-0">
+      <div className="flex sm:flex-col items-center sm:items-end justify-between gap-1 text-[11px] font-mono text-slate-500 shrink-0 font-medium">
         <span>{timestamp}</span>
         {txHash && (
           <AddressBadge
             address={txHash}
             digits={6}
             variant="mono"
-            className="text-[10px] bg-dark-bg-1"
+            className="text-[10px] bg-slate-50 border border-slate-200 text-slate-700"
           />
         )}
       </div>

@@ -15,25 +15,25 @@ export const TraceConnection: React.FC<TraceConnectionProps> = ({
   label,
   isFailureBranch,
 }) => {
-  let lineColor = 'border-dark-border-subtle';
-  let arrowColor = 'text-dark-text-muted';
+  let lineColor = 'border-slate-300';
+  let arrowColor = 'text-slate-400';
   let isDashed = false;
   let isPulsing = false;
 
   if (isFailureBranch || fromStatus === 'FAILED') {
-    lineColor = 'border-rose-500/60';
-    arrowColor = 'text-rose-400';
+    lineColor = 'border-rose-400';
+    arrowColor = 'text-rose-600';
     isDashed = true;
   } else if (toStatus === 'SKIPPED') {
-    lineColor = 'border-dark-border-subtle';
-    arrowColor = 'text-dark-text-muted';
+    lineColor = 'border-slate-300';
+    arrowColor = 'text-slate-400';
     isDashed = true;
   } else if (fromStatus === 'COMPLETED' && toStatus === 'COMPLETED') {
-    lineColor = 'border-emerald-500/50';
-    arrowColor = 'text-emerald-400';
+    lineColor = 'border-emerald-400';
+    arrowColor = 'text-emerald-600';
   } else if (fromStatus === 'COMPLETED' && toStatus === 'ACTIVE') {
-    lineColor = 'border-brand-500/80';
-    arrowColor = 'text-brand-400';
+    lineColor = 'border-yellow-400';
+    arrowColor = 'text-yellow-600';
     isPulsing = true;
   }
 
@@ -50,8 +50,10 @@ export const TraceConnection: React.FC<TraceConnectionProps> = ({
         <ArrowDown className={`w-3.5 h-3.5 ${arrowColor}`} />
         {label && (
           <span
-            className={`px-2 py-0.5 rounded bg-dark-bg-2 border border-dark-border-subtle text-[10px] ${
-              isFailureBranch ? 'text-rose-400 border-rose-500/30 font-bold' : 'text-dark-text-muted'
+            className={`px-2 py-0.5 rounded text-[10px] ${
+              isFailureBranch
+                ? 'text-rose-800 bg-rose-50 border border-rose-300 font-bold'
+                : 'text-slate-600 bg-white border border-slate-200 font-semibold'
             }`}
           >
             {label}

@@ -23,26 +23,26 @@ export const ErrorState: React.FC<ErrorStateProps> = ({
   return (
     <div
       className={cn(
-        'flex flex-col items-center justify-center p-8 text-center rounded-xl border border-crimson-500/30 bg-crimson-500/5',
+        'flex flex-col items-center justify-center p-8 text-center rounded-2xl border border-rose-200 bg-rose-50/60 shadow-xs',
         className
       )}
     >
-      <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-crimson-500/10 border border-crimson-500/20 text-crimson-400 mb-3">
+      <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-rose-100 border border-rose-200 text-rose-700 mb-3 shadow-xs">
         <AlertCircle className="h-6 w-6" />
       </div>
 
       <div className="space-y-1 max-w-md">
         <div className="flex items-center justify-center gap-2">
-          <h3 className="text-sm font-semibold text-dark-text-primary tracking-tight">
+          <h3 className="text-sm font-bold text-slate-950 tracking-tight">
             {title}
           </h3>
           {code && (
-            <span className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-dark-bg-2 text-crimson-400 border border-crimson-500/20">
+            <span className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-white text-rose-700 border border-rose-200 font-bold">
               ERR {code}
             </span>
           )}
         </div>
-        <p className="text-xs text-dark-text-secondary leading-relaxed">
+        <p className="text-xs text-slate-700 leading-relaxed font-medium">
           {message}
         </p>
       </div>

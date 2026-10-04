@@ -10,7 +10,6 @@ import {
   Sparkles,
   AlertTriangle,
   ArrowRight,
-  ExternalLink,
   X,
 } from 'lucide-react';
 
@@ -58,60 +57,60 @@ const MILESTONE_CONFIGS: Record<
     subtitle: 'KYCRegistry on-chain cryptographic attestation confirmed. Account authorized for protocol operations.',
     badgeLabel: 'KYC REGISTRY ATTESTATION',
     icon: ShieldCheck,
-    accentColor: 'bg-emerald-500',
+    accentColor: 'bg-emerald-600',
     glowColor: 'shadow-emerald-500/20',
-    ringColor: 'border-emerald-500/30',
-    textColor: 'text-emerald-400',
+    ringColor: 'border-emerald-300',
+    textColor: 'text-emerald-800',
   },
   AGREEMENT_CREATED: {
     title: 'Credit Facility Deployed',
     subtitle: 'Smart contract credit pool agreement committed to blockchain. Open for institutional syndicate funding.',
     badgeLabel: 'SMART CONTRACT DEPLOYMENT',
     icon: FileText,
-    accentColor: 'bg-brand-500',
-    glowColor: 'shadow-brand-500/20',
-    ringColor: 'border-brand-500/30',
-    textColor: 'text-brand-400',
+    accentColor: 'bg-[#ffe600] text-black border border-yellow-400',
+    glowColor: 'shadow-yellow-500/20',
+    ringColor: 'border-yellow-400',
+    textColor: 'text-yellow-950',
   },
   AGREEMENT_ACTIVATED: {
     title: 'Syndicate Fully Subscribed',
     subtitle: '100% funding target reached by participating lenders. Controlled procurement drawdowns unlocked.',
     badgeLabel: 'LIFECYCLE ACTIVATION',
     icon: Coins,
-    accentColor: 'bg-brand-500',
-    glowColor: 'shadow-brand-500/20',
-    ringColor: 'border-brand-500/30',
-    textColor: 'text-brand-400',
+    accentColor: 'bg-[#ffe600] text-black border border-yellow-400',
+    glowColor: 'shadow-yellow-500/20',
+    ringColor: 'border-yellow-400',
+    textColor: 'text-yellow-950',
   },
   PAYMENT_CONFIRMED: {
     title: 'Procurement Payment Settled',
     subtitle: 'Direct drawdown from escrow settled atomically to verified merchant wallet without intermediate custody.',
     badgeLabel: 'ATOMIC DISBURSEMENT',
     icon: CheckCircle2,
-    accentColor: 'bg-emerald-500',
+    accentColor: 'bg-emerald-600',
     glowColor: 'shadow-emerald-500/20',
-    ringColor: 'border-emerald-500/30',
-    textColor: 'text-emerald-400',
+    ringColor: 'border-emerald-300',
+    textColor: 'text-emerald-800',
   },
   REPAYMENT_COMPLETED: {
     title: 'Credit Facility Fully Settled',
     subtitle: 'All principal and fixed interest obligations fulfilled. Institutional credit track record upgraded.',
     badgeLabel: 'TERMINAL SETTLEMENT',
     icon: Sparkles,
-    accentColor: 'bg-emerald-500',
+    accentColor: 'bg-emerald-600',
     glowColor: 'shadow-emerald-500/20',
-    ringColor: 'border-emerald-500/30',
-    textColor: 'text-emerald-400',
+    ringColor: 'border-emerald-300',
+    textColor: 'text-emerald-800',
   },
   AGREEMENT_DEFAULTED: {
     title: 'Consensus Default Finalized',
     subtitle: 'Lender consensus threshold crossed. Agreement transitioned to default with on-chain penalty.',
     badgeLabel: 'GOVERNANCE RESOLUTION',
     icon: AlertTriangle,
-    accentColor: 'bg-rose-500',
+    accentColor: 'bg-rose-600',
     glowColor: 'shadow-rose-500/20',
-    ringColor: 'border-rose-500/30',
-    textColor: 'text-rose-400',
+    ringColor: 'border-rose-300',
+    textColor: 'text-rose-800',
   },
 };
 
@@ -161,29 +160,29 @@ export const MilestoneCelebration: React.FC<MilestoneCelebrationProps> = ({
       return <AnimatedCoin size={44} />;
     }
     if (type === 'REPAYMENT_COMPLETED' || type === 'AGREEMENT_CREATED') {
-      return <AnimatedCheckmark size={44} color="#10B981" />;
+      return <AnimatedCheckmark size={44} color="#059669" />;
     }
     return <Icon className="w-7 h-7 text-white" />;
   };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      {/* Dark Ambient Backdrop */}
+      {/* Light Ambient Backdrop */}
       <div
-        className="fixed inset-0 bg-dark-bg-0/85 backdrop-blur-sm transition-opacity duration-normal"
+        className="fixed inset-0 bg-black/40 backdrop-blur-xs transition-opacity duration-normal"
         onClick={onClose}
       />
 
       {/* Milestone Modal Card */}
       <div
         className={cn(
-          'relative z-50 surface-glass shadow-depth-elevated rounded-2xl max-w-md w-full p-6 sm:p-8 text-center overflow-hidden animate-milestone-enter'
+          'relative z-50 bg-white shadow-2xl border border-slate-200 rounded-3xl max-w-md w-full p-6 sm:p-8 text-center overflow-hidden animate-milestone-enter'
         )}
       >
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 p-1.5 rounded-lg text-dark-text-muted hover:text-dark-text-primary hover:bg-dark-bg-3 transition-colors cursor-pointer"
+          className="absolute top-4 right-4 p-1.5 rounded-lg text-slate-400 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer"
         >
           <X className="w-4 h-4" />
         </button>
@@ -211,7 +210,7 @@ export const MilestoneCelebration: React.FC<MilestoneCelebrationProps> = ({
         <div className="mb-2">
           <span
             className={cn(
-              'inline-flex items-center text-[10px] font-mono font-semibold px-2.5 py-0.5 rounded-full border bg-dark-bg-1',
+              'inline-flex items-center text-[10px] font-mono font-bold px-3 py-1 rounded-full border bg-slate-50',
               config.ringColor,
               config.textColor
             )}
@@ -221,29 +220,29 @@ export const MilestoneCelebration: React.FC<MilestoneCelebrationProps> = ({
         </div>
 
         {/* Title & Subtitle */}
-        <h3 className="text-xl font-bold tracking-tight text-dark-text-primary">
+        <h3 className="text-xl font-black tracking-tight text-slate-950">
           {config.title}
         </h3>
-        <p className="text-xs text-dark-text-secondary mt-1.5 leading-relaxed">
+        <p className="text-xs text-slate-600 mt-1.5 leading-relaxed font-medium">
           {config.subtitle}
         </p>
 
         {/* Milestone Attributes Grid */}
-        <div className="mt-5 rounded-xl border border-dark-border-subtle bg-dark-bg-1 p-3.5 space-y-2 text-left text-xs font-mono">
+        <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50 p-4 space-y-2.5 text-left text-xs font-mono">
           {amountEth && (
             <div className="flex items-center justify-between">
-              <span className="text-dark-text-muted">Settlement Volume</span>
-              <span className="font-bold text-emerald-400">{amountEth} ETH</span>
+              <span className="text-slate-500 font-medium">Settlement Volume</span>
+              <span className="font-bold text-slate-950">{amountEth} ETH</span>
             </div>
           )}
 
           {reputationDelta !== undefined && (
             <div className="flex items-center justify-between">
-              <span className="text-dark-text-muted">Reputation Score Impact</span>
+              <span className="text-slate-500 font-medium">Reputation Score Impact</span>
               <span
                 className={cn(
                   'font-bold',
-                  reputationDelta >= 0 ? 'text-emerald-400' : 'text-rose-400'
+                  reputationDelta >= 0 ? 'text-emerald-700' : 'text-rose-700'
                 )}
               >
                 {reputationDelta >= 0 ? `+${reputationDelta} pts` : `${reputationDelta} pts`}
@@ -253,21 +252,21 @@ export const MilestoneCelebration: React.FC<MilestoneCelebrationProps> = ({
 
           {contractAddress && (
             <div className="flex items-center justify-between">
-              <span className="text-dark-text-muted">Contract Pool</span>
+              <span className="text-slate-500 font-medium">Contract Pool</span>
               <AddressBadge address={contractAddress} digits={5} />
             </div>
           )}
 
           {blockNumber && (
             <div className="flex items-center justify-between">
-              <span className="text-dark-text-muted">Block Height</span>
-              <span className="text-dark-text-primary">#{blockNumber}</span>
+              <span className="text-slate-500 font-medium">Block Height</span>
+              <span className="text-slate-950 font-bold">#{blockNumber}</span>
             </div>
           )}
 
           {txHash && (
             <div className="flex items-center justify-between">
-              <span className="text-dark-text-muted">Transaction</span>
+              <span className="text-slate-500 font-medium">Transaction</span>
               <AddressBadge address={txHash} digits={6} />
             </div>
           )}
@@ -278,7 +277,7 @@ export const MilestoneCelebration: React.FC<MilestoneCelebrationProps> = ({
           {primaryAction && (
             <Button
               variant="primary"
-              className="w-full sm:w-auto"
+              className="w-full sm:w-auto bg-[#ffe600] text-black hover:bg-yellow-400 border border-yellow-400 font-bold"
               onClick={() => {
                 primaryAction.onClick();
                 onClose();

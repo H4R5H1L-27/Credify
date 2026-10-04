@@ -4,7 +4,6 @@ import { useIdentity } from '../../context/IdentityContext';
 import { useLoans } from '../../hooks/useCredify';
 import {
   Button,
-  Badge,
   StatusBadge,
   AddressBadge,
   ProgressBar,
@@ -22,9 +21,6 @@ import {
   PlusCircle,
   Coins,
   ArrowRight,
-  ShieldCheck,
-  Clock,
-  Filter,
 } from 'lucide-react';
 
 export const BorrowerAgreementsPage: React.FC = () => {
@@ -48,10 +44,10 @@ export const BorrowerAgreementsPage: React.FC = () => {
   if (isLoading) {
     return (
       <div className="space-y-6 max-w-6xl mx-auto">
-        <Skeleton className="h-8 w-48" />
+        <Skeleton className="h-8 w-48 bg-slate-200" />
         <div className="space-y-4">
-          <Skeleton className="h-32 w-full rounded-xl" />
-          <Skeleton className="h-32 w-full rounded-xl" />
+          <Skeleton className="h-32 w-full rounded-2xl bg-slate-200" />
+          <Skeleton className="h-32 w-full rounded-2xl bg-slate-200" />
         </div>
       </div>
     );
@@ -61,10 +57,10 @@ export const BorrowerAgreementsPage: React.FC = () => {
     <div className="space-y-8 max-w-6xl mx-auto pb-12">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-dark-text-primary">
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-950">
             My Credit Agreements
           </h1>
-          <p className="text-xs text-dark-text-secondary mt-1">
+          <p className="text-xs text-slate-600 mt-1 font-medium">
             Directory of all on-chain credit facilities deployed under your borrower identity.
           </p>
         </div>
@@ -73,7 +69,7 @@ export const BorrowerAgreementsPage: React.FC = () => {
           <Button
             variant="primary"
             icon={<PlusCircle className="w-3.5 h-3.5" />}
-            className="text-xs font-semibold shadow-dark-xs"
+            className="text-xs font-bold shadow-xs"
           >
             Create New Agreement
           </Button>
@@ -81,31 +77,34 @@ export const BorrowerAgreementsPage: React.FC = () => {
       </div>
 
       {/* Filter Tabs */}
-      <div className="flex gap-2 border-b border-dark-border-subtle pb-2 text-xs font-mono">
-        {(['ALL', 'FUNDING', 'ACTIVE', 'REPAID'] as const).map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setFilter(tab)}
-            className={`px-3 py-1.5 rounded-lg transition-colors cursor-pointer ${
-              filter === tab
-                ? 'bg-brand-500/10 text-brand-400 font-semibold border border-brand-500/20'
-                : 'text-dark-text-secondary hover:bg-dark-bg-2 hover:text-dark-text-primary'
-            }`}
-          >
-            {tab}
-          </button>
-        ))}
+      <div className="flex gap-2 border-b border-slate-200 pb-2 text-xs font-mono">
+        {(['ALL', 'FUNDING', 'ACTIVE', 'REPAID'] as const).map((tab) => {
+          const isSelected = filter === tab;
+          return (
+            <button
+              key={tab}
+              onClick={() => setFilter(tab)}
+              className={`px-3.5 py-1.5 rounded-lg transition-colors cursor-pointer font-bold ${
+                isSelected
+                  ? 'bg-[#ffe600] text-black border border-yellow-400 shadow-xs'
+                  : 'bg-white text-slate-700 hover:bg-slate-100 hover:text-slate-950 border border-slate-200'
+              }`}
+            >
+              {tab}
+            </button>
+          );
+        })}
       </div>
 
       {/* Agreements List */}
       {filteredLoans.length === 0 ? (
         <EmptyState
-          icon={<Coins className="w-8 h-8 text-dark-text-muted" />}
+          icon={<Coins className="w-8 h-8 text-yellow-600" />}
           title="No Agreements Found"
           description="No agreements match the selected filter. Create an agreement to begin funding from syndicate lenders."
           action={
             <Link to="/app/borrower/agreements/new">
-              <Button variant="primary" icon={<PlusCircle className="w-3.5 h-3.5" />}>
+              <Button variant="primary" icon={<PlusCircle className="w-3.5 h-3.5" />} className="font-bold">
                 Create Agreement
               </Button>
             </Link>
@@ -121,27 +120,27 @@ export const BorrowerAgreementsPage: React.FC = () => {
             return (
               <div
                 key={loan.address}
-                className="p-5 rounded-2xl border border-dark-border-default bg-dark-bg-2 hover:border-dark-border-strong transition-all shadow-dark-xs space-y-4"
+                className="p-6 rounded-2xl border border-slate-200 bg-white hover:border-yellow-400 hover:shadow-md transition-all shadow-xs space-y-4"
               >
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div className="space-y-1 min-w-0">
                     <div className="flex items-center gap-2.5 flex-wrap">
-                      <h3 className="text-base font-bold text-dark-text-primary">
+                      <h3 className="text-base font-bold text-slate-950">
                         Academic Equipment Credit Facility
                       </h3>
                       <StatusBadge status={loan.status} />
                     </div>
-                    <div className="flex items-center gap-2.5 text-xs text-dark-text-secondary font-mono flex-wrap">
-                      <span className="text-dark-text-muted">Contract:</span>
+                    <div className="flex items-center gap-2.5 text-xs text-slate-700 font-mono flex-wrap font-medium">
+                      <span className="text-slate-500">Contract:</span>
                       <AddressBadge address={loan.address} digits={6} />
-                      <span className="text-dark-border-strong">•</span>
-                      <span className="text-dark-text-muted">Matures:</span>
-                      <span className="text-dark-text-primary">{formatDate(loan.maturity)}</span>
+                      <span className="text-slate-300">•</span>
+                      <span className="text-slate-500">Matures:</span>
+                      <span className="text-slate-950 font-bold">{formatDate(loan.maturity)}</span>
                     </div>
                   </div>
 
                   <Link to={`/app/loans/${loan.address}`} className="shrink-0">
-                    <Button variant="secondary" size="sm" icon={<ArrowRight className="w-3.5 h-3.5" />} className="text-xs">
+                    <Button variant="secondary" size="sm" icon={<ArrowRight className="w-3.5 h-3.5" />} className="text-xs font-bold">
                       View Provenance
                     </Button>
                   </Link>
@@ -149,35 +148,35 @@ export const BorrowerAgreementsPage: React.FC = () => {
 
                 {/* Progress & Metrics */}
                 <div className="space-y-1.5">
-                  <div className="flex justify-between text-xs font-mono">
-                    <span className="text-dark-text-secondary">Syndicate Funding</span>
-                    <span className="text-dark-text-primary font-bold">
+                  <div className="flex justify-between text-xs font-mono font-bold">
+                    <span className="text-slate-700">Syndicate Funding</span>
+                    <span className="text-slate-950">
                       {contributedWeiNum.toFixed(2)} / {targetWeiNum.toFixed(2)} ETH ({fundingPercent}%)
                     </span>
                   </div>
                   <ProgressBar
                     value={fundingPercent}
-                    variant={loan.status === 'ACTIVE' || loan.status === 'REPAID' ? 'success' : 'brand'}
-                    className="h-2"
+                    variant={loan.status === 'ACTIVE' || loan.status === 'REPAID' ? 'success' : 'primary'}
+                    className="h-2.5"
                   />
                 </div>
 
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-3 border-t border-dark-border-subtle text-xs">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-3 border-t border-slate-100 text-xs">
                   <div>
-                    <span className="text-dark-text-muted text-[10px] font-mono uppercase block">Interest Rate</span>
-                    <div className="font-mono font-semibold text-dark-text-primary">{formatApr(loan.aprBps)} fixed</div>
+                    <span className="text-slate-500 text-[10px] font-mono font-bold uppercase block">Interest Rate</span>
+                    <div className="font-mono font-bold text-emerald-800">{formatApr(loan.aprBps)} fixed</div>
                   </div>
                   <div>
-                    <span className="text-dark-text-muted text-[10px] font-mono uppercase block">Duration</span>
-                    <div className="font-mono font-semibold text-dark-text-primary">{formatDuration(loan.durationSeconds)}</div>
+                    <span className="text-slate-500 text-[10px] font-mono font-bold uppercase block">Duration</span>
+                    <div className="font-mono font-bold text-slate-950">{formatDuration(loan.durationSeconds)}</div>
                   </div>
                   <div>
-                    <span className="text-dark-text-muted text-[10px] font-mono uppercase block">Spend Ceiling</span>
-                    <div className="font-mono font-semibold text-emerald-400">{formatEther(loan.maxSpendWei)} ETH</div>
+                    <span className="text-slate-500 text-[10px] font-mono font-bold uppercase block">Spend Ceiling</span>
+                    <div className="font-mono font-bold text-emerald-800">{formatEther(loan.maxSpendWei)} ETH</div>
                   </div>
                   <div>
-                    <span className="text-dark-text-muted text-[10px] font-mono uppercase block">Approved Suppliers</span>
-                    <div className="font-mono font-semibold text-dark-text-primary">{loan.merchants.length} vendors</div>
+                    <span className="text-slate-500 text-[10px] font-mono font-bold uppercase block">Approved Suppliers</span>
+                    <div className="font-mono font-bold text-slate-950">{loan.merchants.length} vendors</div>
                   </div>
                 </div>
               </div>

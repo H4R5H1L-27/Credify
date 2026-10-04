@@ -134,8 +134,8 @@ export const AnimatedBeam: React.FC<AnimatedBeamProps> = ({
           className={cn(
             'absolute px-2.5 py-0.5 rounded-full text-[10px] font-mono tracking-wider transition-all duration-300 border shadow-depth-subtle',
             active
-              ? 'bg-dark-bg-2 text-dark-text-primary border-brand-500/40 shadow-[0_0_12px_rgba(79,107,245,0.25)]'
-              : 'bg-dark-bg-2/60 text-dark-text-muted border-dark-border-subtle opacity-50'
+              ? 'bg-white text-slate-950 font-bold border-yellow-400 shadow-sm'
+              : 'bg-white/80 text-slate-400 border-slate-200 opacity-60'
           )}
         >
           {label}

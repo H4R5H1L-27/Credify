@@ -33,21 +33,21 @@ export const VerificationStepper: React.FC<VerificationStepperProps> = ({
             <div
               key={step.id}
               className={cn(
-                'flex flex-col p-3 rounded-xl border transition-all',
-                isDone && 'border-emerald-500/30 bg-emerald-500/5',
-                isCurrent && !isRejected && 'border-brand-500/40 bg-brand-500/5 ring-1 ring-brand-500/20',
-                isRejected && 'border-crimson-500/40 bg-crimson-500/5 ring-1 ring-crimson-500/20',
-                !isDone && !isCurrent && 'border-dark-border-default bg-dark-bg-1 opacity-60'
+                'flex flex-col p-3.5 rounded-2xl border transition-all',
+                isDone && 'border-emerald-300 bg-emerald-50/70 text-emerald-950 shadow-xs',
+                isCurrent && !isRejected && 'border-yellow-400 bg-yellow-50/70 ring-1 ring-yellow-400/50 shadow-xs',
+                isRejected && 'border-rose-300 bg-rose-50 ring-1 ring-rose-300 text-rose-950 shadow-xs',
+                !isDone && !isCurrent && 'border-slate-200 bg-white opacity-60'
               )}
             >
               <div className="flex items-center justify-between pb-2">
                 <div
                   className={cn(
                     'flex h-6 w-6 items-center justify-center rounded-full text-xs font-semibold',
-                    isDone && 'bg-emerald-500/20 text-emerald-400',
-                    isCurrent && !isRejected && 'bg-brand-500 text-white shadow-xs',
-                    isRejected && 'bg-crimson-500 text-white shadow-xs',
-                    !isDone && !isCurrent && 'bg-dark-bg-3 text-dark-text-muted font-mono'
+                    isDone && 'bg-emerald-100 text-emerald-800 font-bold',
+                    isCurrent && !isRejected && 'bg-[#ffe600] text-black font-black shadow-xs border border-yellow-400',
+                    isRejected && 'bg-rose-500 text-white font-bold shadow-xs',
+                    !isDone && !isCurrent && 'bg-slate-100 text-slate-500 font-mono'
                   )}
                 >
                   {isDone ? (
@@ -60,24 +60,24 @@ export const VerificationStepper: React.FC<VerificationStepperProps> = ({
                 </div>
 
                 {isCurrent && (
-                  <span className="flex items-center gap-1 text-[10px] font-mono text-brand-400">
+                  <span className="flex items-center gap-1 text-[10px] font-mono text-yellow-800 font-bold">
                     <Clock className="w-2.5 h-2.5 animate-spin" />
                     IN PROGRESS
                   </span>
                 )}
                 {isDone && (
-                  <span className="text-[10px] font-mono text-emerald-400 font-semibold">
+                  <span className="text-[10px] font-mono text-emerald-700 font-bold">
                     DONE
                   </span>
                 )}
               </div>
 
               <div className="space-y-0.5">
-                <div className="text-xs font-semibold text-dark-text-primary">
+                <div className="text-xs font-bold text-slate-950">
                   {step.label}
                 </div>
                 {step.description && (
-                  <div className="text-[11px] text-dark-text-muted line-clamp-1">
+                  <div className="text-[11px] text-slate-500 line-clamp-1 font-medium">
                     {step.description}
                   </div>
                 )}

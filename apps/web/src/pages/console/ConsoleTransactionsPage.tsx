@@ -87,16 +87,16 @@ export const ConsoleTransactionsPage: React.FC = () => {
   return (
     <div className="space-y-8">
       {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2 text-xs font-sans font-semibold uppercase tracking-wider text-brand-400 mb-1">
-            <ArrowLeftRight className="w-4 h-4" />
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 min-w-0">
+        <div className="min-w-0">
+          <div className="flex items-center gap-2 text-xs font-sans font-bold uppercase tracking-wider text-yellow-950 bg-yellow-100 px-2 py-0.5 rounded border border-yellow-300 w-fit mb-1.5">
+            <ArrowLeftRight className="w-3.5 h-3.5" />
             <span>Mined Receipts &amp; Logs</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-bold font-sans tracking-tight text-dark-text-primary">
+          <h1 className="text-2xl sm:text-3xl font-black font-sans tracking-tight text-slate-950">
             EVM Transactions &amp; Receipts
           </h1>
-          <p className="text-xs text-dark-text-secondary font-sans mt-1">
+          <p className="text-xs text-slate-700 font-sans font-medium mt-1">
             Authoritative on-chain execution receipts, gas telemetry, and complete event evidence chains.
           </p>
         </div>
@@ -107,23 +107,23 @@ export const ConsoleTransactionsPage: React.FC = () => {
           onClick={() => refetch()}
           loading={isLoading}
           icon={<RefreshCw className="w-3.5 h-3.5" />}
-          className="text-xs font-sans shrink-0"
+          className="text-xs font-sans shrink-0 bg-white border-slate-300 text-slate-900 hover:bg-slate-50 font-semibold"
         >
           Refresh Feed
         </Button>
       </div>
 
       {/* Control Strip: Filters & Search */}
-      <div className="p-4 sm:p-5 rounded-2xl bg-dark-bg-2 border border-dark-border-subtle/80 shadow-depth-card flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="p-4 sm:p-5 rounded-2xl bg-white border border-slate-200 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4 min-w-0">
         {/* Status Filter Tabs */}
-        <div className="flex items-center gap-2 font-sans text-xs">
+        <div className="flex items-center gap-2 font-sans text-xs flex-wrap">
           <button
             type="button"
             onClick={() => setStatusFilter('ALL')}
-            className={`px-3.5 py-1.5 rounded-xl border transition-all duration-micro cursor-pointer font-medium ${
+            className={`px-3.5 py-1.5 rounded-xl border transition-all duration-micro cursor-pointer font-bold ${
               statusFilter === 'ALL'
-                ? 'bg-brand-500/15 text-brand-400 border-brand-500/30 font-semibold shadow-depth-subtle'
-                : 'bg-dark-bg-3/60 text-dark-text-secondary border-dark-border-subtle/60 hover:text-dark-text-primary'
+                ? 'bg-[#ffe600] text-black border-yellow-400 shadow-xs'
+                : 'bg-slate-50 text-slate-700 border-slate-200 hover:text-black hover:bg-slate-100'
             }`}
           >
             All Receipts ({transactions.length})
@@ -132,39 +132,39 @@ export const ConsoleTransactionsPage: React.FC = () => {
           <button
             type="button"
             onClick={() => setStatusFilter('CONFIRMED')}
-            className={`px-3.5 py-1.5 rounded-xl border transition-all duration-micro cursor-pointer font-medium flex items-center gap-1.5 ${
+            className={`px-3.5 py-1.5 rounded-xl border transition-all duration-micro cursor-pointer font-bold flex items-center gap-1.5 ${
               statusFilter === 'CONFIRMED'
-                ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30 font-semibold shadow-depth-subtle'
-                : 'bg-dark-bg-3/60 text-dark-text-secondary border-dark-border-subtle/60 hover:text-dark-text-primary'
+                ? 'bg-emerald-100 text-emerald-950 border-emerald-400 shadow-xs'
+                : 'bg-slate-50 text-slate-700 border-slate-200 hover:text-black hover:bg-slate-100'
             }`}
           >
-            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-700" />
             <span>Confirmed ({confirmedCount})</span>
           </button>
 
           <button
             type="button"
             onClick={() => setStatusFilter('REVERTED')}
-            className={`px-3.5 py-1.5 rounded-xl border transition-all duration-micro cursor-pointer font-medium flex items-center gap-1.5 ${
+            className={`px-3.5 py-1.5 rounded-xl border transition-all duration-micro cursor-pointer font-bold flex items-center gap-1.5 ${
               statusFilter === 'REVERTED'
-                ? 'bg-rose-500/15 text-rose-400 border-rose-500/30 font-semibold shadow-depth-subtle'
-                : 'bg-dark-bg-3/60 text-dark-text-secondary border-dark-border-subtle/60 hover:text-dark-text-primary'
+                ? 'bg-rose-100 text-rose-950 border-rose-400 shadow-xs'
+                : 'bg-slate-50 text-slate-700 border-slate-200 hover:text-black hover:bg-slate-100'
             }`}
           >
-            <AlertTriangle className="w-3.5 h-3.5 text-rose-400" />
+            <AlertTriangle className="w-3.5 h-3.5 text-rose-700" />
             <span>Reverted ({revertedCount})</span>
           </button>
         </div>
 
         {/* Real-time Search Input */}
-        <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-dark-bg-3/70 border border-dark-border-subtle/60 focus-within:border-brand-500/50 w-full md:w-80 transition-colors">
-          <Search className="w-4 h-4 text-dark-text-muted shrink-0" />
+        <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200 focus-within:border-yellow-400 focus-within:ring-1 focus-within:ring-yellow-400 w-full md:w-80 transition-colors">
+          <Search className="w-4 h-4 text-slate-500 shrink-0" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search tx, block, address, event..."
-            className="bg-transparent border-none text-xs text-dark-text-primary placeholder:text-dark-text-muted focus:outline-none w-full font-sans"
+            className="bg-transparent border-none text-xs text-slate-950 placeholder:text-slate-500 focus:outline-none w-full font-sans font-medium"
           />
         </div>
       </div>
@@ -174,40 +174,41 @@ export const ConsoleTransactionsPage: React.FC = () => {
         title="Authoritative Transaction Ledger"
         subtitle={`Showing ${filteredTransactions.length} recorded on-chain transactions.`}
         badge={
-          <span className="font-mono text-xs px-2.5 py-0.5 rounded-md bg-dark-bg-3 text-dark-text-secondary border border-dark-border-subtle font-medium">
+          <span className="font-mono text-xs px-2.5 py-0.5 rounded-md bg-yellow-100 border border-yellow-300 text-yellow-950 font-bold">
             {filteredTransactions.length} / {transactions.length} MATCHING
           </span>
         }
         isLoading={isLoading}
         isEmpty={filteredTransactions.length === 0}
         emptyState={
-          <div className="py-16 text-center text-xs font-sans text-dark-text-muted space-y-2">
-            <Layers className="w-8 h-8 text-dark-text-muted mx-auto" />
+          <div className="py-16 text-center text-xs font-sans text-slate-600 space-y-2">
+            <Layers className="w-8 h-8 text-slate-400 mx-auto" />
             <div>No transactions match the selected filter or search query.</div>
           </div>
         }
       >
-        <div className="space-y-3.5">
+        <div className="space-y-3.5 min-w-0">
           {filteredTransactions.map((tx) => {
             const isConfirmed = tx.status === 'SUCCESS';
             const isReverted = tx.status === 'REVERTED';
             const valueEth = tx.valueWei !== '0' ? (Number(tx.valueWei) / 1e18).toFixed(4) : null;
             const gasUsed = Number(tx.gasUsed).toLocaleString();
+            const effectiveGasPriceGwei = tx.effectiveGasPriceWei ? (Number(tx.effectiveGasPriceWei) / 1e9).toFixed(2) : '0.00';
 
             return (
               <div
                 key={tx.hash}
-                className="p-5 rounded-2xl bg-dark-bg-3/50 border border-dark-border-subtle/60 hover:border-brand-500/40 hover:bg-dark-bg-3/80 transition-all duration-micro space-y-3 shadow-depth-subtle"
+                className="p-5 rounded-xl bg-white border border-slate-200 hover:border-yellow-400 hover:shadow-md transition-all space-y-3.5 min-w-0"
               >
                 {/* Header Row: Status, Block, Time */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
-                  <div className="flex items-center gap-3 flex-wrap">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 min-w-0">
+                  <div className="flex items-center gap-3 flex-wrap min-w-0">
                     <TransactionStatus
                       status={isConfirmed ? 'CONFIRMED' : isReverted ? 'REVERTED' : 'PENDING'}
                       size="sm"
                     />
 
-                    <span className="font-mono text-xs font-bold text-dark-text-primary">
+                    <span className="font-mono text-xs font-bold text-slate-950">
                       Block #{tx.blockNumber}
                     </span>
 
@@ -217,31 +218,31 @@ export const ConsoleTransactionsPage: React.FC = () => {
                     ))}
                   </div>
 
-                  <div className="flex items-center gap-2 text-xs font-sans self-start sm:self-auto">
+                  <div className="flex items-center gap-2 text-xs font-sans self-start sm:self-auto shrink-0">
                     <button
                       type="button"
                       onClick={() => navigate(`/console/replay?tx=${tx.hash}`)}
-                      className="px-2.5 py-1 rounded-lg bg-dark-bg-2 text-brand-400 hover:text-brand-300 border border-dark-border-subtle hover:border-brand-500/40 font-medium inline-flex items-center gap-1 transition-colors cursor-pointer"
+                      className="px-2.5 py-1 rounded-lg bg-slate-50 text-slate-800 hover:text-black border border-slate-200 hover:bg-yellow-50 hover:border-yellow-400 font-bold inline-flex items-center gap-1 transition-colors cursor-pointer"
                       title="Replay Transaction"
                     >
-                      <RotateCcw className="w-3 h-3" />
+                      <RotateCcw className="w-3 h-3 text-slate-900" />
                       <span>Replay</span>
                     </button>
 
                     <button
                       type="button"
                       onClick={() => navigate(`/console/trace?tx=${tx.hash}`)}
-                      className="px-2.5 py-1 rounded-lg bg-dark-bg-2 text-brand-400 hover:text-brand-300 border border-dark-border-subtle hover:border-brand-500/40 font-medium inline-flex items-center gap-1 transition-colors cursor-pointer"
+                      className="px-2.5 py-1 rounded-lg bg-slate-50 text-slate-800 hover:text-black border border-slate-200 hover:bg-yellow-50 hover:border-yellow-400 font-bold inline-flex items-center gap-1 transition-colors cursor-pointer"
                       title="Action Trace"
                     >
-                      <Zap className="w-3 h-3" />
+                      <Zap className="w-3 h-3 text-slate-900" />
                       <span>Trace</span>
                     </button>
 
                     <button
                       type="button"
                       onClick={() => setSelectedTx(tx.hash)}
-                      className="px-2.5 py-1 rounded-lg bg-brand-500/10 text-brand-400 hover:bg-brand-500/20 border border-brand-500/30 font-semibold inline-flex items-center gap-1 transition-colors cursor-pointer ml-1"
+                      className="px-3 py-1 rounded-lg bg-[#ffe600] text-black hover:bg-yellow-400 border border-yellow-400 font-bold inline-flex items-center gap-1 transition-colors cursor-pointer shadow-xs ml-1"
                     >
                       <span>Inspect Receipt</span>
                       <ArrowRight className="w-3 h-3" />
@@ -250,36 +251,44 @@ export const ConsoleTransactionsPage: React.FC = () => {
                 </div>
 
                 {/* Routing Row: From -> To */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2 border-t border-dark-border-subtle/50 text-xs font-sans">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-dark-text-secondary">From (Caller):</span>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2.5 border-t border-slate-200 text-xs font-sans">
+                  <div className="flex items-center justify-between gap-2 min-w-0">
+                    <span className="text-slate-700 font-medium">From (Caller):</span>
                     <TechnicalValue value={tx.from} type="address" chars={6} />
                   </div>
 
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-dark-text-secondary">To (Target Contract):</span>
-                    <TechnicalValue value={tx.to || tx.contractAddress || 'Contract Deployer'} type="address" chars={6} />
+                  <div className="flex items-center justify-between gap-2 min-w-0">
+                    <span className="text-slate-700 font-medium">To (Target Contract):</span>
+                    {tx.to ? (
+                      <TechnicalValue value={tx.to} type="address" chars={6} />
+                    ) : (
+                      <span className="text-slate-500 font-mono">Contract Creation</span>
+                    )}
                   </div>
                 </div>
 
-                {/* Telemetry Footer: Hash, Gas, Value */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-2 border-t border-dark-border-subtle/40 text-xs font-sans text-dark-text-secondary">
-                  <div className="flex items-center gap-1.5">
-                    <span>Tx:</span>
-                    <TechnicalValue value={tx.hash} type="hash" chars={8} />
+                {/* Value & Gas Telemetry Row */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2.5 border-t border-slate-200 text-xs font-mono">
+                  <div>
+                    <span className="text-slate-700 font-sans font-semibold text-xs block">Value Transferred</span>
+                    <span className="font-bold text-slate-950">
+                      {valueEth ? `${valueEth} ETH` : '0 ETH'}
+                    </span>
                   </div>
 
-                  <div className="flex items-center gap-1 font-mono">
-                    <Fuel className="w-3.5 h-3.5 text-dark-text-muted" />
-                    <span>{gasUsed} gas</span>
+                  <div>
+                    <span className="text-slate-700 font-sans font-semibold text-xs block">Gas Utilized</span>
+                    <span className="font-bold text-slate-950">{gasUsed}</span>
                   </div>
 
-                  <div className="flex items-center justify-start sm:justify-end gap-1 font-mono text-dark-text-primary">
-                    {valueEth ? (
-                      <span className="text-brand-400 font-bold">{valueEth} ETH</span>
-                    ) : (
-                      <span className="text-dark-text-muted">0.0000 ETH</span>
-                    )}
+                  <div>
+                    <span className="text-slate-700 font-sans font-semibold text-xs block">Gas Price</span>
+                    <span className="font-bold text-slate-950">{effectiveGasPriceGwei} Gwei</span>
+                  </div>
+
+                  <div className="text-right sm:text-left">
+                    <span className="text-slate-700 font-sans font-semibold text-xs block">Tx Hash</span>
+                    <TechnicalValue value={tx.hash} type="hash" chars={4} />
                   </div>
                 </div>
               </div>

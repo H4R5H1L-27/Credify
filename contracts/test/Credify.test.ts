@@ -66,6 +66,10 @@ describe('Credify protocol', function () {
     expect(await pool.status()).to.equal(1);
   });
 
+  it('rejects borrower attempting to contribute to their own syndicate pool', async function () {
+    await expectRevert(() => pool.connect(borrower).contribute({ value: ethers.parseEther('1') }), 'BorrowerCannotContribute');
+  });
+
   it('activates contract through incremental multi-lender contributions (4 ETH -> 7 ETH -> 10 ETH -> ACTIVE)', async function () {
     // 1. Lender A contributes 4 ETH
     const txA = await pool.connect(lenderA).contribute({ value: ethers.parseEther('4') });

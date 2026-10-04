@@ -60,7 +60,17 @@ export const ConsoleEventsPage: React.FC = () => {
     refetchInterval: 3000,
   });
 
-  // Fetch live events stream (poll every 3s)
+  // Reindex mutation for administrator control
+  const reindexMutation = useMutation({
+    mutationFn: () => consoleApi.triggerReindex(),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['console', 'indexer'] });
+      queryClient.invalidateQueries({ queryKey: ['console', 'events'] });
+      queryClient.invalidateQueries({ queryKey: ['console', 'transactions'] });
+    },
+  });
+
+  // Fetch live event log stream (poll every 3s)
   const {
     data: events = [],
     isLoading: eventsLoading,
@@ -72,20 +82,10 @@ export const ConsoleEventsPage: React.FC = () => {
     refetchInterval: 3000,
   });
 
-  // Reindex mutation
-  const reindexMutation = useMutation({
-    mutationFn: () => api.reindex(),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['console', 'indexer'] });
-      queryClient.invalidateQueries({ queryKey: ['console', 'events'] });
-    },
-  });
-
-  // Detect newly arrived events without animating the entire page
+  // Track event arrivals for transient visual highlight
   useEffect(() => {
-    if (!events || events.length === 0) return;
+    if (!events.length) return;
 
-    // First load: register existing events so initial page load does not trigger new arrival animation
     if (seenEventIdsRef.current.size === 0) {
       events.forEach((e) => seenEventIdsRef.current.add(e.id));
       return;
@@ -157,23 +157,26 @@ export const ConsoleEventsPage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 sm:space-y-8 min-w-0">
       {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-xl font-bold font-mono tracking-tight text-dark-text-primary uppercase flex items-center gap-2">
-            <Layers className="w-5 h-5 text-brand-400" />
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 min-w-0">
+        <div className="min-w-0">
+          <div className="flex items-center gap-2 text-xs font-sans font-bold uppercase tracking-wider text-yellow-950 bg-yellow-100 px-2 py-0.5 rounded border border-yellow-300 w-fit mb-1.5">
+            <Layers className="w-3.5 h-3.5" />
+            <span>Decoded Contract Logs</span>
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-black font-sans tracking-tight text-slate-950">
             Live EVM Event Stream &amp; Sync
           </h1>
-          <p className="text-xs text-dark-text-secondary mt-0.5">
+          <p className="text-xs text-slate-700 font-sans font-medium mt-1">
             Deterministic EVM logs parsed and indexed from smart contracts with real-time synchronization telemetry.
           </p>
         </div>
 
-        <div className="flex items-center gap-2.5">
-          <div className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-dark-bg-2 border border-dark-border-subtle text-[11px] font-mono text-dark-text-muted">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span>Polling (3s)</span>
+        <div className="flex items-center gap-2.5 shrink-0">
+          <div className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-xs font-sans text-slate-700 shadow-xs">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="font-semibold">Polling (3s)</span>
           </div>
 
           <Button
@@ -182,7 +185,7 @@ export const ConsoleEventsPage: React.FC = () => {
             onClick={handleRefresh}
             loading={eventsLoading || isRefetching}
             icon={<RefreshCw className="w-3.5 h-3.5" />}
-            className="text-xs font-mono"
+            className="text-xs font-sans bg-white border-slate-300 text-slate-900 hover:bg-slate-50 font-semibold"
           >
             Refresh Stream
           </Button>
@@ -199,24 +202,24 @@ export const ConsoleEventsPage: React.FC = () => {
       />
 
       {/* Filter and Search Bar */}
-      <div className="space-y-3 p-3.5 bg-dark-bg-2 border border-dark-border-subtle rounded-lg">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div className="space-y-3 p-4 bg-white border border-slate-200 shadow-sm rounded-xl min-w-0">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 min-w-0">
           {/* Quick Search */}
           <div className="relative w-full sm:w-80">
-            <Search className="w-3.5 h-3.5 text-dark-text-muted absolute left-2.5 top-1/2 -translate-y-1/2" />
+            <Search className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               placeholder="Search tx, block, contract, actor, parameters..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-8 pr-3 py-1.5 text-xs font-mono bg-dark-bg-3 border border-dark-border-subtle rounded-md text-dark-text-primary placeholder:text-dark-text-muted focus:outline-none focus:border-brand-500/50"
+              className="w-full pl-8 pr-3 py-1.5 text-xs font-mono bg-slate-50 border border-slate-200 rounded-lg text-slate-950 placeholder:text-slate-500 focus:outline-none focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400 font-medium"
             />
           </div>
 
           {searchQuery && (
             <button
               onClick={() => setSearchQuery('')}
-              className="text-brand-400 text-xs font-mono hover:underline self-end sm:self-auto"
+              className="text-yellow-800 text-xs font-sans font-bold hover:underline self-end sm:self-auto"
             >
               Clear search filter
             </button>
@@ -225,14 +228,14 @@ export const ConsoleEventsPage: React.FC = () => {
 
         {/* Real Contract Event Types Tabs */}
         {uniqueEventTypes.length > 0 && (
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs font-mono pt-1 border-t border-dark-border-subtle/50">
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 text-xs font-sans pt-2 border-t border-slate-200">
             <button
               type="button"
               onClick={() => setSelectedEventType('ALL')}
-              className={`px-2.5 py-1 rounded transition-colors whitespace-nowrap ${
+              className={`px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap font-bold cursor-pointer ${
                 selectedEventType === 'ALL'
-                  ? 'bg-brand-500/20 text-brand-400 border border-brand-500/40 font-bold'
-                  : 'bg-dark-bg-3 border border-dark-border-subtle text-dark-text-secondary hover:text-dark-text-primary'
+                  ? 'bg-[#ffe600] text-black border border-yellow-400 shadow-xs'
+                  : 'bg-slate-50 border border-slate-200 text-slate-700 hover:text-black hover:bg-slate-100'
               }`}
             >
               ALL EMISSIONS ({events.length})
@@ -245,10 +248,10 @@ export const ConsoleEventsPage: React.FC = () => {
                   key={type}
                   type="button"
                   onClick={() => setSelectedEventType(type)}
-                  className={`px-2.5 py-1 rounded transition-colors whitespace-nowrap ${
+                  className={`px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap font-bold cursor-pointer ${
                     selectedEventType === type
-                      ? 'bg-brand-500/20 text-brand-400 border border-brand-500/40 font-bold'
-                      : 'bg-dark-bg-3 border border-dark-border-subtle text-dark-text-secondary hover:text-dark-text-primary'
+                      ? 'bg-[#ffe600] text-black border border-yellow-400 shadow-xs'
+                      : 'bg-slate-50 border border-slate-200 text-slate-700 hover:text-black hover:bg-slate-100'
                   }`}
                 >
                   {type} ({count})
@@ -264,20 +267,20 @@ export const ConsoleEventsPage: React.FC = () => {
         title="Authoritative Contract Event Stream"
         subtitle="Chronological EVM emissions indexed from target chain contracts. Newly mined events highlight smoothly on arrival."
         badge={
-          <span className="font-mono text-[10px] px-2 py-0.5 rounded bg-dark-bg-3 border border-dark-border-subtle text-dark-text-secondary">
+          <span className="font-mono text-xs px-2.5 py-0.5 rounded-md bg-yellow-100 border border-yellow-300 text-yellow-950 font-bold">
             {filteredEvents.length} / {events.length} EVENTS
           </span>
         }
         isLoading={eventsLoading}
         isEmpty={filteredEvents.length === 0}
         emptyState={
-          <div className="py-12 text-center text-xs font-mono text-dark-text-muted space-y-2">
-            <Layers className="w-8 h-8 text-dark-text-muted mx-auto" />
+          <div className="py-12 text-center text-xs font-sans text-slate-600 space-y-2">
+            <Layers className="w-8 h-8 text-slate-400 mx-auto" />
             <div>No smart contract events match your current filter criteria.</div>
             {selectedEventType !== 'ALL' && (
               <button
                 onClick={() => setSelectedEventType('ALL')}
-                className="text-brand-400 underline hover:text-brand-300 text-[11px]"
+                className="text-yellow-800 underline hover:text-black font-semibold text-xs"
               >
                 Reset to all events
               </button>
@@ -285,26 +288,26 @@ export const ConsoleEventsPage: React.FC = () => {
           </div>
         }
       >
-        <div className="space-y-3">
+        <div className="space-y-3.5 min-w-0">
           {filteredEvents.map((evt) => {
             const isNewlyArrived = newlyArrivedIds.has(evt.id);
 
             return (
               <div
                 key={evt.id}
-                className={`p-4 rounded-xl border transition-all duration-500 space-y-3 ${
+                className={`p-5 rounded-xl border transition-all duration-300 space-y-3.5 min-w-0 ${
                   isNewlyArrived
-                    ? 'bg-brand-500/10 border-brand-500/50 shadow-[0_0_15px_rgba(99,102,241,0.2)] motion-safe:animate-pulse'
-                    : 'bg-dark-bg-3 border-dark-border-subtle hover:border-dark-border-default'
+                    ? 'bg-yellow-50/70 border-yellow-400 shadow-md ring-2 ring-yellow-400/40'
+                    : 'bg-white border-slate-200 hover:border-yellow-400 hover:shadow-md'
                 }`}
               >
                 {/* Event Card Header Row */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 font-mono text-xs">
-                  <div className="flex items-center gap-2 flex-wrap">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 font-mono text-xs min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap min-w-0">
                     <EventBadge eventName={evt.eventName} />
 
                     {isNewlyArrived && (
-                      <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-brand-500 text-white tracking-wider motion-safe:animate-bounce">
+                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#ffe600] text-black border border-yellow-400 tracking-wider">
                         NEW
                       </span>
                     )}
@@ -312,20 +315,20 @@ export const ConsoleEventsPage: React.FC = () => {
                     {/* Block Height Link */}
                     <button
                       onClick={() => setSelectedBlock(evt.blockNumber)}
-                      className="inline-flex items-center gap-1 text-[11px] text-dark-text-secondary hover:text-brand-400 transition-colors"
+                      className="inline-flex items-center gap-1 text-xs text-slate-700 hover:text-black font-bold transition-colors"
                       title="Inspect Block Proof"
                     >
-                      <Cpu className="w-3 h-3 text-dark-text-muted" />
+                      <Cpu className="w-3.5 h-3.5 text-slate-900" />
                       #{evt.blockNumber}
                     </button>
 
                     {/* Transaction Link */}
                     <button
                       onClick={() => setSelectedTx(evt.transactionHash)}
-                      className="inline-flex items-center gap-1 text-[11px] text-dark-text-secondary hover:text-brand-400 transition-colors"
+                      className="inline-flex items-center gap-1 text-xs text-slate-700 hover:text-black font-semibold transition-colors"
                       title="Inspect Transaction"
                     >
-                      <ArrowLeftRight className="w-3 h-3 text-dark-text-muted" />
+                      <ArrowLeftRight className="w-3.5 h-3.5 text-slate-900" />
                       {evt.transactionHash.slice(0, 8)}...
                     </button>
 
@@ -333,34 +336,34 @@ export const ConsoleEventsPage: React.FC = () => {
                     {(evt.contractAddress || evt.loanId) && (
                       <button
                         onClick={() => setSelectedContract(evt.contractAddress || evt.loanId)}
-                        className="inline-flex items-center gap-1 text-[11px] text-blue-400 hover:text-blue-300 transition-colors"
+                        className="inline-flex items-center gap-1 text-xs text-blue-800 hover:text-blue-950 font-bold transition-colors"
                         title="Inspect Contract"
                       >
-                        <FileCode2 className="w-3 h-3 text-blue-400" />
+                        <FileCode2 className="w-3.5 h-3.5 text-blue-800" />
                         {evt.contractName || 'Contract'}
                       </button>
                     )}
                   </div>
 
                   {/* Timestamp */}
-                  <div className="text-[11px] text-dark-text-muted flex items-center gap-1.5 self-start sm:self-auto">
-                    <Clock className="w-3 h-3" />
+                  <div className="text-xs text-slate-600 font-sans font-medium flex items-center gap-1.5 self-start sm:self-auto shrink-0">
+                    <Clock className="w-3.5 h-3.5 text-slate-500" />
                     <span>{new Date(evt.timestamp).toLocaleTimeString()}</span>
-                    <span className="text-[10px] text-dark-text-muted hidden md:inline">
+                    <span className="hidden md:inline">
                       ({new Date(evt.timestamp).toISOString().split('T')[0]})
                     </span>
                   </div>
                 </div>
 
                 {/* Narrative Summary */}
-                <div className="text-xs text-dark-text-primary font-sans leading-relaxed">
+                <div className="text-xs text-slate-950 font-sans font-medium leading-relaxed">
                   {evt.summary}
                 </div>
 
                 {/* Parameters & Trace Trigger Row */}
-                <div className="pt-2 border-t border-dark-border-subtle/50 flex flex-col md:flex-row md:items-center justify-between gap-3">
+                <div className="pt-2.5 border-t border-slate-200 flex flex-col md:flex-row md:items-center justify-between gap-3 min-w-0">
                   {/* Parameter Tags */}
-                  <div className="flex items-center gap-1.5 flex-wrap font-mono text-[11px]">
+                  <div className="flex items-center gap-1.5 flex-wrap font-mono text-xs min-w-0">
                     {Object.entries(evt.data || {})
                       .slice(0, 4)
                       .map(([key, val]) => {
@@ -370,15 +373,15 @@ export const ConsoleEventsPage: React.FC = () => {
                         return (
                           <span
                             key={key}
-                            className="px-2 py-0.5 rounded bg-dark-bg-2 border border-dark-border-subtle text-dark-text-secondary inline-flex items-center gap-1"
+                            className="px-2.5 py-1 rounded-md bg-slate-50 border border-slate-200 text-slate-900 inline-flex items-center gap-1"
                           >
-                            <span className="text-dark-text-muted text-[10px]">{key}:</span>
+                            <span className="text-slate-600 font-sans font-semibold text-[11px]">{key}:</span>
                             {isWeiAmount ? (
-                              <span className="text-brand-400 font-bold">{formatEther(val, 2)}</span>
+                              <span className="text-slate-950 font-bold">{formatEther(val, 2)} ETH</span>
                             ) : isAddr ? (
-                              <span className="text-dark-text-primary">{val.slice(0, 6)}...{val.slice(-4)}</span>
+                              <span className="text-slate-950 font-bold">{val.slice(0, 6)}...{val.slice(-4)}</span>
                             ) : (
-                              <span className="text-dark-text-primary">{String(val)}</span>
+                              <span className="text-slate-950 font-bold">{String(val)}</span>
                             )}
                           </span>
                         );
@@ -390,8 +393,8 @@ export const ConsoleEventsPage: React.FC = () => {
                     size="sm"
                     variant="outline"
                     onClick={() => setSelectedEventForTrace(evt)}
-                    className="text-xs font-mono shrink-0 self-end md:self-auto hover:border-brand-500/40"
-                    icon={<ArrowRight className="w-3.5 h-3.5 text-brand-400" />}
+                    className="text-xs font-sans shrink-0 self-end md:self-auto bg-white border-slate-300 text-slate-900 hover:bg-yellow-50 hover:border-yellow-400 font-semibold"
+                    icon={<ArrowRight className="w-3.5 h-3.5 text-slate-900" />}
                   >
                     Trace Lineage
                   </Button>

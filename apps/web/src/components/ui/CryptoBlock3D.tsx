@@ -1,6 +1,6 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState } from 'react';
 import { cn } from '../../lib/utils';
-import { Box, ShieldCheck, Cpu, Layers, Hash, Fuel, Terminal } from 'lucide-react';
+import { ShieldCheck, Cpu, Layers, Hash, Fuel, Terminal } from 'lucide-react';
 
 export interface CryptoBlock3DProps {
   blockNumber?: number | string;
@@ -16,7 +16,7 @@ export interface CryptoBlock3DProps {
 /**
  * Pure Code-Native Interactive 3D Cryptographic Block Cube.
  * Features 6 facets of authoritative EVM blockchain telemetry,
- * interactive 3D cursor perspective rotation, and luminous holographic hairline edges.
+ * interactive 3D cursor perspective rotation, and high-contrast yellow & white edges.
  */
 export const CryptoBlock3D: React.FC<CryptoBlock3DProps> = ({
   blockNumber = 42,
@@ -72,12 +72,12 @@ export const CryptoBlock3D: React.FC<CryptoBlock3DProps> = ({
     >
       {/* Ambient Floor Shadow */}
       <div
-        className="absolute rounded-full bg-brand-500/10 blur-2xl pointer-events-none transition-all duration-300"
+        className="absolute rounded-full bg-yellow-400/20 blur-2xl pointer-events-none transition-all duration-300"
         style={{
           width: `${size * 1.4}px`,
           height: `${size * 0.4}px`,
           bottom: '20px',
-          opacity: isHovered ? 0.7 : 0.4,
+          opacity: isHovered ? 0.8 : 0.5,
         }}
       />
 
@@ -98,26 +98,26 @@ export const CryptoBlock3D: React.FC<CryptoBlock3DProps> = ({
             ...faceStyle,
             transform: `translateZ(${half}px)`,
           }}
-          className="p-4 rounded-xl bg-dark-bg-1/90 border border-brand-500/40 backdrop-blur-md flex flex-col justify-between shadow-[0_0_20px_rgba(79,107,245,0.25)]"
+          className="p-4 rounded-2xl bg-white/95 border-2 border-yellow-400 backdrop-blur-md flex flex-col justify-between shadow-[0_10px_30px_rgba(255,230,0,0.35)]"
         >
-          <div className="flex items-center justify-between border-b border-dark-border-subtle pb-2">
+          <div className="flex items-center justify-between border-b border-slate-200 pb-2">
             <div className="flex items-center gap-1.5">
-              <Cpu className="w-3.5 h-3.5 text-brand-400" />
-              <span className="text-[10px] font-mono font-bold text-brand-300">BLOCK HEADER</span>
+              <Cpu className="w-3.5 h-3.5 text-yellow-600" />
+              <span className="text-[10px] font-mono font-bold text-yellow-900 uppercase">BLOCK HEADER</span>
             </div>
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
           </div>
 
           <div className="text-center my-auto space-y-1 font-mono">
-            <div className="text-3xl font-black tracking-tight text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]">
+            <div className="text-3xl font-black tracking-tight text-slate-950">
               #{blockNumber}
             </div>
-            <div className="text-[11px] text-emerald-400 font-semibold">
+            <div className="text-[11px] text-emerald-700 font-bold">
               {txCount} {txCount === 1 ? 'TRANSACTION' : 'TRANSACTIONS'}
             </div>
           </div>
 
-          <div className="text-[9px] font-mono text-dark-text-muted flex justify-between border-t border-dark-border-subtle pt-2">
+          <div className="text-[9px] font-mono text-slate-500 font-bold flex justify-between border-t border-slate-200 pt-2">
             <span>CONSENSUS VERIFIED</span>
             <span>EVM ACTIVE</span>
           </div>
@@ -129,28 +129,28 @@ export const CryptoBlock3D: React.FC<CryptoBlock3DProps> = ({
             ...faceStyle,
             transform: `rotateY(180deg) translateZ(${half}px)`,
           }}
-          className="p-4 rounded-xl bg-dark-bg-1/90 border border-emerald-500/30 backdrop-blur-md flex flex-col justify-between shadow-[0_0_20px_rgba(16,185,129,0.2)]"
+          className="p-4 rounded-2xl bg-white/95 border-2 border-emerald-400 backdrop-blur-md flex flex-col justify-between shadow-[0_10px_30px_rgba(16,185,129,0.25)]"
         >
-          <div className="flex items-center justify-between border-b border-dark-border-subtle pb-2">
+          <div className="flex items-center justify-between border-b border-slate-200 pb-2">
             <div className="flex items-center gap-1.5">
-              <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-              <span className="text-[10px] font-mono font-bold text-emerald-400">STATE TRIE</span>
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+              <span className="text-[10px] font-mono font-bold text-emerald-800">STATE TRIE</span>
             </div>
-            <span className="text-[9px] font-mono text-dark-text-muted">KECCAK256</span>
+            <span className="text-[9px] font-mono text-slate-500 font-semibold">KECCAK256</span>
           </div>
 
           <div className="space-y-2 font-mono text-[10px] my-auto">
             <div>
-              <span className="text-dark-text-muted block text-[9px]">STATE ROOT:</span>
-              <span className="text-dark-text-primary truncate block font-bold">{stateRoot}</span>
+              <span className="text-slate-500 block text-[9px] font-semibold">STATE ROOT:</span>
+              <span className="text-slate-950 truncate block font-bold">{stateRoot}</span>
             </div>
             <div>
-              <span className="text-dark-text-muted block text-[9px]">CONSENSUS:</span>
-              <span className="text-emerald-400 font-semibold">PoA INSTANT FINALITY</span>
+              <span className="text-slate-500 block text-[9px] font-semibold">CONSENSUS:</span>
+              <span className="text-emerald-700 font-bold">PoA INSTANT FINALITY</span>
             </div>
           </div>
 
-          <div className="text-[9px] font-mono text-dark-text-muted border-t border-dark-border-subtle pt-2 text-right">
+          <div className="text-[9px] font-mono text-slate-500 font-bold border-t border-slate-200 pt-2 text-right">
             CRYPTOGRAPHIC PROOF ✓
           </div>
         </div>
@@ -161,25 +161,25 @@ export const CryptoBlock3D: React.FC<CryptoBlock3DProps> = ({
             ...faceStyle,
             transform: `rotateY(90deg) translateZ(${half}px)`,
           }}
-          className="p-4 rounded-xl bg-dark-bg-2/95 border border-brand-400/30 backdrop-blur-md flex flex-col justify-between shadow-[0_0_15px_rgba(79,107,245,0.15)]"
+          className="p-4 rounded-2xl bg-white/95 border-2 border-slate-300 backdrop-blur-md flex flex-col justify-between shadow-lg"
         >
-          <div className="flex items-center gap-1.5 border-b border-dark-border-subtle pb-2">
-            <Hash className="w-3.5 h-3.5 text-brand-400" />
-            <span className="text-[10px] font-mono font-bold text-dark-text-primary">LINEAGE HASH</span>
+          <div className="flex items-center gap-1.5 border-b border-slate-200 pb-2">
+            <Hash className="w-3.5 h-3.5 text-yellow-600" />
+            <span className="text-[10px] font-mono font-bold text-slate-950">LINEAGE HASH</span>
           </div>
 
           <div className="space-y-2.5 font-mono text-[10px] my-auto">
             <div>
-              <span className="text-dark-text-muted block text-[9px]">BLOCK HASH:</span>
-              <span className="text-brand-300 font-bold break-all text-[9.5px]">{blockHash}</span>
+              <span className="text-slate-500 block text-[9px] font-semibold">BLOCK HASH:</span>
+              <span className="text-slate-950 font-bold break-all text-[9.5px]">{blockHash}</span>
             </div>
             <div>
-              <span className="text-dark-text-muted block text-[9px]">PARENT HASH:</span>
-              <span className="text-dark-text-secondary break-all text-[9.5px]">{parentHash}</span>
+              <span className="text-slate-500 block text-[9px] font-semibold">PARENT HASH:</span>
+              <span className="text-slate-600 font-medium break-all text-[9.5px]">{parentHash}</span>
             </div>
           </div>
 
-          <div className="text-[9px] font-mono text-dark-text-muted border-t border-dark-border-subtle pt-2">
+          <div className="text-[9px] font-mono text-slate-500 font-bold border-t border-slate-200 pt-2">
             HEX PROVENANCE
           </div>
         </div>
@@ -190,28 +190,28 @@ export const CryptoBlock3D: React.FC<CryptoBlock3DProps> = ({
             ...faceStyle,
             transform: `rotateY(-90deg) translateZ(${half}px)`,
           }}
-          className="p-4 rounded-xl bg-dark-bg-2/95 border border-amber-500/30 backdrop-blur-md flex flex-col justify-between shadow-[0_0_15px_rgba(245,158,11,0.15)]"
+          className="p-4 rounded-2xl bg-white/95 border-2 border-amber-300 backdrop-blur-md flex flex-col justify-between shadow-lg"
         >
-          <div className="flex items-center gap-1.5 border-b border-dark-border-subtle pb-2">
-            <Fuel className="w-3.5 h-3.5 text-amber-400" />
-            <span className="text-[10px] font-mono font-bold text-amber-300">GAS UTILIZATION</span>
+          <div className="flex items-center gap-1.5 border-b border-slate-200 pb-2">
+            <Fuel className="w-3.5 h-3.5 text-amber-600" />
+            <span className="text-[10px] font-mono font-bold text-amber-900">GAS UTILIZATION</span>
           </div>
 
           <div className="my-auto space-y-2 font-mono text-center">
-            <div className="text-2xl font-bold text-dark-text-primary">
+            <div className="text-2xl font-black text-slate-950">
               {gasPercent}%
             </div>
             {/* 3D Gas Meter Bar */}
-            <div className="w-full h-2 rounded-full bg-dark-bg-3 overflow-hidden border border-dark-border-subtle">
+            <div className="w-full h-2.5 rounded-full bg-slate-100 overflow-hidden border border-slate-200">
               <div
-                className="h-full bg-gradient-to-r from-brand-500 to-amber-400"
+                className="h-full bg-gradient-to-r from-[#ffe600] to-amber-500"
                 style={{ width: `${Math.max(5, gasPercent)}%` }}
               />
             </div>
-            <div className="text-[9px] text-dark-text-muted">60,000,000 GAS LIMIT</div>
+            <div className="text-[9px] text-slate-500 font-bold">60,000,000 GAS LIMIT</div>
           </div>
 
-          <div className="text-[9px] font-mono text-dark-text-muted border-t border-dark-border-subtle pt-2">
+          <div className="text-[9px] font-mono text-slate-500 font-bold border-t border-slate-200 pt-2">
             EIP-1559 BASE FEE 0
           </div>
         </div>
@@ -222,15 +222,15 @@ export const CryptoBlock3D: React.FC<CryptoBlock3DProps> = ({
             ...faceStyle,
             transform: `rotateX(90deg) translateZ(${half}px)`,
           }}
-          className="p-4 rounded-xl bg-brand-500/20 border border-brand-400/50 backdrop-blur-md flex flex-col items-center justify-center text-center shadow-[inset_0_0_25px_rgba(79,107,245,0.4)]"
+          className="p-4 rounded-2xl bg-yellow-50 border-2 border-yellow-400 backdrop-blur-md flex flex-col items-center justify-center text-center shadow-[inset_0_0_25px_rgba(255,230,0,0.4)]"
         >
-          <div className="w-12 h-12 rounded-xl bg-dark-bg-0/60 border border-brand-400/40 flex items-center justify-center text-brand-400 mb-2 shadow-depth-subtle">
+          <div className="w-12 h-12 rounded-2xl bg-[#ffe600] border border-yellow-500 flex items-center justify-center text-black font-black mb-2 shadow-sm">
             <Layers className="w-6 h-6" />
           </div>
-          <div className="text-xs font-mono font-black text-brand-300 tracking-wider uppercase">
+          <div className="text-xs font-mono font-black text-slate-950 tracking-wider uppercase">
             CREDIFY NODE
           </div>
-          <div className="text-[9px] font-mono text-brand-200/80 mt-0.5">
+          <div className="text-[9px] font-mono text-yellow-950 font-bold mt-0.5">
             LOCAL EVM RUNTIME
           </div>
         </div>
@@ -241,10 +241,10 @@ export const CryptoBlock3D: React.FC<CryptoBlock3DProps> = ({
             ...faceStyle,
             transform: `rotateX(-90deg) translateZ(${half}px)`,
           }}
-          className="p-4 rounded-xl bg-dark-bg-0/90 border border-dark-border-subtle flex flex-col items-center justify-center text-center"
+          className="p-4 rounded-2xl bg-slate-100 border-2 border-slate-300 flex flex-col items-center justify-center text-center"
         >
-          <Terminal className="w-8 h-8 text-dark-text-muted mb-1" />
-          <span className="text-[9px] font-mono text-dark-text-muted">IMMUTABLE HEAD</span>
+          <Terminal className="w-8 h-8 text-slate-400 mb-1" />
+          <span className="text-[9px] font-mono text-slate-600 font-bold">IMMUTABLE HEAD</span>
         </div>
       </div>
     </div>

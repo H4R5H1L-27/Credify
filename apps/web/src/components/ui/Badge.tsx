@@ -21,13 +21,13 @@ export const Badge: React.FC<BadgeProps> = ({
   };
 
   const variants = {
-    default: 'bg-brand-950/50 text-brand-300 border border-brand-800/40',
-    secondary: 'bg-dark-bg-3 text-dark-text-secondary border border-dark-border-default',
-    outline: 'border border-dark-border-default text-dark-text-primary bg-transparent',
-    success: 'bg-emerald-950/40 text-emerald-300 border border-emerald-800/40',
-    warning: 'bg-amber-950/40 text-amber-300 border border-amber-800/40',
-    danger: 'bg-rose-950/40 text-rose-300 border border-rose-800/40',
-    info: 'bg-sky-950/40 text-sky-300 border border-sky-800/40',
+    default: 'bg-[#ffe600] text-black border border-yellow-400 font-bold',
+    secondary: 'bg-slate-100 text-slate-800 border border-slate-200 font-semibold',
+    outline: 'border border-slate-300 text-slate-900 bg-white font-semibold',
+    success: 'bg-emerald-50 text-emerald-800 border border-emerald-300 font-bold',
+    warning: 'bg-amber-50 text-amber-900 border border-amber-300 font-bold',
+    danger: 'bg-rose-50 text-rose-800 border border-rose-300 font-bold',
+    info: 'bg-sky-50 text-sky-900 border border-sky-300 font-bold',
   };
 
   return (

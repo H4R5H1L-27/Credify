@@ -45,7 +45,7 @@ export const ConsoleHeader: React.FC<ConsoleHeaderProps> = ({ onToggleMobileNav 
           <button
             type="button"
             onClick={onToggleMobileNav}
-            className="md:hidden p-2 rounded-lg bg-dark-bg-2 border border-dark-border-subtle text-dark-text-secondary hover:text-dark-text-primary"
+            className="md:hidden p-2 rounded-lg bg-white border border-slate-200 text-slate-700 hover:text-slate-950"
             aria-label="Toggle Navigation"
           >
             <Menu className="w-4 h-4" />
@@ -54,13 +54,13 @@ export const ConsoleHeader: React.FC<ConsoleHeaderProps> = ({ onToggleMobileNav 
 
         {/* Proportional Breadcrumbs */}
         <div className="flex items-center gap-2 text-xs font-sans font-medium">
-          <Link to="/console/overview" className="text-brand-400 hover:text-brand-300 transition-colors font-semibold">
+          <Link to="/console/overview" className="text-yellow-800 hover:text-yellow-900 transition-colors font-bold">
             Console
           </Link>
           {pathSegments.map((seg, idx) => (
             <React.Fragment key={idx}>
-              <ChevronRight className="w-3.5 h-3.5 text-dark-text-muted" />
-              <span className="text-dark-text-secondary capitalize">
+              <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
+              <span className="text-slate-600 capitalize font-medium">
                 {seg.replace(/-/g, ' ')}
               </span>
             </React.Fragment>
@@ -69,20 +69,20 @@ export const ConsoleHeader: React.FC<ConsoleHeaderProps> = ({ onToggleMobileNav 
       </div>
 
       {/* Right: Technical Metadata Cluster */}
-      <div className="flex items-center gap-3 flex-wrap text-xs font-sans">
+      <div className="flex items-center gap-2.5 flex-wrap text-xs font-sans">
         {/* Network & Node Status */}
-        <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-dark-bg-2 border border-dark-border-subtle/70 text-xs shadow-depth-subtle">
+        <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-xs shadow-xs">
           <AnimatedSyncPulse color="emerald" />
-          <span className="text-dark-text-secondary">EVM Localhost</span>
+          <span className="text-slate-700 font-semibold">EVM Localhost</span>
         </div>
 
         {/* Current Block Height */}
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-dark-bg-2 border border-dark-border-subtle/70 text-xs shadow-depth-subtle">
-          <span className="text-dark-text-muted font-medium">Block:</span>
+        <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-xs shadow-xs">
+          <span className="text-slate-500 font-medium">Block:</span>
           {currentBlock !== null ? (
-            <span className="font-bold font-mono text-dark-text-primary">#{currentBlock}</span>
+            <span className="font-bold font-mono text-slate-900">#{currentBlock}</span>
           ) : (
-            <span className="text-dark-text-muted font-mono animate-pulse">#...</span>
+            <span className="text-slate-500 font-mono animate-pulse">#...</span>
           )}
         </div>
 
@@ -91,16 +91,16 @@ export const ConsoleHeader: React.FC<ConsoleHeaderProps> = ({ onToggleMobileNav 
 
         {/* Wallet State */}
         {isConnected && address ? (
-          <div className="hidden lg:flex items-center gap-2 pl-3 border-l border-dark-border-subtle/80">
+          <div className="hidden lg:flex items-center gap-2 pl-3 border-l border-slate-200">
             <AddressBadge address={address} chars={4} />
             {identity?.role && (
-              <span className="text-xs font-sans px-2 py-0.5 rounded-md bg-dark-bg-2 border border-dark-border-subtle text-dark-text-secondary uppercase font-semibold">
+              <span className="text-xs font-sans px-2 py-0.5 rounded-md bg-slate-100 border border-slate-200 text-slate-800 uppercase font-bold">
                 {identity.role}
               </span>
             )}
           </div>
         ) : (
-          <div className="hidden lg:flex items-center gap-1.5 text-xs font-sans text-dark-text-muted pl-3 border-l border-dark-border-subtle/80">
+          <div className="hidden lg:flex items-center gap-1.5 text-xs font-sans text-slate-500 pl-3 border-l border-slate-200">
             <span>No Wallet</span>
           </div>
         )}

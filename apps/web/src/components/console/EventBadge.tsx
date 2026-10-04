@@ -111,10 +111,10 @@ export const EventBadge: React.FC<EventBadgeProps> = ({
 }) => {
   const config = EVENT_CONFIG[eventName] || {
     label: eventName,
-    text: 'text-dark-text-secondary',
-    bg: 'bg-dark-bg-3',
-    border: 'border-dark-border-subtle',
-    icon: <Layers className="w-3 h-3 text-dark-text-muted" />,
+    text: 'text-slate-700',
+    bg: 'bg-slate-100',
+    border: 'border-slate-200',
+    icon: <Layers className="w-3 h-3 text-slate-500" />,
   };
 
   return (

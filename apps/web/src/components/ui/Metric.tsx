@@ -34,9 +34,9 @@ export const Metric: React.FC<MetricProps> = ({
   ...props
 }) => {
   const containerVariants = {
-    card: 'p-5 rounded-2xl bg-dark-bg-2 border border-dark-border-subtle/70 shadow-depth-card space-y-2.5 transition-all hover:border-dark-border-strong/80 duration-normal',
+    card: 'p-5 rounded-2xl bg-white border border-slate-200/90 shadow-xs space-y-2.5 transition-all hover:border-slate-300 hover:shadow-md duration-normal',
     flat: 'p-3 rounded-xl bg-transparent border-0 space-y-2',
-    hero: 'p-6 rounded-2xl bg-dark-bg-2 border border-brand-500/20 shadow-depth-card space-y-3.5 relative overflow-hidden',
+    hero: 'p-6 rounded-2xl bg-white border-2 border-yellow-400 shadow-md space-y-3.5 relative overflow-hidden',
   };
 
   return (
@@ -45,23 +45,23 @@ export const Metric: React.FC<MetricProps> = ({
       {...props}
     >
       {variant === 'hero' && (
-        <div className="absolute top-0 right-0 w-48 h-48 bg-brand-500/5 rounded-full blur-3xl pointer-events-none -mr-16 -mt-16" />
+        <div className="absolute top-0 right-0 w-48 h-48 bg-[#ffe600]/15 rounded-full blur-3xl pointer-events-none -mr-16 -mt-16" />
       )}
 
-      <div className="flex items-center justify-between text-dark-text-secondary text-xs">
-        <span className="font-sans font-medium text-xs text-dark-text-secondary tracking-normal">
+      <div className="flex items-center justify-between text-xs">
+        <span className="font-semibold text-xs text-slate-700 tracking-wide uppercase">
           {label}
         </span>
         <div className="flex items-center gap-1.5">
           {badge}
-          {icon && <span className="text-dark-text-muted">{icon}</span>}
+          {icon && <span className="text-slate-600">{icon}</span>}
         </div>
       </div>
 
-      <div className="flex items-baseline gap-2 flex-wrap">
+      <div className="flex items-baseline gap-1.5 flex-wrap">
         <div
           className={cn(
-            'font-black font-mono tracking-tight text-dark-text-primary',
+            'font-bold font-mono tracking-tight text-slate-950',
             variant === 'hero' ? 'text-3xl sm:text-4xl' : 'text-2xl sm:text-3xl'
           )}
         >
@@ -75,18 +75,18 @@ export const Metric: React.FC<MetricProps> = ({
           )}
         </div>
         {unit && (
-          <span className="text-xs font-mono font-medium text-dark-text-muted">
+          <span className="text-base font-mono font-bold text-slate-800">
             {unit}
           </span>
         )}
       </div>
 
       {(trend || subtext) && (
-        <div className="pt-2 flex items-center justify-between text-xs text-dark-text-muted border-t border-dark-border-subtle/50">
+        <div className="pt-2 flex items-center justify-between text-xs border-t border-slate-100">
           {trend ? (
             <div
-              className={`flex items-center gap-1 font-mono text-xs font-semibold ${
-                trend.positive !== false ? 'text-emerald-400' : 'text-rose-400'
+              className={`flex items-center gap-1 font-mono text-xs font-bold ${
+                trend.positive !== false ? 'text-emerald-700' : 'text-rose-700'
               }`}
             >
               {trend.positive !== false ? (
@@ -96,7 +96,7 @@ export const Metric: React.FC<MetricProps> = ({
               )}
               <span>{trend.value}</span>
               {trend.label && (
-                <span className="text-xs font-normal text-dark-text-muted ml-0.5">
+                <span className="text-xs font-medium text-slate-600 ml-0.5">
                   {trend.label}
                 </span>
               )}
@@ -105,7 +105,7 @@ export const Metric: React.FC<MetricProps> = ({
             <span />
           )}
           {subtext && (
-            <span className="text-xs text-dark-text-secondary truncate">
+            <span className="text-xs font-medium text-slate-700 truncate">
               {subtext}
             </span>
           )}

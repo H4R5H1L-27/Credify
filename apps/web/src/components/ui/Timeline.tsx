@@ -22,7 +22,7 @@ export const Timeline: React.FC<TimelineProps> = ({ items, className }) => {
   return (
     <div className={cn('relative space-y-6', className)}>
       {/* Vertical Rail */}
-      <div className="absolute left-3.5 top-3 bottom-3 w-px bg-dark-border-default" />
+      <div className="absolute left-3.5 top-3 bottom-3 w-px bg-slate-200" />
 
       {items.map((item, idx) => {
         const isCompleted = item.status === 'completed';
@@ -35,10 +35,10 @@ export const Timeline: React.FC<TimelineProps> = ({ items, className }) => {
             <div
               className={cn(
                 'relative z-10 flex h-7 w-7 items-center justify-center rounded-full border text-xs font-semibold shrink-0 transition-colors',
-                isCompleted && 'border-emerald-500/50 bg-emerald-500/10 text-emerald-400 shadow-xs',
-                isActive && 'border-brand-500 bg-brand-500/20 text-brand-400 ring-4 ring-brand-500/10 shadow-xs',
-                isError && 'border-crimson-500 bg-crimson-500/20 text-crimson-400',
-                !isCompleted && !isActive && !isError && 'border-dark-border-subtle bg-dark-bg-2 text-dark-text-muted'
+                isCompleted && 'border-emerald-300 bg-emerald-50 text-emerald-800 font-bold shadow-xs',
+                isActive && 'border-yellow-400 bg-yellow-100 text-yellow-950 ring-4 ring-yellow-400/20 font-bold shadow-xs',
+                isError && 'border-rose-300 bg-rose-50 text-rose-800 font-bold',
+                !isCompleted && !isActive && !isError && 'border-slate-200 bg-slate-50 text-slate-500 font-mono'
               )}
             >
               {item.icon ? (
@@ -46,7 +46,7 @@ export const Timeline: React.FC<TimelineProps> = ({ items, className }) => {
               ) : isCompleted ? (
                 <Check className="w-3.5 h-3.5 stroke-[2.5]" />
               ) : isActive ? (
-                <div className="h-2 w-2 rounded-full bg-brand-400 animate-pulse" />
+                <div className="h-2 w-2 rounded-full bg-yellow-600 animate-pulse" />
               ) : isError ? (
                 <AlertCircle className="w-3.5 h-3.5" />
               ) : (
@@ -58,20 +58,20 @@ export const Timeline: React.FC<TimelineProps> = ({ items, className }) => {
             <div className="flex-1 min-w-0 pt-0.5 space-y-1">
               <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <h4 className="text-xs font-semibold text-dark-text-primary">
+                  <h4 className="text-xs font-bold text-slate-950">
                     {item.title}
                   </h4>
                   {item.actor}
                 </div>
                 {item.timestamp && (
-                  <span className="font-mono text-[11px] text-dark-text-muted shrink-0">
+                  <span className="font-mono text-[11px] text-slate-500 shrink-0 font-medium">
                     {item.timestamp}
                   </span>
                 )}
               </div>
 
               {item.description && (
-                <p className="text-xs text-dark-text-secondary leading-relaxed">
+                <p className="text-xs text-slate-600 leading-relaxed font-medium">
                   {item.description}
                 </p>
               )}

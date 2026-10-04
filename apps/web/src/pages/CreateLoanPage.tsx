@@ -1,17 +1,15 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useIdentity } from '../context/IdentityContext';
-import { useWallet } from '../context/WalletContext';
 import { useEvaluatorContracts } from '../hooks/useCredify';
 import { useContractAction } from '../hooks/useContractAction';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Alert } from '../components/ui/Alert';
-import { AddressBadge } from '../components/ui/AddressBadge';
 import { TransactionLifecycle } from '../components/ui/TransactionLifecycle';
 import { MilestoneCelebration } from '../components/ui/MilestoneCelebration';
 import { formatEther, formatApr, formatDuration } from '../lib/utils';
-import { FileText, ArrowRight, ArrowLeft, CheckCircle2, Sparkles, AlertCircle, ShieldAlert, Key, ShieldCheck } from 'lucide-react';
+import { FileText, ArrowRight, ArrowLeft, CheckCircle2 } from 'lucide-react';
 
 const PRESETS = [
   {
@@ -100,19 +98,19 @@ export const CreateLoanPage: React.FC = () => {
   return (
     <div className="max-w-3xl mx-auto space-y-6 pb-12 animate-fade-in">
       {/* Breadcrumb navigation */}
-      <div className="flex items-center gap-2 text-xs text-dark-text-muted">
-        <Link to="/app/borrower/agreements" className="hover:text-dark-text-primary transition-colors duration-fast">
+      <div className="flex items-center gap-2 text-xs text-slate-500 font-medium">
+        <Link to="/app/borrower/agreements" className="hover:text-slate-900 transition-colors duration-fast">
           Agreements
         </Link>
         <span>/</span>
-        <span className="text-dark-text-secondary font-medium">New Credit Agreement</span>
+        <span className="text-slate-800 font-bold">New Credit Agreement</span>
       </div>
 
       {/* Page Title */}
       <div>
-        <h1 className="text-2xl font-bold text-dark-text-primary tracking-tight">Create Loan Agreement</h1>
-        <p className="text-xs text-dark-text-secondary mt-1">
-          Propose an on-chain credit agreement. Parameters are parsed into a structured term sheet and instantiated via the <code className="font-mono text-brand-400">LoanFactory</code> smart contract.
+        <h1 className="text-2xl font-bold text-slate-950 tracking-tight font-sans">Create Loan Agreement</h1>
+        <p className="text-xs text-slate-600 mt-1 font-medium">
+          Propose an on-chain credit agreement. Parameters are parsed into a structured term sheet and instantiated via the <code className="font-mono text-yellow-950 bg-yellow-100 px-1 py-0.5 rounded font-bold">LoanFactory</code> smart contract.
         </p>
       </div>
 
@@ -129,7 +127,7 @@ export const CreateLoanPage: React.FC = () => {
                 size="sm"
                 variant="primary"
                 onClick={() => navigate('/app/verify')}
-                className="text-xs h-7"
+                className="text-xs font-bold"
               >
                 Complete Identity Verification &rarr;
               </Button>
@@ -147,67 +145,67 @@ export const CreateLoanPage: React.FC = () => {
       )}
 
       {/* Stepper Progress */}
-      <div className="flex items-center justify-between border-b border-dark-border-subtle pb-4">
+      <div className="flex items-center justify-between border-b border-slate-200 pb-4">
         <div className="flex items-center gap-2 text-xs font-medium">
           <span
             className={`w-6 h-6 rounded-full flex items-center justify-center text-xs transition-colors duration-normal ${
-              step >= 1 ? 'bg-brand-500 text-white shadow-xs font-bold' : 'bg-dark-bg-3 text-dark-text-muted border border-dark-border-subtle'
+              step >= 1 ? 'bg-[#ffe600] text-black border border-yellow-400 font-black shadow-xs' : 'bg-slate-100 text-slate-500 border border-slate-200'
             }`}
           >
             1
           </span>
-          <span className={step >= 1 ? 'text-dark-text-primary font-semibold' : 'text-dark-text-muted'}>Describe Agreement</span>
+          <span className={step >= 1 ? 'text-slate-950 font-bold' : 'text-slate-500'}>Describe Agreement</span>
         </div>
-        <div className="w-12 h-px bg-dark-border-subtle" />
+        <div className="w-12 h-px bg-slate-200" />
         <div className="flex items-center gap-2 text-xs font-medium">
           <span
             className={`w-6 h-6 rounded-full flex items-center justify-center text-xs transition-colors duration-normal ${
-              step >= 2 ? 'bg-brand-500 text-white shadow-xs font-bold' : 'bg-dark-bg-3 text-dark-text-muted border border-dark-border-subtle'
+              step >= 2 ? 'bg-[#ffe600] text-black border border-yellow-400 font-black shadow-xs' : 'bg-slate-100 text-slate-500 border border-slate-200'
             }`}
           >
             2
           </span>
-          <span className={step >= 2 ? 'text-dark-text-primary font-semibold' : 'text-dark-text-muted'}>Review Structured Terms</span>
+          <span className={step >= 2 ? 'text-slate-950 font-bold' : 'text-slate-500'}>Review Structured Terms</span>
         </div>
-        <div className="w-12 h-px bg-dark-border-subtle" />
+        <div className="w-12 h-px bg-slate-200" />
         <div className="flex items-center gap-2 text-xs font-medium">
           <span
             className={`w-6 h-6 rounded-full flex items-center justify-center text-xs transition-colors duration-normal ${
-              step >= 3 ? 'bg-brand-500 text-white shadow-xs font-bold' : 'bg-dark-bg-3 text-dark-text-muted border border-dark-border-subtle'
+              step >= 3 ? 'bg-[#ffe600] text-black border border-yellow-400 font-black shadow-xs' : 'bg-slate-100 text-slate-500 border border-slate-200'
             }`}
           >
             3
           </span>
-          <span className={step >= 3 ? 'text-dark-text-primary font-semibold' : 'text-dark-text-muted'}>Deploy On-Chain</span>
+          <span className={step >= 3 ? 'text-slate-950 font-bold' : 'text-slate-500'}>Deploy On-Chain</span>
         </div>
       </div>
 
       {/* STEP 1: Describe Agreement */}
       {step === 1 && (
-        <Card className="animate-milestone-enter">
+        <Card className="animate-milestone-enter bg-white border-slate-200 shadow-sm">
           <CardHeader>
-            <CardTitle>1. Natural Language Agreement Terms</CardTitle>
-            <CardDescription>
+            <CardTitle className="text-slate-950 font-bold">1. Natural Language Agreement Terms</CardTitle>
+            <CardDescription className="text-slate-600 font-medium">
               Specify terms describing the principal, duration, APR, and spending cap. The Credify parser extracts validated parameters for the immutable contract template.
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-5">
             <div>
-              <label className="block text-xs font-semibold text-dark-text-secondary mb-1.5">
+              <label className="block text-xs font-bold text-slate-800 mb-1.5">
                 Agreement Text
               </label>
               <textarea
                 value={agreementText}
                 onChange={(e) => setAgreementText(e.target.value)}
                 rows={4}
-                className="w-full text-sm p-3 rounded-lg border border-dark-border-default bg-dark-bg-3 text-dark-text-primary focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 font-sans leading-relaxed"
+                className="w-full text-sm p-3.5 rounded-xl border border-slate-300 bg-white text-slate-950 font-medium focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 font-sans leading-relaxed"
                 placeholder="e.g. Create a 10 ETH credit agreement for 14 days at 8% with an 8 ETH spending cap."
               />
             </div>
 
             {/* Presets Helper */}
             <div className="space-y-2">
-              <span className="text-[11px] font-semibold text-dark-text-muted uppercase tracking-wider block">
+              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">
                 Standard Templates:
               </span>
               <div className="space-y-2">
@@ -216,15 +214,15 @@ export const CreateLoanPage: React.FC = () => {
                     key={idx}
                     type="button"
                     onClick={() => setAgreementText(p.text)}
-                    className="w-full text-left p-3 rounded-lg border border-dark-border-subtle hover:border-dark-border-strong bg-dark-bg-3 hover:bg-dark-bg-2 transition-all duration-fast text-xs flex items-center justify-between group cursor-pointer"
+                    className="w-full text-left p-3.5 rounded-xl border border-slate-200 hover:border-yellow-400 bg-slate-50 hover:bg-yellow-50/30 transition-all duration-fast text-xs flex items-center justify-between group cursor-pointer"
                   >
                     <div>
-                      <div className="font-semibold text-dark-text-primary group-hover:text-brand-300 transition-colors">
+                      <div className="font-bold text-slate-950 group-hover:text-yellow-950 transition-colors">
                         {p.title}
                       </div>
-                      <div className="text-[11px] text-dark-text-muted mt-0.5">{p.text}</div>
+                      <div className="text-xs text-slate-600 mt-0.5 font-medium">{p.text}</div>
                     </div>
-                    <span className="text-xs text-brand-400 font-medium shrink-0 ml-2 group-hover:translate-x-0.5 transition-transform">Use &rarr;</span>
+                    <span className="text-xs text-yellow-800 font-bold shrink-0 ml-2 group-hover:translate-x-0.5 transition-transform">Use &rarr;</span>
                   </button>
                 ))}
               </div>
@@ -236,6 +234,7 @@ export const CreateLoanPage: React.FC = () => {
                 onClick={previewTerms}
                 disabled={!agreementText.trim() || !isVerified}
                 icon={<ArrowRight className="w-4 h-4" />}
+                className="font-bold"
               >
                 Parse &amp; Review Term Sheet
               </Button>
@@ -246,42 +245,42 @@ export const CreateLoanPage: React.FC = () => {
 
       {/* STEP 2: Review Structured Terms */}
       {step === 2 && parsedPreview && (
-        <Card className="animate-milestone-enter">
+        <Card className="animate-milestone-enter bg-white border-slate-200 shadow-sm">
           <CardHeader>
-            <CardTitle>2. Review Structured Smart Contract Term Sheet</CardTitle>
-            <CardDescription>
-              Verify the parsed terms before deploying the <code className="font-mono text-brand-400">LoanPool</code> instance on-chain.
+            <CardTitle className="text-slate-950 font-bold">2. Review Structured Smart Contract Term Sheet</CardTitle>
+            <CardDescription className="text-slate-600 font-medium">
+              Verify the parsed terms before deploying the <code className="font-mono text-yellow-900 bg-yellow-100 px-1 py-0.5 rounded font-bold">LoanPool</code> instance on-chain.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            <div className="border border-dark-border-default rounded-lg divide-y divide-dark-border-subtle bg-dark-bg-3 text-xs">
+            <div className="border border-slate-200 rounded-xl divide-y divide-slate-200 bg-slate-50 text-xs">
               <div className="p-3.5 flex items-center justify-between">
-                <span className="text-dark-text-secondary">Principal Target:</span>
-                <span className="font-bold text-dark-text-primary font-mono text-sm">
+                <span className="text-slate-600 font-medium">Principal Target:</span>
+                <span className="font-black text-slate-950 font-mono text-sm">
                   {formatEther(parsedPreview.targetWei)}
                 </span>
               </div>
               <div className="p-3.5 flex items-center justify-between">
-                <span className="text-dark-text-secondary">Interest Rate:</span>
-                <span className="font-bold text-dark-text-primary font-mono">
+                <span className="text-slate-600 font-medium">Interest Rate:</span>
+                <span className="font-bold text-slate-950 font-mono">
                   {formatApr(parsedPreview.aprBps)}
                 </span>
               </div>
               <div className="p-3.5 flex items-center justify-between">
-                <span className="text-dark-text-secondary">Duration:</span>
-                <span className="font-bold text-dark-text-primary font-mono">
+                <span className="text-slate-600 font-medium">Duration:</span>
+                <span className="font-bold text-slate-950 font-mono">
                   {formatDuration(parsedPreview.durationSeconds)}
                 </span>
               </div>
               <div className="p-3.5 flex items-center justify-between">
-                <span className="text-dark-text-secondary">Spending Cap:</span>
-                <span className="font-bold text-dark-text-primary font-mono">
+                <span className="text-slate-600 font-medium">Spending Cap:</span>
+                <span className="font-black text-slate-950 font-mono">
                   {formatEther(parsedPreview.maxSpendWei)}
                 </span>
               </div>
               <div className="p-3.5 flex items-center justify-between">
-                <span className="text-dark-text-secondary">Default Quorum:</span>
-                <span className="font-bold text-dark-text-primary font-mono">
+                <span className="text-slate-600 font-medium">Default Quorum:</span>
+                <span className="font-bold text-slate-950 font-mono">
                   {(parsedPreview.defaultQuorumBps / 100).toFixed(2)}% (Capital-weighted)
                 </span>
               </div>
@@ -292,6 +291,7 @@ export const CreateLoanPage: React.FC = () => {
                 variant="outline"
                 onClick={() => setStep(1)}
                 icon={<ArrowLeft className="w-4 h-4" />}
+                className="font-bold bg-white border-slate-300 text-slate-900 hover:bg-slate-50"
               >
                 Back to Edit
               </Button>
@@ -299,6 +299,7 @@ export const CreateLoanPage: React.FC = () => {
                 variant="primary"
                 onClick={handleDeploy}
                 icon={<FileText className="w-4 h-4" />}
+                className="font-bold"
               >
                 Deploy Agreement to Blockchain
               </Button>
@@ -309,10 +310,10 @@ export const CreateLoanPage: React.FC = () => {
 
       {/* STEP 3: Deploy On-Chain (Transaction Lifecycle) */}
       {step === 3 && (
-        <Card className="animate-milestone-enter">
+        <Card className="animate-milestone-enter bg-white border-slate-200 shadow-sm">
           <CardHeader>
-            <CardTitle>3. On-Chain Contract Instantiation</CardTitle>
-            <CardDescription>
+            <CardTitle className="text-slate-950 font-bold">3. On-Chain Contract Instantiation</CardTitle>
+            <CardDescription className="text-slate-600 font-medium">
               Observing smart contract factory deployment and reputation authorization.
             </CardDescription>
           </CardHeader>
@@ -320,30 +321,31 @@ export const CreateLoanPage: React.FC = () => {
             {contractTxState && <TransactionLifecycle state={contractTxState} />}
 
             {contractTxState?.step === 'confirmed' && (
-              <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-dark-text-primary space-y-3">
+              <div className="p-5 rounded-2xl bg-emerald-50 border border-emerald-300 text-slate-950 space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <CheckCircle2 className="w-5 h-5 text-emerald-400" />
-                    <span className="font-semibold text-sm">LoanPool Contract Active &amp; Ready for Funding</span>
+                    <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+                    <span className="font-bold text-sm text-emerald-950">LoanPool Contract Active &amp; Ready for Funding</span>
                   </div>
                   <Button
                     size="sm"
                     variant="outline"
                     onClick={() => setShowMilestone(true)}
-                    className="text-xs"
+                    className="text-xs font-bold bg-white border-slate-300 text-slate-900 hover:bg-slate-50"
                   >
                     View Milestone
                   </Button>
                 </div>
-                <div className="text-xs text-dark-text-secondary leading-relaxed">
+                <div className="text-xs text-slate-800 leading-relaxed font-medium">
                   The agreement was successfully recorded on the local EVM. Lenders can now inspect the terms and contribute pooled funds toward the target.
                 </div>
                 <div className="flex items-center gap-3 pt-1">
                   {createdPoolId && createdPoolId.startsWith('0x') && createdPoolId.length === 42 ? (
                     <Button
                       variant="primary"
-                      onClick={() => navigate(`/app/agreements/${createdPoolId}`)}
+                      onClick={() => navigate(`/app/loans/${createdPoolId}`)}
                       icon={<ArrowRight className="w-4 h-4" />}
+                      className="font-bold"
                     >
                       Open Agreement Details
                     </Button>
@@ -351,6 +353,7 @@ export const CreateLoanPage: React.FC = () => {
                   <Button
                     variant="outline"
                     onClick={() => navigate('/app/borrower/agreements')}
+                    className="font-bold bg-white border-slate-300 text-slate-900 hover:bg-slate-50"
                   >
                     View My Agreements
                   </Button>
@@ -364,6 +367,7 @@ export const CreateLoanPage: React.FC = () => {
                   variant="outline"
                   onClick={() => setStep(2)}
                   icon={<ArrowLeft className="w-4 h-4" />}
+                  className="font-bold bg-white border-slate-300 text-slate-900 hover:bg-slate-50"
                 >
                   Return to Term Sheet
                 </Button>
@@ -371,6 +375,7 @@ export const CreateLoanPage: React.FC = () => {
                   variant="primary"
                   onClick={handleDeploy}
                   disabled={isExecuting}
+                  className="font-bold"
                 >
                   Retry Deployment
                 </Button>
@@ -393,7 +398,7 @@ export const CreateLoanPage: React.FC = () => {
             label: 'Open Agreement Details',
             onClick: () => {
               setShowMilestone(false);
-              navigate(`/app/agreements/${createdPoolId}`);
+              navigate(`/app/loans/${createdPoolId}`);
             },
           }}
         />

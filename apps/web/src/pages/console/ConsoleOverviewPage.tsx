@@ -42,27 +42,27 @@ export const ConsoleOverviewPage: React.FC = () => {
   const networkName = health?.network ?? 'hardhat';
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 sm:space-y-8 min-w-0">
       {/* Asymmetric Hero Header */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 items-stretch min-w-0">
         {/* Left 2/3: Dominant Node Telemetry Stage */}
-        <div className="lg:col-span-2 p-6 sm:p-8 rounded-2xl bg-dark-bg-2 border border-dark-border-subtle/80 shadow-depth-card relative overflow-hidden flex flex-col justify-between space-y-6">
-          <div className="absolute top-0 right-0 w-80 h-80 bg-brand-500/5 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20" />
+        <div className="xl:col-span-2 p-6 sm:p-8 rounded-2xl bg-white border border-slate-200 shadow-sm relative overflow-hidden flex flex-col justify-between space-y-6 min-w-0">
+          <div className="absolute top-0 right-0 w-80 h-80 bg-yellow-400/10 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20" />
 
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
-            <div className="space-y-1">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10 min-w-0">
+            <div className="space-y-1.5 min-w-0">
               <div className="flex items-center gap-2.5">
-                <span className="p-1.5 rounded-lg bg-brand-500/10 text-brand-400 border border-brand-500/25">
+                <span className="p-1.5 rounded-lg bg-[#ffe600] text-black border border-yellow-400 font-bold shadow-xs">
                   <Activity className="w-4 h-4" />
                 </span>
-                <span className="text-xs font-sans font-semibold uppercase tracking-wider text-brand-400">
+                <span className="text-xs font-sans font-bold uppercase tracking-wider text-yellow-950 bg-yellow-100 px-2 py-0.5 rounded border border-yellow-300">
                   EVM Runtime &amp; Protocol Engine
                 </span>
               </div>
-              <h1 className="text-2xl sm:text-3xl font-bold font-sans tracking-tight text-dark-text-primary">
+              <h1 className="text-2xl sm:text-3xl font-black font-sans tracking-tight text-slate-950">
                 Technical Console Overview
               </h1>
-              <p className="text-xs text-dark-text-secondary font-sans leading-relaxed max-w-xl">
+              <p className="text-xs text-slate-700 font-sans leading-relaxed max-w-xl font-medium">
                 Real-time protocol runtime inspection, authoritative state trees, and cryptographic verification evidence.
               </p>
             </div>
@@ -73,45 +73,45 @@ export const ConsoleOverviewPage: React.FC = () => {
               onClick={handleRefresh}
               loading={isRefreshing}
               icon={<RefreshCw className="w-3.5 h-3.5" />}
-              className="text-xs font-sans shrink-0 self-start sm:self-auto"
+              className="text-xs font-sans shrink-0 self-start sm:self-auto bg-white border-slate-300 text-slate-900 hover:bg-slate-50 font-semibold"
             >
               Poll EVM Node
             </Button>
           </div>
 
           {/* Core Metrics Band */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-4 border-t border-dark-border-subtle/50 relative z-10">
-            <div className="space-y-1">
-              <span className="text-xs font-sans text-dark-text-secondary block">LATEST BLOCK</span>
-              <div className="font-mono font-black text-2xl text-dark-text-primary flex items-center gap-1.5">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5 pt-4 border-t border-slate-200 relative z-10 min-w-0">
+            <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 space-y-1 min-w-0">
+              <span className="text-xs font-sans font-bold text-slate-700 block truncate">LATEST BLOCK</span>
+              <div className="font-mono font-black text-2xl text-slate-950 flex items-center gap-1.5 truncate">
                 {currentBlock !== null ? (
                   <>
                     <span>#<NumberTicker value={currentBlock} /></span>
                     <AnimatedSyncPulse color="emerald" />
                   </>
                 ) : (
-                  <span className="text-dark-text-muted">#...</span>
+                  <span className="text-slate-400">#...</span>
                 )}
               </div>
             </div>
 
-            <div className="space-y-1">
-              <span className="text-xs font-sans text-dark-text-secondary block">CHAIN ID</span>
-              <div className="font-mono font-bold text-2xl text-dark-text-primary">
+            <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 space-y-1 min-w-0">
+              <span className="text-xs font-sans font-bold text-slate-700 block truncate">CHAIN ID</span>
+              <div className="font-mono font-black text-2xl text-slate-950 truncate">
                 {chainId}
               </div>
             </div>
 
-            <div className="space-y-1">
-              <span className="text-xs font-sans text-dark-text-secondary block">SYNCHRONIZATION</span>
+            <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 space-y-1 min-w-0">
+              <span className="text-xs font-sans font-bold text-slate-700 block truncate">SYNCHRONIZATION</span>
               <div className="pt-1">
                 <TechnicalStatus status={nodeConnected ? 'SYNCED' : 'OFFLINE'} size="sm" />
               </div>
             </div>
 
-            <div className="space-y-1">
-              <span className="text-xs font-sans text-dark-text-secondary block">ACTIVE FACILITIES</span>
-              <div className="font-mono font-bold text-2xl text-brand-400">
+            <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 space-y-1 min-w-0">
+              <span className="text-xs font-sans font-bold text-slate-700 block truncate">ACTIVE FACILITIES</span>
+              <div className="font-mono font-black text-2xl text-slate-950 truncate">
                 <NumberTicker value={poolCount} />
               </div>
             </div>
@@ -119,76 +119,76 @@ export const ConsoleOverviewPage: React.FC = () => {
         </div>
 
         {/* Right 1/3: Quick Diagnostic Action Hub */}
-        <div className="p-6 sm:p-8 rounded-2xl bg-dark-bg-2 border border-dark-border-subtle/80 shadow-depth-card flex flex-col justify-between space-y-4">
-          <div className="space-y-1">
-            <h2 className="text-base font-bold font-sans text-dark-text-primary tracking-tight">
+        <div className="p-6 sm:p-8 rounded-2xl bg-white border border-slate-200 shadow-sm flex flex-col justify-between space-y-4 min-w-0">
+          <div className="space-y-1 min-w-0">
+            <h2 className="text-base font-bold font-sans text-slate-950 tracking-tight">
               Diagnostic Shortcuts
             </h2>
-            <p className="text-xs text-dark-text-secondary font-sans leading-relaxed">
+            <p className="text-xs text-slate-700 font-sans leading-relaxed font-medium">
               Direct telemetry inspection routes for system auditors.
             </p>
           </div>
 
-          <div className="space-y-2.5">
+          <div className="space-y-2.5 min-w-0">
             <Link
               to="/console/architecture"
-              className="flex items-center justify-between p-3 rounded-xl bg-dark-bg-3/60 hover:bg-dark-bg-3 border border-dark-border-subtle/60 hover:border-dark-border-default transition-all duration-micro group"
+              className="flex items-center justify-between p-3 rounded-xl bg-slate-50 hover:bg-yellow-50/70 border border-slate-200 hover:border-yellow-400 transition-all duration-micro group min-w-0"
             >
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-dark-bg-2 text-brand-400 group-hover:text-brand-300">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="p-2 rounded-lg bg-white border border-slate-200 text-slate-900 group-hover:bg-[#ffe600] group-hover:border-yellow-400 transition-colors shrink-0">
                   <Activity className="w-4 h-4" />
                 </div>
-                <div>
-                  <div className="text-xs font-sans font-semibold text-dark-text-primary group-hover:text-brand-300 transition-colors">
+                <div className="min-w-0">
+                  <div className="text-xs font-sans font-bold text-slate-950 group-hover:text-black transition-colors truncate">
                     Interactive System Topology
                   </div>
-                  <div className="text-xs font-sans text-dark-text-muted">Spatial architecture diagram</div>
+                  <div className="text-xs font-sans text-slate-700 font-medium truncate">Spatial architecture diagram</div>
                 </div>
               </div>
-              <ArrowRight className="w-4 h-4 text-dark-text-muted group-hover:text-brand-400 transition-colors" />
+              <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-black transition-colors shrink-0" />
             </Link>
 
             <Link
               to="/console/trace"
-              className="flex items-center justify-between p-3 rounded-xl bg-dark-bg-3/60 hover:bg-dark-bg-3 border border-dark-border-subtle/60 hover:border-dark-border-default transition-all duration-micro group"
+              className="flex items-center justify-between p-3 rounded-xl bg-slate-50 hover:bg-yellow-50/70 border border-slate-200 hover:border-yellow-400 transition-all duration-micro group min-w-0"
             >
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-dark-bg-2 text-purple-400 group-hover:text-purple-300">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="p-2 rounded-lg bg-white border border-slate-200 text-slate-900 group-hover:bg-[#ffe600] group-hover:border-yellow-400 transition-colors shrink-0">
                   <Binary className="w-4 h-4" />
                 </div>
-                <div>
-                  <div className="text-xs font-sans font-semibold text-dark-text-primary group-hover:text-purple-300 transition-colors">
+                <div className="min-w-0">
+                  <div className="text-xs font-sans font-bold text-slate-950 group-hover:text-black transition-colors truncate">
                     Action Trace Engine
                   </div>
-                  <div className="text-xs font-sans text-dark-text-muted">10-stage execution trace</div>
+                  <div className="text-xs font-sans text-slate-700 font-medium truncate">10-stage execution trace</div>
                 </div>
               </div>
-              <ArrowRight className="w-4 h-4 text-dark-text-muted group-hover:text-purple-400 transition-colors" />
+              <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-black transition-colors shrink-0" />
             </Link>
 
             <Link
               to="/console/replay"
-              className="flex items-center justify-between p-3 rounded-xl bg-dark-bg-3/60 hover:bg-dark-bg-3 border border-dark-border-subtle/60 hover:border-dark-border-default transition-all duration-micro group"
+              className="flex items-center justify-between p-3 rounded-xl bg-slate-50 hover:bg-yellow-50/70 border border-slate-200 hover:border-yellow-400 transition-all duration-micro group min-w-0"
             >
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-dark-bg-2 text-emerald-400 group-hover:text-emerald-300">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="p-2 rounded-lg bg-white border border-slate-200 text-slate-900 group-hover:bg-[#ffe600] group-hover:border-yellow-400 transition-colors shrink-0">
                   <RotateCcw className="w-4 h-4" />
                 </div>
-                <div>
-                  <div className="text-xs font-sans font-semibold text-dark-text-primary group-hover:text-emerald-300 transition-colors">
+                <div className="min-w-0">
+                  <div className="text-xs font-sans font-bold text-slate-950 group-hover:text-black transition-colors truncate">
                     Transaction Replay
                   </div>
-                  <div className="text-xs font-sans text-dark-text-muted">9-stage state reconstruction</div>
+                  <div className="text-xs font-sans text-slate-700 font-medium truncate">9-stage state reconstruction</div>
                 </div>
               </div>
-              <ArrowRight className="w-4 h-4 text-dark-text-muted group-hover:text-emerald-400 transition-colors" />
+              <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-black transition-colors shrink-0" />
             </Link>
           </div>
         </div>
       </div>
 
       {/* System Topology Nodes Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 min-w-0">
         {/* EVM Node */}
         <SystemNode
           name="Local EVM Execution Node"
@@ -236,13 +236,13 @@ export const ConsoleOverviewPage: React.FC = () => {
           title="Authoritative Protocol Contracts"
           subtitle="Immutable smart contract instances registered on local chain."
           badge={
-            <span className="font-mono text-xs px-2.5 py-0.5 rounded-md bg-dark-bg-3 border border-dark-border-subtle/80 text-dark-text-secondary font-medium">
+            <span className="font-mono text-xs px-2.5 py-0.5 rounded-md bg-yellow-100 border border-yellow-300 text-yellow-950 font-bold">
               EVM DEPLOYMENTS
             </span>
           }
           action={
             <Link to="/console/contracts">
-              <Button size="sm" variant="outline" className="text-xs font-sans">
+              <Button size="sm" variant="outline" className="text-xs font-sans bg-white border-slate-300 text-slate-900 hover:bg-slate-50 font-semibold">
                 Inspect All →
               </Button>
             </Link>
@@ -251,32 +251,32 @@ export const ConsoleOverviewPage: React.FC = () => {
         >
           {evaluatorData?.contracts ? (
             <div className="space-y-3 font-sans text-xs">
-              <div className="p-3.5 rounded-xl bg-dark-bg-3/50 border border-dark-border-subtle/60 flex items-center justify-between hover:border-dark-border-subtle transition-colors">
+              <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between hover:border-yellow-400 transition-colors">
                 <div>
-                  <span className="font-bold text-sm text-dark-text-primary block">KYCRegistry</span>
-                  <div className="text-xs text-dark-text-secondary">Identity Attestation Registry</div>
+                  <span className="font-bold text-sm text-slate-950 block">KYCRegistry</span>
+                  <div className="text-xs text-slate-600 font-medium">Identity Attestation Registry</div>
                 </div>
                 <TechnicalValue value={evaluatorData.contracts.kycRegistry} type="address" chars={5} />
               </div>
 
-              <div className="p-3.5 rounded-xl bg-dark-bg-3/50 border border-dark-border-subtle/60 flex items-center justify-between hover:border-dark-border-subtle transition-colors">
+              <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between hover:border-yellow-400 transition-colors">
                 <div>
-                  <span className="font-bold text-sm text-dark-text-primary block">LoanFactory</span>
-                  <div className="text-xs text-dark-text-secondary">Pool Instantiation Factory</div>
+                  <span className="font-bold text-sm text-slate-950 block">LoanFactory</span>
+                  <div className="text-xs text-slate-600 font-medium">Pool Instantiation Factory</div>
                 </div>
                 <TechnicalValue value={evaluatorData.contracts.loanFactory} type="address" chars={5} />
               </div>
 
-              <div className="p-3.5 rounded-xl bg-dark-bg-3/50 border border-dark-border-subtle/60 flex items-center justify-between hover:border-dark-border-subtle transition-colors">
+              <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between hover:border-yellow-400 transition-colors">
                 <div>
-                  <span className="font-bold text-sm text-dark-text-primary block">ReputationRegistry</span>
-                  <div className="text-xs text-dark-text-secondary">Authoritative Outcomes &amp; Scores</div>
+                  <span className="font-bold text-sm text-slate-950 block">ReputationRegistry</span>
+                  <div className="text-xs text-slate-600 font-medium">Authoritative Outcomes &amp; Scores</div>
                 </div>
                 <TechnicalValue value={evaluatorData.contracts.reputationRegistry} type="address" chars={5} />
               </div>
             </div>
           ) : (
-            <div className="py-8 text-center text-xs font-sans text-dark-text-muted">
+            <div className="py-8 text-center text-xs font-sans text-slate-500 font-medium">
               Connecting to contract registry...
             </div>
           )}
@@ -291,54 +291,54 @@ export const ConsoleOverviewPage: React.FC = () => {
           <div className="grid grid-cols-2 gap-3 text-xs font-sans">
             <Link
               to="/console/blockchain"
-              className="p-4 rounded-xl bg-dark-bg-3/50 border border-dark-border-subtle/60 hover:border-dark-border-default hover:bg-dark-bg-3 transition-all duration-micro flex items-center justify-between group"
+              className="p-4 rounded-xl bg-slate-50 border border-slate-200 hover:border-yellow-400 hover:bg-yellow-50/50 transition-all duration-micro flex items-center justify-between group"
             >
               <div>
-                <div className="font-bold text-sm text-dark-text-primary group-hover:text-brand-300 transition-colors">
+                <div className="font-bold text-sm text-slate-950 group-hover:text-black transition-colors">
                   Blockchain
                 </div>
-                <div className="text-xs text-dark-text-muted mt-0.5">Node RPC &amp; Mined Blocks</div>
+                <div className="text-xs text-slate-500 mt-0.5 font-medium">Node RPC &amp; Mined Blocks</div>
               </div>
-              <ArrowRight className="w-4 h-4 text-dark-text-muted group-hover:text-brand-400 transition-colors" />
+              <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-black transition-colors" />
             </Link>
 
             <Link
               to="/console/transactions"
-              className="p-4 rounded-xl bg-dark-bg-3/50 border border-dark-border-subtle/60 hover:border-dark-border-default hover:bg-dark-bg-3 transition-all duration-micro flex items-center justify-between group"
+              className="p-4 rounded-xl bg-slate-50 border border-slate-200 hover:border-yellow-400 hover:bg-yellow-50/50 transition-all duration-micro flex items-center justify-between group"
             >
               <div>
-                <div className="font-bold text-sm text-dark-text-primary group-hover:text-brand-300 transition-colors">
+                <div className="font-bold text-sm text-slate-950 group-hover:text-black transition-colors">
                   Transactions
                 </div>
-                <div className="text-xs text-dark-text-muted mt-0.5">Indexed EVM Receipts</div>
+                <div className="text-xs text-slate-500 mt-0.5 font-medium">Indexed EVM Receipts</div>
               </div>
-              <ArrowRight className="w-4 h-4 text-dark-text-muted group-hover:text-brand-400 transition-colors" />
+              <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-black transition-colors" />
             </Link>
 
             <Link
               to="/console/events"
-              className="p-4 rounded-xl bg-dark-bg-3/50 border border-dark-border-subtle/60 hover:border-dark-border-default hover:bg-dark-bg-3 transition-all duration-micro flex items-center justify-between group"
+              className="p-4 rounded-xl bg-slate-50 border border-slate-200 hover:border-yellow-400 hover:bg-yellow-50/50 transition-all duration-micro flex items-center justify-between group"
             >
               <div>
-                <div className="font-bold text-sm text-dark-text-primary group-hover:text-brand-300 transition-colors">
+                <div className="font-bold text-sm text-slate-950 group-hover:text-black transition-colors">
                   Live Events
                 </div>
-                <div className="text-xs text-dark-text-muted mt-0.5">Decoded Contract Logs</div>
+                <div className="text-xs text-slate-500 mt-0.5 font-medium">Decoded Contract Logs</div>
               </div>
-              <ArrowRight className="w-4 h-4 text-dark-text-muted group-hover:text-brand-400 transition-colors" />
+              <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-black transition-colors" />
             </Link>
 
             <Link
               to="/console/evaluator-tools"
-              className="p-4 rounded-xl bg-dark-bg-3/50 border border-dark-border-subtle/60 hover:border-dark-border-default hover:bg-dark-bg-3 transition-all duration-micro flex items-center justify-between group"
+              className="p-4 rounded-xl bg-slate-50 border border-slate-200 hover:border-yellow-400 hover:bg-yellow-50/50 transition-all duration-micro flex items-center justify-between group"
             >
               <div>
-                <div className="font-bold text-sm text-dark-text-primary group-hover:text-brand-300 transition-colors">
+                <div className="font-bold text-sm text-slate-950 group-hover:text-black transition-colors">
                   Evaluator Tools
                 </div>
-                <div className="text-xs text-dark-text-muted mt-0.5">Time-Warp &amp; Test Actions</div>
+                <div className="text-xs text-slate-500 mt-0.5 font-medium">Time-Warp &amp; Test Actions</div>
               </div>
-              <ArrowRight className="w-4 h-4 text-dark-text-muted group-hover:text-brand-400 transition-colors" />
+              <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-black transition-colors" />
             </Link>
           </div>
         </TechnicalPanel>

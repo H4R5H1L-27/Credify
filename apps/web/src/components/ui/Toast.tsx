@@ -23,27 +23,27 @@ export const Toast: React.FC<ToastProps> = ({
   return (
     <div
       className={cn(
-        'flex items-start gap-3 p-3.5 rounded-xl surface-glass shadow-glass max-w-sm w-full transition-all animate-in slide-in-from-bottom-2 duration-fast',
-        type === 'info' && 'border-brand-500/30 text-brand-400',
-        type === 'success' && 'border-emerald-500/30 text-emerald-400',
-        type === 'warning' && 'border-amber-500/30 text-amber-400',
-        type === 'error' && 'border-rose-500/30 text-rose-400',
+        'flex items-start gap-3 p-3.5 rounded-2xl bg-white border shadow-lg max-w-sm w-full transition-all animate-in slide-in-from-bottom-2 duration-fast',
+        type === 'info' && 'border-yellow-300 text-yellow-800',
+        type === 'success' && 'border-emerald-300 text-emerald-700',
+        type === 'warning' && 'border-amber-300 text-amber-700',
+        type === 'error' && 'border-rose-300 text-rose-700',
         className
       )}
     >
       <div className="mt-0.5 shrink-0">
-        {type === 'info' && <Info className="w-4 h-4" />}
-        {type === 'success' && <CheckCircle2 className="w-4 h-4" />}
-        {type === 'warning' && <AlertTriangle className="w-4 h-4" />}
-        {type === 'error' && <AlertCircle className="w-4 h-4" />}
+        {type === 'info' && <Info className="w-4 h-4 text-yellow-600" />}
+        {type === 'success' && <CheckCircle2 className="w-4 h-4 text-emerald-600" />}
+        {type === 'warning' && <AlertTriangle className="w-4 h-4 text-amber-600" />}
+        {type === 'error' && <AlertCircle className="w-4 h-4 text-rose-600" />}
       </div>
 
       <div className="flex-1 min-w-0 space-y-0.5">
-        <h5 className="text-xs font-semibold text-dark-text-primary">
+        <h5 className="text-xs font-bold text-slate-950">
           {title}
         </h5>
         {message && (
-          <p className="text-[11px] text-dark-text-secondary leading-relaxed">
+          <p className="text-[11px] text-slate-600 font-medium leading-relaxed">
             {message}
           </p>
         )}
@@ -53,7 +53,7 @@ export const Toast: React.FC<ToastProps> = ({
         <button
           type="button"
           onClick={onClose}
-          className="text-dark-text-muted hover:text-dark-text-primary rounded p-0.5 transition-colors cursor-pointer"
+          className="text-slate-400 hover:text-slate-900 rounded p-0.5 transition-colors cursor-pointer"
         >
           <X className="w-3.5 h-3.5" />
         </button>

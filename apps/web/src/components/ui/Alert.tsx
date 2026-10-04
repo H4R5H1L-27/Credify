@@ -10,24 +10,24 @@ export const Alert: React.FC<{
 }> = ({ variant = 'info', title, className, children }) => {
   const configs = {
     info: {
-      bg: 'bg-brand-500/10 text-dark-text-primary border-brand-500/30',
+      bg: 'bg-yellow-50 text-slate-900 border-yellow-300',
       icon: Info,
-      iconColor: 'text-brand-400',
+      iconColor: 'text-yellow-700',
     },
     warning: {
-      bg: 'bg-amber-500/10 text-dark-text-primary border-amber-500/30',
+      bg: 'bg-amber-50 text-slate-900 border-amber-300',
       icon: AlertTriangle,
-      iconColor: 'text-amber-400',
+      iconColor: 'text-amber-700',
     },
     error: {
-      bg: 'bg-crimson-500/10 text-dark-text-primary border-crimson-500/30',
+      bg: 'bg-rose-50 text-slate-900 border-rose-300',
       icon: AlertCircle,
-      iconColor: 'text-crimson-400',
+      iconColor: 'text-rose-700',
     },
     success: {
-      bg: 'bg-emerald-500/10 text-dark-text-primary border-emerald-500/30',
+      bg: 'bg-emerald-50 text-slate-900 border-emerald-300',
       icon: CheckCircle,
-      iconColor: 'text-emerald-400',
+      iconColor: 'text-emerald-700',
     },
   };
 
@@ -35,11 +35,11 @@ export const Alert: React.FC<{
   const Icon = config.icon;
 
   return (
-    <div className={cn('p-3.5 rounded-xl border flex gap-3 text-xs leading-relaxed', config.bg, className)}>
+    <div className={cn('p-3.5 rounded-xl border flex gap-3 text-xs leading-relaxed shadow-xs', config.bg, className)}>
       <Icon className={cn('w-4 h-4 shrink-0 mt-0.5', config.iconColor)} />
       <div className="flex-1 min-w-0">
-        {title && <h5 className="font-semibold mb-1 text-xs tracking-tight text-dark-text-primary">{title}</h5>}
-        <div className="text-xs text-dark-text-secondary">{children}</div>
+        {title && <h5 className="font-bold mb-1 text-xs tracking-tight text-slate-950">{title}</h5>}
+        <div className="text-xs text-slate-800 font-medium">{children}</div>
       </div>
     </div>
   );

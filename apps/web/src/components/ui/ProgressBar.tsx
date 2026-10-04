@@ -36,42 +36,42 @@ export const ProgressBar: React.FC<ProgressBarProps> = ({
   const thresholdPct = threshold !== undefined ? Math.min(100, Math.max(0, (threshold / max) * 100)) : undefined;
 
   const heightClasses = {
-    sm: 'h-1.5',
-    md: 'h-2',
-    lg: 'h-3',
+    sm: 'h-2',
+    md: 'h-2.5',
+    lg: 'h-3.5',
   };
 
   const variantClasses: Record<ProgressVariant, string> = {
-    primary: 'bg-brand-500',
-    brand: 'bg-brand-500',
+    primary: 'bg-[#ffe600] border border-yellow-400',
+    brand: 'bg-[#ffe600] border border-yellow-400',
     success: 'bg-emerald-500',
     emerald: 'bg-emerald-500',
     warning: 'bg-amber-500',
     amber: 'bg-amber-500',
-    danger: 'bg-crimson-500',
-    crimson: 'bg-crimson-500',
+    danger: 'bg-rose-500',
+    crimson: 'bg-rose-500',
   };
 
   return (
-    <div className="w-full space-y-1">
-      <div className={cn('relative w-full bg-dark-bg-3 border border-dark-border-subtle rounded-full overflow-hidden', heightClasses[size], className)}>
+    <div className="w-full space-y-1.5">
+      <div className={cn('relative w-full bg-slate-100 border border-slate-200 rounded-full overflow-hidden shadow-inner', heightClasses[size], className)}>
         <div
           className={cn('h-full rounded-full transition-all duration-500 ease-out', variantClasses[variant], barClassName)}
           style={{ width: `${percentage}%` }}
         />
         {thresholdPct !== undefined && (
           <div
-            className="absolute top-0 bottom-0 w-0.5 bg-dark-text-primary z-10 opacity-80"
+            className="absolute top-0 bottom-0 w-0.5 bg-slate-900 z-10 opacity-80"
             style={{ left: `${thresholdPct}%` }}
             title={`Threshold: ${thresholdPct.toFixed(1)}%`}
           />
         )}
       </div>
       {showLabel && (
-        <div className="flex justify-between items-center text-[11px] font-mono text-dark-text-secondary">
+        <div className="flex justify-between items-center text-[11px] font-mono font-bold text-slate-800">
           <span>{percentage.toFixed(1)}% completed</span>
           {thresholdPct !== undefined && (
-            <span className="text-dark-text-muted">Threshold: {thresholdPct.toFixed(1)}%</span>
+            <span className="text-slate-600 font-medium">Threshold: {thresholdPct.toFixed(1)}%</span>
           )}
         </div>
       )}

@@ -272,18 +272,18 @@ export const TopologyNodeInspector: React.FC<TopologyNodeInspectorProps> = ({
     >
       <div className="space-y-5 font-mono">
         {/* Role Banner */}
-        <div className="p-3.5 rounded-lg bg-dark-bg-3 border border-dark-border-subtle space-y-2">
-          <div className="text-[10px] text-dark-text-muted uppercase">Architectural Role</div>
-          <div className="text-xs font-bold text-dark-text-primary font-sans leading-relaxed">
+        <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
+          <div className="text-[10px] text-slate-500 font-bold uppercase">Architectural Role</div>
+          <div className="text-xs font-bold text-slate-950 font-sans leading-relaxed">
             {node.role}
           </div>
-          <div className="flex items-center gap-2 pt-1 text-[11px] text-dark-text-secondary">
-            <span className="text-dark-text-muted">Tech Stack:</span>
-            <span className="text-brand-400">{node.techStack}</span>
+          <div className="flex items-center gap-2 pt-1 text-xs text-slate-700">
+            <span className="text-slate-500 font-medium">Tech Stack:</span>
+            <span className="text-yellow-800 font-bold">{node.techStack}</span>
           </div>
-          <div className="flex items-center gap-2 text-[11px] text-dark-text-secondary">
-            <span className="text-dark-text-muted">Code Path:</span>
-            <code className="text-dark-text-primary px-1.5 py-0.5 rounded bg-dark-bg-2 border border-dark-border-default text-[10px]">
+          <div className="flex items-center gap-2 text-xs text-slate-700">
+            <span className="text-slate-500 font-medium">Code Path:</span>
+            <code className="text-slate-950 font-bold px-1.5 py-0.5 rounded bg-white border border-slate-300 text-[11px]">
               {node.sourcePath}
             </code>
           </div>
@@ -292,15 +292,15 @@ export const TopologyNodeInspector: React.FC<TopologyNodeInspectorProps> = ({
         {/* Runtime Telemetry (if available) */}
         {node.runtimeTelemetry && node.runtimeTelemetry.length > 0 && (
           <div className="space-y-2">
-            <span className="text-xs font-bold uppercase text-dark-text-primary flex items-center gap-1.5">
-              <Activity className="w-3.5 h-3.5 text-brand-400" />
+            <span className="text-xs font-bold uppercase text-slate-950 flex items-center gap-1.5">
+              <Activity className="w-3.5 h-3.5 text-yellow-700" />
               Live Runtime Telemetry
             </span>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
               {node.runtimeTelemetry.map((metric) => (
-                <div key={metric.label} className="p-2.5 rounded-md bg-dark-bg-2 border border-dark-border-subtle space-y-0.5">
-                  <div className="text-[10px] text-dark-text-muted uppercase">{metric.label}</div>
-                  <div className="text-dark-text-primary font-bold">{metric.value}</div>
+                <div key={metric.label} className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 space-y-0.5">
+                  <div className="text-[10px] text-slate-500 font-bold uppercase">{metric.label}</div>
+                  <div className="text-slate-950 font-black">{metric.value}</div>
                 </div>
               ))}
             </div>
@@ -309,14 +309,14 @@ export const TopologyNodeInspector: React.FC<TopologyNodeInspectorProps> = ({
 
         {/* Primary Responsibilities */}
         <div className="space-y-2">
-          <span className="text-xs font-bold uppercase text-dark-text-primary flex items-center gap-1.5">
-            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+          <span className="text-xs font-bold uppercase text-slate-950 flex items-center gap-1.5">
+            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
             Core Technical Responsibilities
           </span>
-          <ul className="space-y-1.5 font-sans text-xs text-dark-text-secondary">
+          <ul className="space-y-1.5 font-sans text-xs text-slate-700">
             {node.responsibilities.map((resp, i) => (
               <li key={i} className="flex items-start gap-2">
-                <span className="text-brand-400 font-bold shrink-0 font-mono">•</span>
+                <span className="text-yellow-700 font-bold shrink-0 font-mono">•</span>
                 <span>{resp}</span>
               </li>
             ))}
@@ -325,14 +325,14 @@ export const TopologyNodeInspector: React.FC<TopologyNodeInspectorProps> = ({
 
         {/* Architectural Invariants */}
         <div className="space-y-2">
-          <span className="text-xs font-bold uppercase text-dark-text-primary flex items-center gap-1.5">
-            <ShieldCheck className="w-3.5 h-3.5 text-blue-400" />
+          <span className="text-xs font-bold uppercase text-slate-950 flex items-center gap-1.5">
+            <ShieldCheck className="w-3.5 h-3.5 text-yellow-700" />
             Formal Architectural Invariants
           </span>
-          <ul className="space-y-1.5 font-sans text-xs text-dark-text-secondary">
+          <ul className="space-y-1.5 font-sans text-xs text-slate-700">
             {node.invariants.map((inv, i) => (
               <li key={i} className="flex items-start gap-2">
-                <span className="text-blue-400 font-bold shrink-0 font-mono">✓</span>
+                <span className="text-emerald-700 font-bold shrink-0 font-mono">✓</span>
                 <span>{inv}</span>
               </li>
             ))}
@@ -340,11 +340,11 @@ export const TopologyNodeInspector: React.FC<TopologyNodeInspectorProps> = ({
         </div>
 
         {/* Footer & Actions */}
-        <div className="flex items-center justify-between pt-3 border-t border-dark-border-subtle">
+        <div className="flex items-center justify-between pt-3 border-t border-slate-200">
           {node.consoleRoute ? (
             <Link
               to={node.consoleRoute}
-              className="inline-flex items-center gap-1.5 text-xs text-brand-400 hover:text-brand-300 font-bold transition-colors"
+              className="inline-flex items-center gap-1.5 text-xs text-yellow-800 hover:text-yellow-950 font-bold transition-colors"
             >
               <span>{node.consoleRouteLabel || 'Inspect in Console'}</span>
               <ArrowRight className="w-3.5 h-3.5" />
@@ -353,7 +353,7 @@ export const TopologyNodeInspector: React.FC<TopologyNodeInspectorProps> = ({
             <div />
           )}
 
-          <Button variant="outline" size="sm" onClick={onClose} className="text-xs">
+          <Button variant="outline" size="sm" onClick={onClose} className="text-xs font-bold bg-white border-slate-300 text-slate-900 hover:bg-slate-50">
             Close Inspector
           </Button>
         </div>

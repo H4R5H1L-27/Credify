@@ -11,18 +11,18 @@ export const Card: React.FC<CardProps> = ({
   ...props
 }) => {
   const variants = {
-    elevated: 'bg-dark-bg-2 border border-dark-border-subtle/70 shadow-depth-card',
-    flat: 'bg-dark-bg-2/60 border-0 shadow-none',
-    ghost: 'bg-transparent border border-dark-border-subtle/50 shadow-none',
-    glass: 'surface-glass shadow-glass',
+    elevated: 'bg-white border border-slate-200 shadow-sm',
+    flat: 'bg-slate-50 border-0 shadow-none',
+    ghost: 'bg-transparent border border-slate-200 shadow-none',
+    glass: 'bg-white/95 backdrop-blur-md border border-slate-200 shadow-sm',
     interactive:
-      'bg-dark-bg-2 border border-dark-border-subtle/70 hover:border-brand-500/40 hover:bg-dark-bg-3/50 hover:shadow-depth-elevated cursor-pointer',
+      'bg-white border border-slate-200 hover:border-yellow-400 hover:shadow-md transition-all cursor-pointer',
   };
 
   return (
     <div
       className={cn(
-        'rounded-2xl text-dark-text-primary transition-all duration-normal',
+        'rounded-2xl text-slate-950 transition-all duration-normal',
         variants[variant],
         className
       )}
@@ -37,7 +37,7 @@ export const CardHeader: React.FC<React.HTMLAttributes<HTMLDivElement>> = ({
 }) => (
   <div
     className={cn(
-      'p-5 sm:p-6 border-b border-dark-border-subtle/60 flex flex-col gap-1.5',
+      'p-5 sm:p-6 border-b border-slate-200 flex flex-col gap-1.5',
       className
     )}
     {...props}
@@ -50,7 +50,7 @@ export const CardTitle: React.FC<React.HTMLAttributes<HTMLHeadingElement>> = ({
 }) => (
   <h3
     className={cn(
-      'text-base font-bold font-sans text-dark-text-primary tracking-tight flex items-center gap-2',
+      'text-base font-bold font-sans text-slate-950 tracking-tight flex items-center gap-2',
       className
     )}
     {...props}
@@ -63,7 +63,7 @@ export const CardDescription: React.FC<React.HTMLAttributes<HTMLParagraphElement
 }) => (
   <p
     className={cn(
-      'text-xs text-dark-text-secondary leading-relaxed font-sans',
+      'text-xs text-slate-600 leading-relaxed font-sans font-medium',
       className
     )}
     {...props}

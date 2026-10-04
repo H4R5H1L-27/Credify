@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { cn } from '../../lib/utils';
-import { Box, ArrowRight, Hash, Clock, Fuel, ShieldCheck } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 
 export interface IsometricBlockData {
   number: string;
@@ -34,7 +34,7 @@ export const IsometricBlockStream: React.FC<IsometricBlockStreamProps> = ({
 
   if (displayBlocks.length === 0) {
     return (
-      <div className="p-8 text-center text-xs font-mono text-dark-text-muted">
+      <div className="p-8 text-center text-xs font-mono text-slate-500 font-medium">
         Waiting for initial EVM blocks...
       </div>
     );
@@ -81,13 +81,13 @@ export const IsometricBlockStream: React.FC<IsometricBlockStreamProps> = ({
                       <linearGradient id={`topGrad-${blk.number}`} x1="0" y1="0" x2="1" y2="1">
                         <stop
                           offset="0%"
-                          stopColor={isLatest ? '#4F6BF5' : isHovered ? '#3B82F6' : '#1F2432'}
-                          stopOpacity={isLatest ? '0.6' : '0.8'}
+                          stopColor={isLatest ? '#ffe600' : isHovered ? '#fef08a' : '#ffffff'}
+                          stopOpacity="1"
                         />
                         <stop
                           offset="100%"
-                          stopColor={isLatest ? '#202F8F' : isHovered ? '#1E3A8A' : '#141721'}
-                          stopOpacity="0.9"
+                          stopColor={isLatest ? '#facc15' : isHovered ? '#fde047' : '#f1f5f9'}
+                          stopOpacity="1"
                         />
                       </linearGradient>
 
@@ -95,11 +95,11 @@ export const IsometricBlockStream: React.FC<IsometricBlockStreamProps> = ({
                       <linearGradient id={`frontGrad-${blk.number}`} x1="0" y1="0" x2="0" y2="1">
                         <stop
                           offset="0%"
-                          stopColor={isLatest ? '#3B54D6' : '#171B26'}
+                          stopColor={isLatest ? '#facc15' : '#f8fafc'}
                         />
                         <stop
                           offset="100%"
-                          stopColor={isLatest ? '#182269' : '#0F1219'}
+                          stopColor={isLatest ? '#eab308' : '#e2e8f0'}
                         />
                       </linearGradient>
 
@@ -107,11 +107,11 @@ export const IsometricBlockStream: React.FC<IsometricBlockStreamProps> = ({
                       <linearGradient id={`rightGrad-${blk.number}`} x1="0" y1="0" x2="1" y2="0">
                         <stop
                           offset="0%"
-                          stopColor={isLatest ? '#2C3FB5' : '#12151E'}
+                          stopColor={isLatest ? '#eab308' : '#e2e8f0'}
                         />
                         <stop
                           offset="100%"
-                          stopColor={isLatest ? '#12173F' : '#0B0D13'}
+                          stopColor={isLatest ? '#ca8a04' : '#cbd5e1'}
                         />
                       </linearGradient>
 
@@ -128,8 +128,8 @@ export const IsometricBlockStream: React.FC<IsometricBlockStreamProps> = ({
                       cy="125"
                       rx="48"
                       ry="12"
-                      fill="black"
-                      fillOpacity={isHovered ? '0.55' : '0.35'}
+                      fill="#0f172a"
+                      fillOpacity={isHovered ? '0.15' : '0.08'}
                       className="transition-all duration-300"
                     />
 
@@ -140,23 +140,22 @@ export const IsometricBlockStream: React.FC<IsometricBlockStreamProps> = ({
                         cy="60"
                         rx="55"
                         ry="45"
-                        fill={isLatest ? 'rgba(79, 107, 245, 0.25)' : 'rgba(16, 185, 129, 0.25)'}
+                        fill={isLatest ? 'rgba(255, 230, 0, 0.3)' : 'rgba(16, 185, 129, 0.2)'}
                         filter={`url(#glow-${blk.number})`}
                         className="animate-pulse-subtle pointer-events-none"
                       />
                     )}
 
                     {/* 1. TOP FACE (Rhombus in 30° Axonometric Projection) */}
-                    {/* Points: (65, 15) -> (115, 42) -> (65, 68) -> (15, 42) */}
                     <polygon
                       points="65,15 115,42 65,68 15,42"
                       fill={`url(#topGrad-${blk.number})`}
                       stroke={
                         isLatest
-                          ? 'rgba(104, 132, 248, 0.8)'
+                          ? '#ca8a04'
                           : isHovered
-                          ? 'rgba(59, 130, 246, 0.6)'
-                          : 'rgba(255, 255, 255, 0.12)'
+                          ? '#eab308'
+                          : '#cbd5e1'
                       }
                       strokeWidth="1.5"
                     />
@@ -164,37 +163,35 @@ export const IsometricBlockStream: React.FC<IsometricBlockStreamProps> = ({
                     {/* Top Face Gas Volume Indicator Grid */}
                     <polygon
                       points="65,25 100,43 65,60 30,43"
-                      fill={gasPercent > 0 ? 'rgba(16, 185, 129, 0.25)' : 'rgba(255, 255, 255, 0.04)'}
-                      stroke={gasPercent > 0 ? 'rgba(16, 185, 129, 0.5)' : 'rgba(255, 255, 255, 0.08)'}
+                      fill={gasPercent > 0 ? 'rgba(16, 185, 129, 0.25)' : 'rgba(0, 0, 0, 0.04)'}
+                      stroke={gasPercent > 0 ? 'rgba(16, 185, 129, 0.6)' : 'rgba(0, 0, 0, 0.08)'}
                       strokeWidth="1"
                     />
 
                     {/* 2. LEFT / FRONT FACE */}
-                    {/* Points: (15, 42) -> (65, 68) -> (65, 118) -> (15, 92) */}
                     <polygon
                       points="15,42 65,68 65,118 15,92"
                       fill={`url(#frontGrad-${blk.number})`}
                       stroke={
                         isLatest
-                          ? 'rgba(104, 132, 248, 0.7)'
+                          ? '#ca8a04'
                           : isHovered
-                          ? 'rgba(59, 130, 246, 0.5)'
-                          : 'rgba(255, 255, 255, 0.1)'
+                          ? '#eab308'
+                          : '#cbd5e1'
                       }
                       strokeWidth="1.5"
                     />
 
                     {/* 3. RIGHT FACE */}
-                    {/* Points: (65, 68) -> (115, 42) -> (115, 92) -> (65, 118) */}
                     <polygon
                       points="65,68 115,42 115,92 65,118"
                       fill={`url(#rightGrad-${blk.number})`}
                       stroke={
                         isLatest
-                          ? 'rgba(104, 132, 248, 0.7)'
+                          ? '#ca8a04'
                           : isHovered
-                          ? 'rgba(59, 130, 246, 0.5)'
-                          : 'rgba(255, 255, 255, 0.08)'
+                          ? '#eab308'
+                          : '#cbd5e1'
                       }
                       strokeWidth="1.5"
                     />
@@ -205,7 +202,7 @@ export const IsometricBlockStream: React.FC<IsometricBlockStreamProps> = ({
                       y1="68"
                       x2="65"
                       y2="118"
-                      stroke={isLatest ? '#6884F8' : 'rgba(255, 255, 255, 0.2)'}
+                      stroke={isLatest ? '#a16207' : '#94a3b8'}
                       strokeWidth="1.5"
                     />
 
@@ -213,7 +210,7 @@ export const IsometricBlockStream: React.FC<IsometricBlockStreamProps> = ({
                     <text
                       x="38"
                       y="82"
-                      fill="#FFFFFF"
+                      fill="#0f172a"
                       fontSize="11"
                       fontFamily="JetBrains Mono, monospace"
                       fontWeight="bold"
@@ -228,24 +225,24 @@ export const IsometricBlockStream: React.FC<IsometricBlockStreamProps> = ({
                 <div className="mt-2 text-center space-y-1 font-mono text-[11px]">
                   <div className="flex items-center justify-center gap-1.5">
                     {isLatest ? (
-                      <span className="px-2 py-0.5 rounded-full bg-brand-500/20 text-brand-300 border border-brand-500/40 text-[9px] font-bold">
+                      <span className="px-2.5 py-0.5 rounded-full bg-[#ffe600] text-black border border-yellow-400 text-[9px] font-black shadow-xs">
                         HEAD BLOCK
                       </span>
                     ) : (
-                      <span className="text-dark-text-muted text-[10px]">#{blk.number}</span>
+                      <span className="text-slate-700 font-bold text-[10px]">#{blk.number}</span>
                     )}
                   </div>
 
-                  <div className="flex items-center justify-center gap-2 text-[10px] text-dark-text-secondary">
+                  <div className="flex items-center justify-center gap-2 text-[10px] text-slate-600 font-medium">
                     <span
                       className={cn(
-                        'px-1.5 py-0.2 rounded font-semibold',
-                        hasTxs ? 'text-emerald-400 bg-emerald-500/10' : 'text-dark-text-muted bg-dark-bg-3'
+                        'px-1.5 py-0.2 rounded font-bold',
+                        hasTxs ? 'text-emerald-800 bg-emerald-100 border border-emerald-300' : 'text-slate-500 bg-slate-100'
                       )}
                     >
                       {blk.transactionCount} {blk.transactionCount === 1 ? 'tx' : 'txs'}
                     </span>
-                    <span className="text-dark-text-muted truncate max-w-[65px]">
+                    <span className="text-slate-500 font-medium truncate max-w-[65px]">
                       {blk.hash.slice(0, 6)}…
                     </span>
                   </div>
@@ -256,13 +253,13 @@ export const IsometricBlockStream: React.FC<IsometricBlockStreamProps> = ({
               {idx < displayBlocks.length - 1 && (
                 <div className="flex-1 flex flex-col items-center justify-center px-1 mb-8 relative">
                   {/* Glowing Vector Connection Beam */}
-                  <div className="w-full h-0.5 bg-dark-border-default relative overflow-hidden">
-                    <div className="absolute inset-0 bg-gradient-to-r from-brand-500 via-emerald-400 to-brand-400 animate-shimmer-slide opacity-75" />
+                  <div className="w-full h-0.5 bg-slate-200 relative overflow-hidden rounded-full">
+                    <div className="absolute inset-0 bg-gradient-to-r from-yellow-400 via-emerald-400 to-yellow-500 animate-shimmer-slide opacity-85" />
                   </div>
                   {/* Arrow Indicator */}
-                  <div className="mt-1 flex items-center gap-0.5 text-[9px] font-mono text-dark-text-muted">
+                  <div className="mt-1 flex items-center gap-0.5 text-[9px] font-mono text-slate-500 font-semibold">
                     <span>parentHash</span>
-                    <ArrowRight className="w-2.5 h-2.5 text-brand-400" />
+                    <ArrowRight className="w-2.5 h-2.5 text-yellow-600" />
                   </div>
                 </div>
               )}

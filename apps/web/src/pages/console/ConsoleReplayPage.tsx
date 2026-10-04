@@ -400,11 +400,11 @@ export const ConsoleReplayPage: React.FC = () => {
       {/* Header Banner */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl font-bold font-mono tracking-tight text-dark-text-primary uppercase flex items-center gap-2">
-            <RotateCcw className="w-5 h-5 text-brand-400" />
+          <h1 className="text-xl font-black font-mono tracking-tight text-slate-950 uppercase flex items-center gap-2">
+            <RotateCcw className="w-5 h-5 text-yellow-600" />
             Deterministic Transaction Replay
           </h1>
-          <p className="text-xs text-dark-text-secondary mt-0.5 font-sans">
+          <p className="text-xs text-slate-500 mt-0.5 font-sans font-medium">
             Step-by-step deterministic reconstruction of completed on-chain transactions. Synthesizes real EVM state transitions without triggering mutations.
           </p>
         </div>
@@ -416,8 +416,8 @@ export const ConsoleReplayPage: React.FC = () => {
             onClick={() => setReducedMotion(!reducedMotion)}
             className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-mono border transition-colors cursor-pointer ${
               reducedMotion
-                ? 'bg-amber-500/10 text-amber-400 border-amber-500/30'
-                : 'bg-dark-bg-2 text-dark-text-muted border-dark-border-subtle hover:text-dark-text-primary'
+                ? 'bg-amber-50 text-amber-900 border-amber-300 font-bold'
+                : 'bg-white text-slate-600 border-slate-200 hover:text-slate-900 font-semibold'
             }`}
             title="Toggle reduced motion mode"
           >
@@ -462,25 +462,25 @@ export const ConsoleReplayPage: React.FC = () => {
         />
 
         {/* Transaction Selection Bar */}
-        <div className="p-3.5 rounded-xl bg-dark-bg-2 border border-dark-border-subtle flex flex-col md:flex-row md:items-center justify-between gap-3 font-mono text-xs">
+        <div className="p-3.5 rounded-2xl bg-white border border-slate-200 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-3 font-mono text-xs">
           <form onSubmit={handleSearchSubmit} className="flex-1 flex items-center gap-2">
-            <Search className="w-4 h-4 text-dark-text-muted shrink-0" />
+            <Search className="w-4 h-4 text-slate-400 shrink-0" />
             <input
               type="text"
               value={targetTxHash}
               onChange={(e) => setTargetTxHash(e.target.value)}
               placeholder="Paste transaction hash (0x...) to replay execution proof..."
-              className="w-full bg-transparent border-none text-xs text-dark-text-primary placeholder:text-dark-text-muted focus:outline-none"
+              className="w-full bg-transparent border-none text-xs text-slate-950 placeholder:text-slate-400 focus:outline-none font-medium"
             />
-            <Button size="sm" variant="primary" type="submit" className="text-xs shrink-0 font-mono">
+            <Button size="sm" variant="primary" type="submit" className="text-xs shrink-0 font-mono font-bold">
               Replay Tx
             </Button>
           </form>
 
           {/* Quick Transaction Picker */}
           {filteredTransactions.length > 0 && (
-            <div className="flex items-center gap-2 border-t md:border-t-0 md:border-l border-dark-border-subtle pt-2 md:pt-0 md:pl-3">
-              <span className="text-dark-text-muted text-[11px] shrink-0">Recent:</span>
+            <div className="flex items-center gap-2 border-t md:border-t-0 md:border-l border-slate-200 pt-2 md:pt-0 md:pl-3">
+              <span className="text-slate-500 text-[11px] font-bold shrink-0">Recent:</span>
               <select
                 value={selectedTx || ''}
                 onChange={(e) => {
@@ -490,7 +490,7 @@ export const ConsoleReplayPage: React.FC = () => {
                   setIsPlaying(false);
                 }}
                 aria-label="Select transaction to replay"
-                className="bg-dark-bg-3 border border-dark-border-subtle rounded-lg px-2.5 py-1 text-xs text-dark-text-primary font-mono focus:outline-none focus:border-brand-500 max-w-[220px] truncate"
+                className="bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1 text-xs text-slate-950 font-mono font-bold focus:outline-none focus:border-yellow-400 max-w-[220px] truncate"
               >
                 {filteredTransactions.map((tx) => {
                   const evt = tx.decodedEvents[0]?.eventName || (tx.status === 'REVERTED' ? 'Reverted' : 'Tx');
@@ -508,17 +508,17 @@ export const ConsoleReplayPage: React.FC = () => {
 
       {/* Selected Transaction Metadata Card */}
       {currentTransaction && (
-        <div className="p-4 rounded-xl bg-dark-bg-2 border border-dark-border-subtle font-mono text-xs space-y-3">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-dark-border-subtle/50">
+        <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs font-mono text-xs space-y-3">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-slate-100">
             <div className="flex items-center gap-2">
               <TransactionStatus
                 status={currentTransaction.status === 'SUCCESS' ? 'CONFIRMED' : currentTransaction.status === 'REVERTED' ? 'REVERTED' : 'PENDING'}
                 size="md"
               />
-              <span className="font-bold text-dark-text-primary">
+              <span className="font-bold text-slate-950">
                 {currentEvent?.eventName || currentTransaction.decodedEvents[0]?.eventName || 'Contract Call'}
               </span>
-              <span className="text-dark-text-muted text-[11px]">
+              <span className="text-slate-500 text-[11px] font-bold">
                 Block #{currentTransaction.blockNumber}
               </span>
             </div>
@@ -527,7 +527,7 @@ export const ConsoleReplayPage: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setModalTxHash(currentTransaction.hash)}
-                className="text-xs text-brand-400 hover:underline flex items-center gap-1"
+                className="text-xs text-yellow-900 hover:text-black font-bold underline flex items-center gap-1"
               >
                 <span>Inspect Authoritative Receipt</span>
                 <ExternalLink className="w-3.5 h-3.5" />
@@ -537,27 +537,27 @@ export const ConsoleReplayPage: React.FC = () => {
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-[11px]">
             <div>
-              <span className="text-dark-text-muted block text-[10px]">TX HASH</span>
-              <span className="font-bold text-dark-text-primary truncate block" title={currentTransaction.hash}>
+              <span className="text-slate-500 block text-[10px] font-bold">TX HASH</span>
+              <span className="font-bold text-slate-950 truncate block" title={currentTransaction.hash}>
                 {currentTransaction.hash.slice(0, 14)}...{currentTransaction.hash.slice(-8)}
               </span>
             </div>
             <div>
-              <span className="text-dark-text-muted block text-[10px]">CALLER (FROM)</span>
-              <span className="font-bold text-dark-text-primary truncate block" title={currentTransaction.from}>
+              <span className="text-slate-500 block text-[10px] font-bold">CALLER (FROM)</span>
+              <span className="font-bold text-slate-950 truncate block" title={currentTransaction.from}>
                 {currentTransaction.from.slice(0, 10)}...{currentTransaction.from.slice(-6)}
               </span>
             </div>
             <div>
-              <span className="text-dark-text-muted block text-[10px]">GAS CONSUMED</span>
-              <span className="font-bold text-dark-text-primary block">
+              <span className="text-slate-500 block text-[10px] font-bold">GAS CONSUMED</span>
+              <span className="font-bold text-slate-950 block">
                 {Number(currentTransaction.gasUsed).toLocaleString()} gas
               </span>
             </div>
             <div>
-              <span className="text-dark-text-muted block text-[10px]">VALUE TRANSFERRED</span>
-              <span className="font-bold text-brand-400 block">
-                {formatEther(currentTransaction.valueWei || '0')}
+              <span className="text-slate-500 block text-[10px] font-bold">VALUE TRANSFERRED</span>
+              <span className="font-bold text-slate-950 block">
+                {formatEther(currentTransaction.valueWei || '0')} ETH
               </span>
             </div>
           </div>
@@ -600,22 +600,22 @@ export const ConsoleReplayPage: React.FC = () => {
         title="Chronological Information Flow"
         subtitle="Step-by-step progression of evidence through Credify's architectural layers."
         badge={
-          <span className="font-mono text-[10px] text-brand-400">
+          <span className="font-mono text-[10px] font-bold text-yellow-950 bg-yellow-100 px-2 py-0.5 rounded border border-yellow-300">
             {playbackStep} OF 9 MILESTONES APPLIED
           </span>
         }
         isLoading={txLoading}
         isEmpty={replayStages.length === 0}
         emptyState={
-          <div className="py-12 text-center text-xs font-mono text-dark-text-muted space-y-2">
-            <Layers className="w-8 h-8 mx-auto text-dark-text-muted" />
+          <div className="py-12 text-center text-xs font-mono text-slate-500 space-y-2">
+            <Layers className="w-8 h-8 mx-auto text-slate-400" />
             <div>No transaction selected or available to replay.</div>
           </div>
         }
       >
         <div className="space-y-4 relative">
           {/* Subtle vertical connector wire */}
-          <div className="absolute left-7 top-6 bottom-6 w-0.5 bg-dark-border-subtle -z-10" />
+          <div className="absolute left-7 top-6 bottom-6 w-0.5 bg-slate-200 -z-10" />
 
           {replayStages.map((stage) => {
             const isStageActive = stage.step === playbackStep;
@@ -647,39 +647,39 @@ export const ConsoleReplayPage: React.FC = () => {
           maxWidth="lg"
         >
           <div className="space-y-4 font-mono text-xs">
-            <div className="p-3.5 rounded-xl bg-dark-bg-2 border border-dark-border-subtle space-y-2">
+            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-dark-text-muted text-[11px]">ARCHITECTURAL LAYER:</span>
-                <span className="font-bold text-dark-text-primary">{inspectedStage.category}</span>
+                <span className="text-slate-500 text-[11px] font-bold">ARCHITECTURAL LAYER:</span>
+                <span className="font-bold text-slate-950">{inspectedStage.category}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-dark-text-muted text-[11px]">EXECUTION STATE:</span>
-                <span className="font-bold text-emerald-400">{inspectedStage.state}</span>
+                <span className="text-slate-500 text-[11px] font-bold">EXECUTION STATE:</span>
+                <span className="font-bold text-emerald-800">{inspectedStage.state}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-dark-text-muted text-[11px]">RECORDED TIMESTAMP:</span>
-                <span className="font-bold text-dark-text-primary">{inspectedStage.timestamp}</span>
+                <span className="text-slate-500 text-[11px] font-bold">RECORDED TIMESTAMP:</span>
+                <span className="font-bold text-slate-950">{inspectedStage.timestamp}</span>
               </div>
             </div>
 
             <div className="space-y-1.5">
-              <div className="text-[11px] text-dark-text-muted uppercase font-bold">
+              <div className="text-[11px] text-slate-600 uppercase font-bold">
                 Narrative Explanation
               </div>
-              <p className="text-xs text-dark-text-secondary font-sans leading-relaxed p-3 rounded-lg bg-dark-bg-1 border border-dark-border-subtle">
+              <p className="text-xs text-slate-800 font-sans leading-relaxed p-3.5 rounded-xl bg-white border border-slate-200 font-medium">
                 {inspectedStage.summary}
               </p>
             </div>
 
             <div className="space-y-1.5">
-              <div className="text-[11px] text-dark-text-muted uppercase font-bold">
+              <div className="text-[11px] text-slate-600 uppercase font-bold">
                 Captured Parameters
               </div>
-              <div className="p-3 rounded-lg bg-dark-bg-1 border border-dark-border-subtle space-y-1.5 text-[11px]">
+              <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5 text-[11px]">
                 {Object.entries(inspectedStage.details).map(([k, v]) => (
                   <div key={k} className="flex items-center justify-between gap-3">
-                    <span className="text-dark-text-muted">{k}:</span>
-                    <span className="text-dark-text-primary font-bold truncate max-w-[320px]">
+                    <span className="text-slate-600 font-medium">{k}:</span>
+                    <span className="text-slate-950 font-bold truncate max-w-[320px]">
                       {String(v)}
                     </span>
                   </div>
@@ -690,9 +690,9 @@ export const ConsoleReplayPage: React.FC = () => {
             <div className="pt-2 flex justify-end">
               <Button
                 size="sm"
-                variant="outline"
+                variant="secondary"
                 onClick={() => setInspectedStage(null)}
-                className="text-xs font-mono"
+                className="text-xs font-mono font-bold"
               >
                 Close Inspector
               </Button>

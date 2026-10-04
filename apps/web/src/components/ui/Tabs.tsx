@@ -76,13 +76,13 @@ export const Tabs: React.FC<TabsProps> = ({
         ref={containerRef}
         role="tablist"
         className={cn(
-          'relative flex items-center p-1 rounded-xl bg-[#141416] border border-white/10 overflow-x-auto no-scrollbar shadow-inner',
+          'relative flex items-center p-1 rounded-xl bg-slate-100 border border-slate-200/90 overflow-x-auto no-scrollbar',
           className
         )}
       >
-        {/* Animated Sliding Pill Indicator (Apple Segmented Control) */}
+        {/* Animated Sliding Pill Indicator (Bright Yellow High Contrast) */}
         <div
-          className="absolute top-1 bottom-1 rounded-lg bg-[#242428] border border-white/15 shadow-[0_2px_8px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.15)] pointer-events-none transition-all duration-200 ease-expo-out"
+          className="absolute top-1 bottom-1 rounded-lg bg-[#ffe600] border border-yellow-400 shadow-[0_1px_4px_rgba(234,179,8,0.35)] pointer-events-none transition-all duration-200 ease-expo-out"
           style={{
             transform: `translateX(${gliderStyle.left}px)`,
             width: `${gliderStyle.width}px`,
@@ -105,10 +105,10 @@ export const Tabs: React.FC<TabsProps> = ({
               onClick={() => onChange(tab.id)}
               onKeyDown={(e) => handleKeyDown(e, idx)}
               className={cn(
-                'relative z-10 flex items-center justify-center gap-2 py-1.5 px-3.5 text-xs font-medium rounded-lg transition-colors whitespace-nowrap cursor-pointer select-none',
+                'relative z-10 flex items-center justify-center gap-2 py-1.5 px-3.5 text-xs font-semibold rounded-lg transition-colors whitespace-nowrap cursor-pointer select-none',
                 isActive
-                  ? 'text-white font-semibold'
-                  : 'text-[#86868b] hover:text-white'
+                  ? 'text-black font-bold'
+                  : 'text-slate-600 hover:text-slate-900'
               )}
             >
               {tab.icon && <span className="w-3.5 h-3.5 shrink-0">{tab.icon}</span>}
@@ -116,10 +116,10 @@ export const Tabs: React.FC<TabsProps> = ({
               {tab.count !== undefined && (
                 <span
                   className={cn(
-                    'px-1.5 py-0.2 rounded-full text-[10px] font-mono font-semibold',
+                    'px-1.5 py-0.2 rounded-full text-[10px] font-mono font-bold transition-colors',
                     isActive
-                      ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
-                      : 'bg-white/10 text-white/60'
+                      ? 'bg-black text-[#ffe600]'
+                      : 'bg-slate-200 text-slate-700'
                   )}
                 >
                   {tab.count}
@@ -138,13 +138,13 @@ export const Tabs: React.FC<TabsProps> = ({
       ref={containerRef}
       role="tablist"
       className={cn(
-        'relative flex border-b border-white/10 gap-2 overflow-x-auto no-scrollbar',
+        'relative flex border-b border-slate-200 gap-2 overflow-x-auto no-scrollbar',
         className
       )}
     >
       {/* Animated Sliding Underline Indicator */}
       <div
-        className="absolute bottom-0 h-0.5 bg-[#2997ff] shadow-[0_0_10px_rgba(41,151,255,0.8)] pointer-events-none transition-all duration-200 ease-expo-out"
+        className="absolute bottom-0 h-0.5 bg-[#eab308] shadow-[0_0_8px_rgba(234,179,8,0.5)] pointer-events-none transition-all duration-200 ease-expo-out"
         style={{
           transform: `translateX(${gliderStyle.left}px)`,
           width: `${gliderStyle.width}px`,
@@ -167,10 +167,10 @@ export const Tabs: React.FC<TabsProps> = ({
             onClick={() => onChange(tab.id)}
             onKeyDown={(e) => handleKeyDown(e, idx)}
             className={cn(
-              'relative z-10 flex items-center gap-2 py-2.5 px-3 text-xs font-medium transition-colors whitespace-nowrap cursor-pointer select-none',
+              'relative z-10 flex items-center gap-2 py-2.5 px-3 text-xs font-semibold transition-colors whitespace-nowrap cursor-pointer select-none',
               isActive
-                ? 'text-[#2997ff] font-semibold'
-                : 'text-[#86868b] hover:text-white'
+                ? 'text-slate-950 font-bold border-b-2 border-[#eab308]'
+                : 'text-slate-600 hover:text-slate-900'
             )}
           >
             {tab.icon && <span className="w-3.5 h-3.5 shrink-0">{tab.icon}</span>}
@@ -178,10 +178,10 @@ export const Tabs: React.FC<TabsProps> = ({
             {tab.count !== undefined && (
               <span
                 className={cn(
-                  'px-1.5 py-0.5 rounded-full text-[10px] font-mono font-semibold',
+                  'px-1.5 py-0.5 rounded-full text-[10px] font-mono font-bold',
                   isActive
-                    ? 'bg-brand-500/20 text-brand-400'
-                    : 'bg-dark-bg-3 text-dark-text-muted'
+                    ? 'bg-yellow-100 text-yellow-900 border border-yellow-300'
+                    : 'bg-slate-100 text-slate-600'
                 )}
               >
                 {tab.count}

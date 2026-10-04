@@ -4,10 +4,8 @@ import { useIdentity } from '../../context/IdentityContext';
 import { useLoans } from '../../hooks/useCredify';
 import {
   Button,
-  Badge,
   StatusBadge,
   AddressBadge,
-  ProgressBar,
   Skeleton,
   EmptyState,
   Table,
@@ -24,7 +22,6 @@ import {
   formatEtherNum,
   formatDate,
   formatApr,
-  timeAgo,
 } from '../../lib/utils';
 import {
   Briefcase,
@@ -32,8 +29,6 @@ import {
   Download,
   Coins,
   ArrowLeft,
-  ShieldCheck,
-  TrendingUp,
 } from 'lucide-react';
 
 export const LenderPositionsPage: React.FC = () => {
@@ -98,26 +93,26 @@ export const LenderPositionsPage: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <Link to="/app/lender/portfolio" className="inline-flex items-center gap-1.5 text-xs text-dark-text-muted hover:text-dark-text-primary transition-colors mb-2">
+          <Link to="/app/lender/portfolio" className="inline-flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-900 transition-colors mb-2 font-medium">
             <ArrowLeft className="w-3.5 h-3.5" />
             <span>Back to Portfolio</span>
           </Link>
-          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-dark-text-primary">
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-950">
             Syndicate Position Ledger
           </h1>
-          <p className="text-xs text-dark-text-secondary mt-1">
+          <p className="text-xs text-slate-600 mt-1 font-medium">
             Authoritative on-chain record of your supplied capital, syndicate equity shares, and voting weight.
           </p>
         </div>
 
         <div className="flex items-center gap-2.5">
           <Link to="/app/lender/claims">
-            <Button variant="secondary" size="sm" icon={<Download className="w-3.5 h-3.5" />} className="text-xs font-semibold">
+            <Button variant="secondary" size="sm" icon={<Download className="w-3.5 h-3.5" />} className="text-xs font-bold">
               Claims Ledger
             </Button>
           </Link>
           <Link to="/app/lender/explore">
-            <Button variant="primary" size="sm" icon={<Coins className="w-3.5 h-3.5" />} className="text-xs font-semibold shadow-dark-xs">
+            <Button variant="primary" size="sm" icon={<Coins className="w-3.5 h-3.5" />} className="text-xs font-bold shadow-xs">
               Find New Pools
             </Button>
           </Link>
@@ -126,28 +121,30 @@ export const LenderPositionsPage: React.FC = () => {
 
       {/* High-Level Accounting Strip */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="p-4 rounded-xl border border-dark-border-default bg-dark-bg-2 space-y-1">
-          <span className="text-[10px] font-mono uppercase tracking-wider text-dark-text-muted">Total Capital Supplied</span>
-          <div className="text-2xl font-bold font-mono text-dark-text-primary">
-            <NumberTicker value={formatEtherNum(totalCapitalSupplied)} decimalPlaces={2} /> <span className="text-sm font-normal text-dark-text-muted">ETH</span>
+        <div className="p-5 rounded-2xl border border-slate-200 bg-white space-y-1 shadow-xs">
+          <span className="text-[10px] font-mono uppercase tracking-wider text-slate-600 font-bold">Total Capital Supplied</span>
+          <div className="text-2xl font-bold font-mono text-slate-950 flex items-baseline gap-1.5">
+            <NumberTicker value={formatEtherNum(totalCapitalSupplied)} decimalPlaces={2} />
+            <span className="text-base font-bold text-slate-900">ETH</span>
           </div>
-          <p className="text-[11px] text-dark-text-secondary">Across {myPositions.length} syndicated positions</p>
+          <p className="text-xs text-slate-600 font-medium">Across {myPositions.length} syndicated positions</p>
         </div>
 
-        <div className="p-4 rounded-xl border border-emerald-500/30 bg-emerald-500/5 space-y-1">
-          <span className="text-[10px] font-mono uppercase tracking-wider text-emerald-400">Total Claimable Entitlement</span>
-          <div className="text-2xl font-bold font-mono text-emerald-400">
-            <NumberTicker value={formatEtherNum(totalClaimableAll)} decimalPlaces={2} /> <span className="text-sm font-normal text-emerald-400/70">ETH</span>
+        <div className="p-5 rounded-2xl border border-emerald-300 bg-emerald-50/70 space-y-1 shadow-xs">
+          <span className="text-[10px] font-mono uppercase tracking-wider text-emerald-900 font-bold">Total Claimable Entitlement</span>
+          <div className="text-2xl font-bold font-mono text-emerald-950 flex items-baseline gap-1.5">
+            <NumberTicker value={formatEtherNum(totalClaimableAll)} decimalPlaces={2} />
+            <span className="text-base font-bold text-emerald-900">ETH</span>
           </div>
-          <p className="text-[11px] text-dark-text-secondary">Repayments available to pull</p>
+          <p className="text-xs text-emerald-800 font-medium">Repayments available to pull</p>
         </div>
 
-        <div className="p-4 rounded-xl border border-dark-border-default bg-dark-bg-2 space-y-1">
-          <span className="text-[10px] font-mono uppercase tracking-wider text-dark-text-muted">Active Syndicates</span>
-          <div className="text-2xl font-bold font-mono text-dark-text-primary">
+        <div className="p-5 rounded-2xl border border-slate-200 bg-white space-y-1 shadow-xs">
+          <span className="text-[10px] font-mono uppercase tracking-wider text-slate-600 font-bold">Active Syndicates</span>
+          <div className="text-2xl font-bold font-mono text-slate-950">
             <NumberTicker value={myPositions.filter((p) => p.loan.status === 'ACTIVE' || p.loan.status === 'FUNDING').length} />
           </div>
-          <p className="text-[11px] text-dark-text-secondary">Open and performing loans</p>
+          <p className="text-xs text-slate-600 font-medium">Open and performing loans</p>
         </div>
       </div>
 
@@ -168,12 +165,12 @@ export const LenderPositionsPage: React.FC = () => {
       </div>
 
       {/* Positions Master Table */}
-      <div className="rounded-2xl border border-dark-border-default bg-dark-bg-2 overflow-hidden shadow-dark-md">
-        <div className="p-5 border-b border-dark-border-subtle">
-          <h3 className="text-sm font-semibold text-dark-text-primary">
+      <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-xs">
+        <div className="p-5 border-b border-slate-100">
+          <h3 className="text-sm font-bold text-slate-950">
             Position Details ({filteredPositions.length})
           </h3>
-          <p className="text-xs text-dark-text-muted mt-0.5">
+          <p className="text-xs text-slate-600 mt-0.5 font-medium">
             Smart contract accounts recording your capital contribution, voting power, and pro-rata returns.
           </p>
         </div>
@@ -181,7 +178,7 @@ export const LenderPositionsPage: React.FC = () => {
         {filteredPositions.length === 0 ? (
           <div className="p-8 text-center">
             <EmptyState
-              icon={<Briefcase className="w-8 h-8 text-dark-text-muted" />}
+              icon={<Briefcase className="w-8 h-8 text-slate-400" />}
               title="No Positions Matching Filter"
               description="You do not currently hold any positions under this status filter."
             />
@@ -210,13 +207,13 @@ export const LenderPositionsPage: React.FC = () => {
                     <TableCell className="font-mono">
                       <div className="space-y-0.5">
                         <AddressBadge address={loan.address} digits={6} />
-                        <div className="text-[10px] text-dark-text-muted">Target: {formatEther(loan.targetWei)} ETH</div>
+                        <div className="text-[10px] text-slate-500 font-medium">Target: {formatEther(loan.targetWei)} ETH</div>
                       </div>
                     </TableCell>
 
                     <TableCell>
                       <div className="space-y-0.5">
-                        <div className="font-medium text-dark-text-primary text-xs">
+                        <div className="font-bold text-slate-950 text-xs">
                           {loan.borrower.displayName}
                         </div>
                         <AddressBadge address={loan.borrower.walletAddress} digits={4} />
@@ -224,19 +221,19 @@ export const LenderPositionsPage: React.FC = () => {
                     </TableCell>
 
                     <TableCell className="font-mono">
-                      <div className="font-bold text-dark-text-primary">
+                      <div className="font-bold text-slate-950">
                         {formatEtherNum(contributedWei).toFixed(2)} ETH
                       </div>
-                      <div className="text-[10px] text-dark-text-muted font-sans">
+                      <div className="text-[10px] text-slate-600 font-sans font-medium">
                         Voting Weight: {formatEtherNum(contributedWei).toFixed(2)}
                       </div>
                     </TableCell>
 
                     <TableCell className="font-mono">
-                      <div className="font-bold text-brand-400">
+                      <div className="font-bold text-slate-950 bg-yellow-100 px-2 py-0.5 rounded border border-yellow-300 inline-block">
                         {(lenderRecord.shareBps / 100).toFixed(1)}%
                       </div>
-                      <div className="text-[10px] text-dark-text-muted">
+                      <div className="text-[10px] text-slate-600 font-bold mt-1">
                         {formatApr(loan.aprBps)} APR
                       </div>
                     </TableCell>
@@ -248,17 +245,17 @@ export const LenderPositionsPage: React.FC = () => {
                     <TableCell className="font-mono">
                       {hasClaimable ? (
                         <div className="space-y-0.5">
-                          <span className="font-bold text-emerald-400">
+                          <span className="font-bold text-emerald-800">
                             {claimableNum.toFixed(2)} ETH
                           </span>
-                          <div className="text-[10px] text-emerald-400/80 font-sans">Ready to pull</div>
+                          <div className="text-[10px] text-emerald-700 font-bold">Ready to pull</div>
                         </div>
                       ) : (
-                        <span className="text-dark-text-muted text-xs">0.00 ETH</span>
+                        <span className="text-slate-600 text-xs font-bold">0.00 ETH</span>
                       )}
                     </TableCell>
 
-                    <TableCell className="text-xs text-dark-text-secondary">
+                    <TableCell className="text-xs text-slate-700 font-bold">
                       {formatDate(loan.maturity)}
                     </TableCell>
 
@@ -266,13 +263,13 @@ export const LenderPositionsPage: React.FC = () => {
                       <div className="flex items-center justify-end gap-2">
                         {hasClaimable && (
                           <Link to="/app/lender/claims">
-                            <Button size="xs" variant="success" className="font-semibold">
+                            <Button size="xs" variant="success" className="font-bold">
                               Claim
                             </Button>
                           </Link>
                         )}
                         <Link to={`/app/loans/${loan.address}`}>
-                          <Button size="xs" variant="secondary" icon={<ArrowRight className="w-3 h-3" />}>
+                          <Button size="xs" variant="secondary" icon={<ArrowRight className="w-3 h-3" />} className="font-bold">
                             Inspect
                           </Button>
                         </Link>

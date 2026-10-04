@@ -38,8 +38,8 @@ export const EvidenceRow: React.FC<EvidenceRowProps> = ({
       className={cn(
         'rounded-xl transition-all duration-micro overflow-hidden',
         isExpanded
-          ? 'bg-dark-bg-3/60 border border-dark-border-subtle/80 shadow-depth-subtle'
-          : 'bg-dark-bg-2/70 hover:bg-dark-bg-3/50 border border-dark-border-subtle/40 hover:border-dark-border-subtle/80',
+          ? 'bg-yellow-50/30 border border-yellow-300 shadow-sm'
+          : 'bg-white hover:bg-slate-50 border border-slate-200',
         className
       )}
     >
@@ -49,7 +49,7 @@ export const EvidenceRow: React.FC<EvidenceRowProps> = ({
       >
         <div className="flex items-start md:items-center gap-2.5 flex-wrap">
           {/* Block height */}
-          <span className="font-mono text-xs px-2 py-0.5 rounded-md bg-dark-bg-3/80 text-dark-text-secondary font-semibold border border-dark-border-subtle/60">
+          <span className="font-mono text-xs px-2 py-0.5 rounded-md bg-slate-100 text-slate-800 font-bold border border-slate-200">
             #{blockNumber}
           </span>
 
@@ -57,13 +57,13 @@ export const EvidenceRow: React.FC<EvidenceRowProps> = ({
           {eventName && <EventBadge eventName={eventName} size="sm" />}
 
           {contractName && (
-            <span className="text-xs font-mono px-2 py-0.5 rounded-md bg-dark-bg-3/80 text-brand-300 border border-brand-500/20">
+            <span className="text-xs font-mono px-2 py-0.5 rounded-md bg-yellow-100 text-yellow-950 font-bold border border-yellow-300">
               {contractName}
             </span>
           )}
 
           {/* Human Readable Summary */}
-          <span className="text-xs font-sans font-medium text-dark-text-primary leading-normal">
+          <span className="text-xs font-sans font-semibold text-slate-900 leading-normal">
             {summary}
           </span>
         </div>
@@ -72,10 +72,10 @@ export const EvidenceRow: React.FC<EvidenceRowProps> = ({
           {/* Actor */}
           {actorAddress && (
             <div className="flex items-center gap-1.5">
-              <span className="text-dark-text-muted text-xs">Actor:</span>
+              <span className="text-slate-500 text-xs font-medium">Actor:</span>
               <TechnicalValue value={actorAddress} type="address" chars={4} copyable={false} />
               {actorRole && (
-                <span className="text-xs font-sans px-1.5 py-0.5 rounded bg-dark-bg-3 text-dark-text-secondary border border-dark-border-subtle/60">
+                <span className="text-xs font-sans px-1.5 py-0.5 rounded bg-slate-100 text-slate-800 font-bold border border-slate-200">
                   {actorRole}
                 </span>
               )}
@@ -89,7 +89,7 @@ export const EvidenceRow: React.FC<EvidenceRowProps> = ({
           {details && (
             <button
               type="button"
-              className="p-1 text-dark-text-muted hover:text-dark-text-primary transition-colors cursor-pointer"
+              className="p-1 text-slate-500 hover:text-slate-900 transition-colors cursor-pointer"
               aria-label={isExpanded ? 'Collapse row details' : 'Expand row details'}
             >
               {isExpanded ? (
@@ -104,16 +104,16 @@ export const EvidenceRow: React.FC<EvidenceRowProps> = ({
 
       {/* Expanded payload */}
       {isExpanded && details && (
-        <div className="p-4 bg-dark-bg-1/90 border-t border-dark-border-subtle/60 text-xs space-y-2.5">
-          <div className="flex items-center justify-between text-xs font-sans text-dark-text-secondary">
-            <span className="flex items-center gap-1.5 font-medium text-dark-text-primary">
-              <FileCode className="w-3.5 h-3.5 text-brand-400" />
+        <div className="p-4 bg-slate-50 border-t border-slate-200 text-xs space-y-2.5">
+          <div className="flex items-center justify-between text-xs font-sans text-slate-700">
+            <span className="flex items-center gap-1.5 font-bold text-slate-950">
+              <FileCode className="w-3.5 h-3.5 text-yellow-700" />
               Decoded Parameters &amp; EVM State
             </span>
-            <span className="font-mono text-dark-text-muted">{timestamp}</span>
+            <span className="font-mono text-slate-500 font-medium">{timestamp}</span>
           </div>
 
-          <pre className="p-3 rounded-lg bg-dark-bg-0/90 border border-dark-border-subtle/70 text-brand-300 font-mono text-xs overflow-x-auto max-h-56 leading-relaxed">
+          <pre className="p-3 rounded-xl bg-slate-100 border border-slate-200 text-slate-800 font-mono text-xs overflow-x-auto max-h-56 leading-relaxed">
             {JSON.stringify(details, null, 2)}
           </pre>
         </div>

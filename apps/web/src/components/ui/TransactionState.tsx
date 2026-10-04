@@ -33,33 +33,33 @@ export const TransactionState: React.FC<TransactionStateProps> = ({
   return (
     <div
       className={cn(
-        'rounded-xl border p-4 transition-all',
-        status === 'broadcasting' && 'border-brand-500/30 bg-brand-500/5',
-        status === 'confirming' && 'border-amber-500/30 bg-amber-500/5',
-        status === 'confirmed' && 'border-emerald-500/30 bg-emerald-500/5',
-        status === 'error' && 'border-crimson-500/30 bg-crimson-500/5',
+        'rounded-2xl border p-4 transition-all shadow-xs',
+        status === 'broadcasting' && 'border-yellow-300 bg-yellow-50 text-yellow-950',
+        status === 'confirming' && 'border-amber-300 bg-amber-50 text-amber-950',
+        status === 'confirmed' && 'border-emerald-300 bg-emerald-50 text-emerald-950',
+        status === 'error' && 'border-rose-300 bg-rose-50 text-rose-950',
         className
       )}
     >
       <div className="flex items-start gap-3">
         <div className="mt-0.5 shrink-0">
           {status === 'broadcasting' && (
-            <Loader2 className="w-5 h-5 animate-spin text-brand-400" />
+            <Loader2 className="w-5 h-5 animate-spin text-yellow-700" />
           )}
           {status === 'confirming' && (
-            <Clock className="w-5 h-5 animate-pulse text-amber-400" />
+            <Clock className="w-5 h-5 animate-pulse text-amber-700" />
           )}
           {status === 'confirmed' && (
-            <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+            <CheckCircle2 className="w-5 h-5 text-emerald-600" />
           )}
           {status === 'error' && (
-            <AlertCircle className="w-5 h-5 text-crimson-400" />
+            <AlertCircle className="w-5 h-5 text-rose-600" />
           )}
         </div>
 
         <div className="flex-1 space-y-1.5 min-w-0">
           <div className="flex items-center justify-between gap-2">
-            <h4 className="text-sm font-semibold text-dark-text-primary">
+            <h4 className="text-sm font-bold text-slate-950">
               {title ||
                 (status === 'broadcasting' && 'Broadcasting Transaction') ||
                 (status === 'confirming' && 'Confirming on Blockchain') ||
@@ -67,13 +67,13 @@ export const TransactionState: React.FC<TransactionStateProps> = ({
                 (status === 'error' && 'Transaction Failed')}
             </h4>
             {status === 'confirming' && (
-              <span className="font-mono text-[11px] text-amber-400 font-medium">
+              <span className="font-mono text-[11px] text-amber-800 font-bold">
                 {confirmations}/{requiredConfirmations} blocks
               </span>
             )}
           </div>
 
-          <p className="text-xs text-dark-text-secondary leading-relaxed">
+          <p className="text-xs text-slate-700 font-medium leading-relaxed">
             {description ||
               (status === 'broadcasting' && 'Waiting for local node to accept transaction broadcast...') ||
               (status === 'confirming' && 'Waiting for block inclusion and receipt confirmation...') ||
@@ -82,13 +82,13 @@ export const TransactionState: React.FC<TransactionStateProps> = ({
           </p>
 
           {hash && (
-            <div className="pt-2 flex items-center justify-between gap-2 border-t border-dark-border-subtle/50">
-              <span className="text-[11px] text-dark-text-muted">TX Hash</span>
+            <div className="pt-2 flex items-center justify-between gap-2 border-t border-slate-200">
+              <span className="text-[11px] text-slate-500 font-medium">TX Hash</span>
               <AddressBadge
                 address={hash}
                 digits={8}
                 variant="mono"
-                className="bg-dark-bg-1/80 border-dark-border-subtle"
+                className="bg-white border-slate-200 text-slate-900"
               />
             </div>
           )}
@@ -98,9 +98,9 @@ export const TransactionState: React.FC<TransactionStateProps> = ({
               <button
                 type="button"
                 onClick={onReset}
-                className="text-xs font-semibold text-crimson-400 hover:text-crimson-300 underline cursor-pointer"
+                className="text-xs text-rose-700 hover:text-rose-900 font-bold underline cursor-pointer"
               >
-                Dismiss & Try Again
+                Try Again
               </button>
             </div>
           )}

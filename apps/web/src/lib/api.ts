@@ -271,6 +271,9 @@ export const api = {
       return request<ActivityEvent[]>(`${API_BASE}/console/events${qs ? `?${qs}` : ''}`);
     },
     getIndexerState: () => request<IndexerStateObservability>(`${API_BASE}/console/indexer`),
+    triggerReindex: () => request<{ success: boolean; message: string }>(`${API_BASE}/evaluator/reindex`, {
+      method: 'POST',
+    }),
     getVerifications: () => request<VerificationAttestationObservability[]>(`${API_BASE}/console/verification`),
     getAgreements: () => request<AgreementObservability[]>(`${API_BASE}/console/agreements`),
   },

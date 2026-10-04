@@ -37,71 +37,85 @@ export const LifecycleRail: React.FC<LifecycleRailProps> = ({
 
   return (
     <div className={cn('w-full py-2', className)}>
-      <div className="relative flex items-center justify-between">
-        {/* Continuous background rail line */}
-        <div className="absolute left-6 right-6 top-1/2 -translate-y-1/2 h-0.5 bg-dark-border-default z-0" />
+      <div className="relative w-full px-4 sm:px-8">
+        <div className="relative flex items-center justify-between">
+          {/* Continuous rail track spanning from center of first node (14px) to center of last node (14px) */}
+          <div className="absolute left-3.5 right-3.5 top-1/2 -translate-y-1/2 h-1.5 bg-slate-200/80 rounded-full z-0 overflow-hidden">
+            <div
+              className={cn(
+                'h-full transition-all duration-500 rounded-full',
+                defaulted ? 'bg-rose-500' : 'bg-[#ffe600]'
+              )}
+              style={{
+                width: `${Math.min(100, Math.max(0, (currentIndex / (STAGES.length - 1)) * 100))}%`,
+              }}
+            />
+          </div>
 
-        {/* Progress fill line */}
-        <div
-          className={cn(
-            'absolute left-6 top-1/2 -translate-y-1/2 h-0.5 z-0 transition-all duration-300',
-            defaulted ? 'bg-crimson-500' : 'bg-brand-500'
-          )}
-          style={{
-            width: `${Math.min(100, Math.max(0, (currentIndex / (STAGES.length - 1)) * 100))}%`,
-          }}
-        />
+          {STAGES.map((stage, idx) => {
+            const isPassed = idx < currentIndex;
+            const isCurrent = idx === currentIndex;
+            const isLast = idx === STAGES.length - 1;
+            const isFirst = idx === 0;
+            const isDefaultNode = isLast && defaulted;
 
-        {STAGES.map((stage, idx) => {
-          const isPassed = idx < currentIndex;
-          const isCurrent = idx === currentIndex;
-          const isLast = idx === STAGES.length - 1;
-          const isDefaultNode = isLast && defaulted;
-
-          return (
-            <div key={stage.key} className="relative z-10 flex flex-col items-center">
-              {/* Node Circle */}
-              <div
-                className={cn(
-                  'flex h-7 w-7 items-center justify-center rounded-full border text-xs font-semibold transition-all',
-                  isPassed && 'border-brand-500 bg-brand-500 text-white shadow-xs',
-                  isCurrent && !defaulted && 'border-brand-500 bg-dark-bg-1 text-brand-400 ring-4 ring-brand-500/20 font-bold',
-                  isCurrent && isDefaultNode && 'border-crimson-500 bg-crimson-500/20 text-crimson-400 ring-4 ring-crimson-500/20 font-bold',
-                  !isPassed && !isCurrent && 'border-dark-border-strong bg-dark-bg-2 text-dark-text-muted'
-                )}
-              >
-                {isPassed ? (
-                  <Check className="w-3.5 h-3.5 stroke-[2.5]" />
-                ) : isDefaultNode ? (
-                  <AlertTriangle className="w-3.5 h-3.5" />
-                ) : (
-                  <span className="font-mono text-[10px]">{idx + 1}</span>
-                )}
-              </div>
-
-              {/* Node Labels */}
-              <div className="absolute top-8 flex flex-col items-center text-center whitespace-nowrap">
-                <span
+            return (
+              <div key={stage.key} className="relative z-10 flex flex-col items-center">
+                {/* Node Circle */}
+                <div
                   className={cn(
-                    'text-[11px] font-semibold tracking-tight',
-                    isCurrent && !defaulted && 'text-brand-400',
-                    isCurrent && isDefaultNode && 'text-crimson-400',
-                    isPassed && 'text-dark-text-primary',
-                    !isPassed && !isCurrent && 'text-dark-text-muted'
+                    'flex h-7 w-7 items-center justify-center rounded-full border text-xs font-semibold transition-all shadow-xs',
+                    isPassed && 'border-yellow-500 bg-[#ffe600] text-black font-black',
+                    isCurrent && !defaulted && 'border-yellow-500 bg-[#ffe600] text-black ring-4 ring-yellow-300/60 font-black shadow-sm',
+                    isCurrent && isDefaultNode && 'border-rose-500 bg-rose-500 text-white ring-4 ring-rose-200 font-bold',
+                    !isPassed && !isCurrent && 'border-slate-300 bg-white text-slate-400 font-bold'
                   )}
                 >
-                  {isDefaultNode ? 'Defaulted' : stage.label}
-                </span>
-                <span className="text-[10px] text-dark-text-muted font-normal hidden sm:inline">
-                  {isDefaultNode ? 'Governance Action' : stage.sub}
-                </span>
+                  {isPassed ? (
+                    <Check className="w-3.5 h-3.5 stroke-[3]" />
+                  ) : isDefaultNode ? (
+                    <AlertTriangle className="w-3.5 h-3.5 stroke-[2.5]" />
+                  ) : (
+                    <span className="font-mono text-[10px] font-bold">{idx + 1}</span>
+                  )}
+                </div>
+
+                {/* Node Labels - positioned so they NEVER clip on container edges */}
+                <div
+                  className={cn(
+                    'absolute top-8 flex flex-col whitespace-nowrap',
+                    isFirst && 'items-start text-left left-0',
+                    isLast && 'items-end text-right right-0',
+                    !isFirst && !isLast && 'items-center text-center left-1/2 -translate-x-1/2'
+                  )}
+                >
+                  <span
+                    className={cn(
+                      'text-xs tracking-tight',
+                      isCurrent && !defaulted && 'text-slate-950 font-black',
+                      isCurrent && isDefaultNode && 'text-rose-700 font-black',
+                      isPassed && 'text-slate-950 font-bold',
+                      !isPassed && !isCurrent && 'text-slate-500 font-semibold'
+                    )}
+                  >
+                    {isDefaultNode ? 'Defaulted' : stage.label}
+                  </span>
+                  <span
+                    className={cn(
+                      'text-[11px] font-semibold hidden sm:inline',
+                      isCurrent || isPassed ? 'text-slate-700' : 'text-slate-400'
+                    )}
+                  >
+                    {isDefaultNode ? 'Governance Action' : stage.sub}
+                  </span>
+                </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
+        {/* Spacer for absolute positioned labels */}
+        <div className="h-7" />
       </div>
-      {/* Bottom spacer for absolute positioned labels */}
-      <div className="h-6" />
     </div>
   );
 };

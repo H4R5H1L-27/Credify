@@ -40,21 +40,21 @@ export const TechnicalValue: React.FC<TechnicalValueProps> = ({
   }
 
   const content = (
-    <span className="font-mono text-dark-text-primary tracking-tight font-medium">
+    <span className="font-mono text-slate-900 tracking-tight font-bold">
       {displayValue}
     </span>
   );
 
   return (
     <div className={cn('inline-flex items-center gap-1.5 text-xs', className)}>
-      {label && <span className="text-dark-text-muted text-[11px] font-sans">{label}:</span>}
+      {label && <span className="text-slate-600 text-xs font-sans font-medium">{label}:</span>}
 
       {href ? (
         <a
           href={href}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-1 text-brand-400 hover:text-brand-300 hover:underline transition-colors"
+          className="inline-flex items-center gap-1 text-yellow-800 hover:text-black hover:underline transition-colors font-bold"
         >
           {content}
           <ExternalLink className="w-3 h-3 opacity-70" />
@@ -68,10 +68,10 @@ export const TechnicalValue: React.FC<TechnicalValueProps> = ({
           type="button"
           onClick={handleCopy}
           title={`Copy ${value}`}
-          className="p-1 rounded text-dark-text-muted hover:text-dark-text-primary hover:bg-dark-bg-3 transition-colors cursor-pointer"
+          className="p-1 rounded text-slate-500 hover:text-black hover:bg-slate-100 transition-colors cursor-pointer"
         >
           {copied ? (
-            <Check className="w-3 h-3 text-emerald-400" />
+            <Check className="w-3 h-3 text-emerald-600" />
           ) : (
             <Copy className="w-3 h-3" />
           )}

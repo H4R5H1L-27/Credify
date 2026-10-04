@@ -38,15 +38,15 @@ export const AddressBadge: React.FC<AddressBadgeProps> = ({
       onClick={copy}
       title={`Click to copy: ${address}`}
       className={cn(
-        'inline-flex items-center gap-1.5 px-2 py-0.5 rounded font-mono text-xs text-dark-text-secondary bg-dark-bg-3 hover:bg-dark-bg-4 hover:text-dark-text-primary border border-dark-border-default hover:border-dark-border-strong transition-colors group cursor-pointer select-none',
+        'inline-flex items-center gap-1.5 px-2 py-0.5 rounded font-mono text-xs text-slate-800 bg-slate-100 hover:bg-yellow-50 hover:text-black border border-slate-200 hover:border-yellow-400 font-semibold transition-colors group cursor-pointer select-none',
         variant === 'mono' && 'text-[11px]',
         className
       )}
     >
       <span>{truncate ? truncateAddress(address, length) : address}</span>
       {showIcon && (
-        <span className="text-dark-text-muted group-hover:text-dark-text-secondary transition-colors">
-          {copied ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+        <span className="text-slate-500 group-hover:text-black transition-colors">
+          {copied ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
         </span>
       )}
     </button>

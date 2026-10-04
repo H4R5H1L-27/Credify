@@ -13,6 +13,7 @@ interface IReputationRegistry {
 
 contract LoanPool is ReentrancyGuard {
     error NotBorrower();
+    error BorrowerCannotContribute();
     error NotVerifiedLender();
     error FundingClosed();
     error ContributionIsZero();
@@ -101,6 +102,7 @@ contract LoanPool is ReentrancyGuard {
 
     function contribute() external payable nonReentrant {
         if (status != Status.Funding) revert FundingClosed();
+        if (msg.sender == borrower) revert BorrowerCannotContribute();
         if (!IKYCRegistry(kycRegistry).isVerified(msg.sender)) revert NotVerifiedLender();
         if (msg.value == 0) revert ContributionIsZero();
         uint256 remaining = targetWei - totalContributed;

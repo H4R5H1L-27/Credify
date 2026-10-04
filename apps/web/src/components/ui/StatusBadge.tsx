@@ -12,32 +12,32 @@ export const StatusBadge: React.FC<{ status: LoanStatus; className?: string; siz
     FUNDING: {
       label: 'Funding Syndicate',
       icon: Clock,
-      style: 'bg-amber-950/40 text-amber-300 border-amber-800/40'
+      style: 'bg-yellow-100 text-yellow-900 border-yellow-300 font-bold'
     },
     ACTIVE: {
       label: 'Active Agreement',
       icon: CircleDot,
-      style: 'bg-emerald-950/40 text-emerald-300 border-emerald-800/40'
+      style: 'bg-emerald-50 text-emerald-800 border-emerald-300 font-bold'
     },
     REPAID: {
       label: 'Fully Settled',
       icon: CheckCircle2,
-      style: 'bg-brand-950/50 text-brand-300 border-brand-800/40'
+      style: 'bg-[#ffe600] text-black border-yellow-400 font-bold shadow-xs'
     },
     DEFAULTED: {
       label: 'Consensus Default',
       icon: AlertTriangle,
-      style: 'bg-rose-950/40 text-rose-300 border-rose-800/40'
+      style: 'bg-rose-50 text-rose-800 border-rose-300 font-bold'
     },
     CANCELLED: {
       label: 'Cancelled',
       icon: XCircle,
-      style: 'bg-dark-bg-3 text-dark-text-muted border-dark-border-default'
+      style: 'bg-slate-100 text-slate-700 border-slate-300 font-semibold'
     }
   }[status] || {
     label: status,
     icon: CircleDot,
-    style: 'bg-dark-bg-3 text-dark-text-muted border-dark-border-default'
+    style: 'bg-slate-100 text-slate-700 border-slate-300 font-semibold'
   };
 
   const Icon = config.icon;

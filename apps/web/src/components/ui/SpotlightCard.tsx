@@ -16,7 +16,7 @@ export interface SpotlightCardProps extends React.HTMLAttributes<HTMLDivElement>
 export const SpotlightCard: React.FC<SpotlightCardProps> = ({
   children,
   className,
-  spotlightColor = 'rgba(79, 107, 245, 0.14)',
+  spotlightColor = 'rgba(255, 230, 0, 0.22)',
   spotlightSize = 340,
   borderGlow = true,
   ...props
@@ -48,8 +48,8 @@ export const SpotlightCard: React.FC<SpotlightCardProps> = ({
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
       className={cn(
-        'group relative overflow-hidden rounded-2xl bg-dark-bg-1 border border-dark-border-subtle p-6 transition-all duration-200',
-        'hover:border-dark-border-default/80 hover:shadow-depth-card',
+        'group relative overflow-hidden rounded-2xl bg-white border border-slate-200 p-6 shadow-sm transition-all duration-200',
+        'hover:border-yellow-400 hover:shadow-md',
         className
       )}
       {...props}
@@ -68,7 +68,7 @@ export const SpotlightCard: React.FC<SpotlightCardProps> = ({
       {borderGlow && (
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute -inset-px rounded-2xl transition-opacity duration-300 border border-brand-400/30"
+          className="pointer-events-none absolute -inset-px rounded-2xl transition-opacity duration-300 border border-yellow-400/50"
           style={{
             opacity,
             maskImage: `radial-gradient(${spotlightSize * 0.75}px circle at ${position.x}px ${position.y}px, black, transparent 80%)`,

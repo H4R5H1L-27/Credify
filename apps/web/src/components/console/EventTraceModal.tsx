@@ -6,23 +6,11 @@ import { TechnicalValue } from './TechnicalValue';
 import { EventBadge } from './EventBadge';
 import { formatEther } from '../../lib/utils';
 import {
-  Layers,
-  ArrowRight,
-  ShieldCheck,
-  Award,
-  CheckCircle2,
-  AlertTriangle,
-  Clock,
-  Fuel,
-  ExternalLink,
   Cpu,
   ArrowLeftRight,
   FileCode2,
-  Database,
   GitCommit,
-  Check,
 } from 'lucide-react';
-import { Link } from 'react-router-dom';
 
 export interface EventTraceModalProps {
   event: ActivityEvent | null;
@@ -131,26 +119,26 @@ export const EventTraceModal: React.FC<EventTraceModalProps> = ({
     >
       <div className="space-y-6">
         {/* Event Header Banner */}
-        <div className="p-4 rounded-xl bg-dark-bg-3 border border-dark-border-subtle flex flex-col md:flex-row md:items-center justify-between gap-3 font-mono">
+        <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 flex flex-col md:flex-row md:items-center justify-between gap-3 font-mono">
           <div className="space-y-1.5">
             <div className="flex items-center gap-2 flex-wrap">
               <EventBadge eventName={event.eventName} />
-              <span className="text-xs text-dark-text-secondary">
+              <span className="text-xs text-slate-700 font-bold">
                 Block #{event.blockNumber}
               </span>
-              <span className="text-dark-text-muted text-xs">•</span>
-              <span className="text-[11px] text-dark-text-muted">
+              <span className="text-slate-300 text-xs">•</span>
+              <span className="text-xs text-slate-500 font-medium">
                 {new Date(event.timestamp).toLocaleString()}
               </span>
             </div>
-            <div className="text-xs text-dark-text-primary font-sans">
+            <div className="text-xs text-slate-950 font-sans font-semibold">
               {event.summary}
             </div>
           </div>
 
           <div className="text-right shrink-0">
-            <div className="text-[10px] text-dark-text-muted uppercase">Emitted Contract</div>
-            <div className="font-bold text-dark-text-primary text-xs">
+            <div className="text-[10px] text-slate-500 uppercase font-bold">Emitted Contract</div>
+            <div className="font-bold text-slate-950 text-xs">
               {event.contractName || 'SmartContract'}
             </div>
             {event.contractAddress && (
@@ -162,29 +150,29 @@ export const EventTraceModal: React.FC<EventTraceModalProps> = ({
         {/* 5-Layer Trace Pipeline */}
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-mono font-bold uppercase text-dark-text-primary flex items-center gap-1.5">
-              <GitCommit className="w-3.5 h-3.5 text-brand-400" />
+            <span className="text-xs font-mono font-bold uppercase text-slate-950 flex items-center gap-1.5">
+              <GitCommit className="w-3.5 h-3.5 text-yellow-700" />
               Trace Pipeline Lineage
             </span>
-            <span className="text-[10px] font-mono text-dark-text-muted">
+            <span className="text-[10px] font-mono font-bold text-slate-500">
               5-Tier Verification Chain
             </span>
           </div>
 
           <div className="space-y-3 font-mono text-xs">
             {/* Step 1: EVM Block */}
-            <div className="p-3.5 rounded-lg bg-dark-bg-2 border border-dark-border-subtle flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
-                  <span className="w-5 h-5 rounded-full bg-brand-500/20 text-brand-400 flex items-center justify-center text-[10px] font-bold">
+                  <span className="w-5 h-5 rounded-full bg-[#ffe600] text-black border border-yellow-400 flex items-center justify-center text-[10px] font-black">
                     1
                   </span>
-                  <span className="font-bold text-dark-text-primary">EVM Block Header Proof</span>
-                  <span className="text-[10px] px-1.5 py-0.2 rounded bg-dark-bg-3 border border-dark-border-default text-dark-text-secondary">
+                  <span className="font-bold text-slate-950">EVM Block Header Proof</span>
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 border border-slate-300 text-slate-800 font-bold">
                     Height: #{event.blockNumber}
                   </span>
                 </div>
-                <div className="text-[11px] text-dark-text-muted pl-7 font-sans">
+                <div className="text-xs text-slate-600 pl-7 font-sans font-medium">
                   Block timestamp verified on-chain at {event.timestamp}
                 </div>
               </div>
@@ -197,8 +185,8 @@ export const EventTraceModal: React.FC<EventTraceModalProps> = ({
                     onSelectBlock(event.blockNumber);
                     onClose();
                   }}
-                  className="text-xs shrink-0 self-end sm:self-auto"
-                  icon={<Cpu className="w-3 h-3 text-brand-400" />}
+                  className="text-xs shrink-0 self-end sm:self-auto bg-white border-slate-300 text-slate-900 hover:bg-slate-50 font-bold"
+                  icon={<Cpu className="w-3 h-3 text-yellow-700" />}
                 >
                   Inspect Block
                 </Button>
@@ -206,16 +194,16 @@ export const EventTraceModal: React.FC<EventTraceModalProps> = ({
             </div>
 
             {/* Step 2: Transaction Execution */}
-            <div className="p-3.5 rounded-lg bg-dark-bg-2 border border-dark-border-subtle flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
-                  <span className="w-5 h-5 rounded-full bg-brand-500/20 text-brand-400 flex items-center justify-center text-[10px] font-bold">
+                  <span className="w-5 h-5 rounded-full bg-[#ffe600] text-black border border-yellow-400 flex items-center justify-center text-[10px] font-black">
                     2
                   </span>
-                  <span className="font-bold text-dark-text-primary">Transaction Execution</span>
+                  <span className="font-bold text-slate-950">Transaction Execution</span>
                   <TechnicalValue value={event.transactionHash} type="hash" chars={8} />
                 </div>
-                <div className="text-[11px] text-dark-text-muted pl-7 font-sans">
+                <div className="text-xs text-slate-600 pl-7 font-sans font-medium">
                   Initiated by {event.actorName || 'Actor'} ({event.actorRole || 'PRINCIPAL'})
                 </div>
               </div>
@@ -228,8 +216,8 @@ export const EventTraceModal: React.FC<EventTraceModalProps> = ({
                     onSelectTx(event.transactionHash);
                     onClose();
                   }}
-                  className="text-xs shrink-0 self-end sm:self-auto"
-                  icon={<ArrowLeftRight className="w-3 h-3 text-brand-400" />}
+                  className="text-xs shrink-0 self-end sm:self-auto bg-white border-slate-300 text-slate-900 hover:bg-slate-50 font-bold"
+                  icon={<ArrowLeftRight className="w-3 h-3 text-yellow-700" />}
                 >
                   Inspect Tx
                 </Button>
@@ -237,18 +225,18 @@ export const EventTraceModal: React.FC<EventTraceModalProps> = ({
             </div>
 
             {/* Step 3: Smart Contract Bytecode */}
-            <div className="p-3.5 rounded-lg bg-dark-bg-2 border border-dark-border-subtle flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
-                  <span className="w-5 h-5 rounded-full bg-brand-500/20 text-brand-400 flex items-center justify-center text-[10px] font-bold">
+                  <span className="w-5 h-5 rounded-full bg-[#ffe600] text-black border border-yellow-400 flex items-center justify-center text-[10px] font-black">
                     3
                   </span>
-                  <span className="font-bold text-dark-text-primary">Smart Contract Bytecode</span>
-                  <span className="text-[10px] px-1.5 py-0.2 rounded bg-blue-500/10 text-blue-400 border border-blue-500/30">
+                  <span className="font-bold text-slate-950">Smart Contract Bytecode</span>
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-50 text-blue-900 border border-blue-300 font-bold">
                     {event.contractName || 'Contract'}
                   </span>
                 </div>
-                <div className="text-[11px] text-dark-text-muted pl-7 font-sans">
+                <div className="text-xs text-slate-600 pl-7 font-sans font-medium">
                   Address: {event.contractAddress || event.loanId}
                 </div>
               </div>
@@ -261,8 +249,8 @@ export const EventTraceModal: React.FC<EventTraceModalProps> = ({
                     onSelectContract(event.contractAddress || event.loanId);
                     onClose();
                   }}
-                  className="text-xs shrink-0 self-end sm:self-auto"
-                  icon={<FileCode2 className="w-3 h-3 text-brand-400" />}
+                  className="text-xs shrink-0 self-end sm:self-auto bg-white border-slate-300 text-slate-900 hover:bg-slate-50 font-bold"
+                  icon={<FileCode2 className="w-3 h-3 text-yellow-700" />}
                 >
                   Inspect Contract
                 </Button>
@@ -270,42 +258,42 @@ export const EventTraceModal: React.FC<EventTraceModalProps> = ({
             </div>
 
             {/* Step 4: Decoded Event Emission */}
-            <div className="p-3.5 rounded-lg bg-dark-bg-2 border border-dark-border-subtle space-y-2.5">
+            <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-2.5">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <span className="w-5 h-5 rounded-full bg-brand-500/20 text-brand-400 flex items-center justify-center text-[10px] font-bold">
+                  <span className="w-5 h-5 rounded-full bg-[#ffe600] text-black border border-yellow-400 flex items-center justify-center text-[10px] font-black">
                     4
                   </span>
-                  <span className="font-bold text-dark-text-primary">Decoded Event Emission</span>
-                  <span className="text-[10px] text-dark-text-muted">
+                  <span className="font-bold text-slate-950">Decoded Event Emission</span>
+                  <span className="text-xs text-slate-600 font-bold">
                     {Object.keys(event.data || {}).length} Parameters
                   </span>
                 </div>
               </div>
 
               {/* Decoded Parameters Table */}
-              <div className="ml-7 border border-dark-border-subtle rounded-md divide-y divide-dark-border-subtle bg-dark-bg-3 overflow-hidden">
+              <div className="ml-7 border border-slate-200 rounded-xl divide-y divide-slate-200 bg-white overflow-hidden">
                 {Object.entries(event.data || {}).map(([key, val]) => {
                   const isAddress = typeof val === 'string' && val.startsWith('0x') && val.length === 42;
                   const isWeiAmount = /amount|total|weight|target/i.test(key) && !isNaN(Number(val)) && Number(val) > 1000000;
 
                   return (
-                    <div key={key} className="p-2.5 flex items-center justify-between gap-3 text-[11px]">
-                      <span className="text-dark-text-muted">{key}:</span>
+                    <div key={key} className="p-2.5 flex items-center justify-between gap-3 text-xs">
+                      <span className="text-slate-500 font-medium">{key}:</span>
                       <div className="text-right">
                         {isAddress ? (
                           <TechnicalValue value={val} type="address" chars={8} />
                         ) : isWeiAmount ? (
-                          <div className="flex items-center gap-1.5">
-                            <span className="text-brand-400 font-bold">
+                          <div className="flex items-center gap-1.5 font-bold">
+                            <span className="text-slate-950 font-mono">
                               {formatEther(val, 4)}
                             </span>
-                            <span className="text-dark-text-muted text-[10px]">
+                            <span className="text-slate-500 text-[10px] font-medium">
                               ({val} wei)
                             </span>
                           </div>
                         ) : (
-                          <span className="text-dark-text-primary font-bold">
+                          <span className="text-slate-950 font-bold font-mono">
                             {String(val)}
                           </span>
                         )}
@@ -317,24 +305,24 @@ export const EventTraceModal: React.FC<EventTraceModalProps> = ({
             </div>
 
             {/* Step 5: Read Model & State Projection */}
-            <div className="p-3.5 rounded-lg bg-dark-bg-2 border border-brand-500/30 space-y-2">
+            <div className="p-3.5 rounded-xl bg-yellow-50/70 border border-yellow-300 space-y-2">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <span className="w-5 h-5 rounded-full bg-brand-500 text-white flex items-center justify-center text-[10px] font-bold">
+                  <span className="w-5 h-5 rounded-full bg-black text-[#ffe600] flex items-center justify-center text-[10px] font-black">
                     5
                   </span>
-                  <span className="font-bold text-brand-400">Read Model State Projection</span>
+                  <span className="font-bold text-yellow-950">Read Model State Projection</span>
                 </div>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-brand-500/20 text-brand-300 border border-brand-500/40">
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-yellow-200 text-yellow-950 border border-yellow-400">
                   {projection.stateImpact}
                 </span>
               </div>
 
               <div className="pl-7 space-y-1 font-sans">
-                <div className="text-xs font-bold text-dark-text-primary">
+                <div className="text-xs font-bold text-slate-950">
                   {projection.entity} — {projection.action}
                 </div>
-                <div className="text-[11px] text-dark-text-secondary leading-relaxed">
+                <div className="text-xs text-slate-700 leading-relaxed font-medium">
                   {projection.description}
                 </div>
               </div>
@@ -343,8 +331,8 @@ export const EventTraceModal: React.FC<EventTraceModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="flex justify-end pt-2 border-t border-dark-border-subtle">
-          <Button variant="outline" size="sm" onClick={onClose} className="font-mono text-xs">
+        <div className="flex justify-end pt-2 border-t border-slate-200">
+          <Button variant="outline" size="sm" onClick={onClose} className="font-sans text-xs font-bold bg-white border-slate-300 text-slate-900 hover:bg-slate-50">
             Close Trace
           </Button>
         </div>

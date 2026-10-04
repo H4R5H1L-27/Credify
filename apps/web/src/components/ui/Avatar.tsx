@@ -31,18 +31,18 @@ export const Avatar: React.FC<AvatarProps> = ({
   };
 
   const ringClasses = role === 'BORROWER'
-    ? 'ring-brand-500/30'
+    ? 'ring-yellow-400/50'
     : role === 'LENDER'
-    ? 'ring-emerald-500/30'
+    ? 'ring-emerald-400/50'
     : role === 'MERCHANT'
-    ? 'ring-purple-500/30'
-    : 'ring-dark-border-default';
+    ? 'ring-purple-400/50'
+    : 'ring-slate-200';
 
   return (
     <div className="relative inline-flex shrink-0">
       <div
         className={cn(
-          'rounded-full bg-dark-bg-3 border border-dark-border-default text-dark-text-primary font-bold font-mono flex items-center justify-center select-none ring-2',
+          'rounded-full bg-slate-100 border border-slate-200 text-slate-950 font-bold font-mono flex items-center justify-center select-none ring-2',
           ringClasses,
           sizeClasses[size],
           className
@@ -54,7 +54,7 @@ export const Avatar: React.FC<AvatarProps> = ({
       </div>
       {verified && (
         <span
-          className="absolute -bottom-0.5 -right-0.5 bg-dark-bg-1 text-emerald-400 rounded-full p-0.5 border border-dark-border-subtle"
+          className="absolute -bottom-0.5 -right-0.5 bg-white text-emerald-600 rounded-full p-0.5 border border-emerald-300 shadow-xs"
           title="On-chain Verified Identity"
         >
           <ShieldCheck className="w-3 h-3" />

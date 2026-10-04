@@ -44,37 +44,37 @@ export const Drawer: React.FC<DrawerProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 overflow-hidden">
-      {/* Dark Ambient Backdrop with Calibrated Blur */}
+      {/* Ambient Backdrop with Calibrated Blur */}
       <div
-        className="fixed inset-0 bg-dark-bg-0/75 backdrop-blur-sm transition-opacity animate-in fade-in duration-normal"
+        className="fixed inset-0 bg-slate-900/35 backdrop-blur-xs transition-opacity animate-in fade-in duration-normal"
         onClick={onClose}
       />
 
       <div className="fixed inset-y-0 right-0 flex max-w-full pl-10">
         <div
           className={cn(
-            'w-screen bg-dark-bg-1 border-l border-dark-border-default shadow-depth-elevated flex flex-col justify-between animate-in slide-in-from-right duration-200',
+            'w-screen bg-white border-l border-slate-200 shadow-2xl flex flex-col justify-between animate-in slide-in-from-right duration-200',
             widthMap[width],
             className
           )}
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
-          <div className="p-5 border-b border-dark-border-subtle flex items-start justify-between">
+          <div className="p-5 border-b border-slate-100 flex items-start justify-between">
             <div>
-              <h3 className="text-base font-semibold text-dark-text-primary tracking-tight">
+              <h3 className="text-base font-bold text-slate-950 tracking-tight">
                 {title}
               </h3>
               {description && (
-                <p className="text-xs text-dark-text-secondary mt-1">{description}</p>
+                <p className="text-xs text-slate-600 mt-1">{description}</p>
               )}
             </div>
             <button
               type="button"
               onClick={onClose}
-              className="text-dark-text-muted hover:text-dark-text-primary rounded-md p-1 transition-colors hover:bg-dark-bg-3 cursor-pointer"
+              className="text-slate-500 hover:text-slate-950 rounded-md p-1.5 transition-colors hover:bg-slate-100 cursor-pointer"
             >
-              <X className="w-4 h-4" />
+              <X className="w-5 h-5" />
             </button>
           </div>
 
@@ -83,7 +83,7 @@ export const Drawer: React.FC<DrawerProps> = ({
 
           {/* Optional Sticky Footer */}
           {footer && (
-            <div className="p-4 bg-dark-bg-1/70 border-t border-dark-border-subtle flex items-center justify-end gap-2.5">
+            <div className="p-4 bg-slate-50 border-t border-slate-200 flex items-center justify-end gap-2.5">
               {footer}
             </div>
           )}

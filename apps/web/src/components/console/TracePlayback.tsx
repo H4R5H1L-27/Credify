@@ -40,27 +40,27 @@ export const TracePlayback: React.FC<TracePlaybackProps> = ({
   stepName,
 }) => {
   return (
-    <div className="p-3.5 rounded-xl bg-dark-bg-2 border border-dark-border-subtle space-y-3 font-mono">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+    <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-sm space-y-3.5 font-mono min-w-0">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 min-w-0">
         {/* Playback Controls */}
-        <div className="flex items-center gap-1.5 flex-wrap">
+        <div className="flex items-center gap-2 flex-wrap">
           {isPlaying ? (
             <Button
               size="sm"
               variant="outline"
               onClick={onPause}
-              icon={<Pause className="w-3.5 h-3.5 text-amber-400" />}
-              className="text-xs font-mono border-amber-500/30 text-amber-400 hover:bg-amber-500/10"
+              icon={<Pause className="w-3.5 h-3.5 text-yellow-900" />}
+              className="text-xs font-sans font-bold border-yellow-400 bg-yellow-100 text-yellow-950 hover:bg-yellow-200"
             >
               Pause
             </Button>
           ) : (
             <Button
               size="sm"
-              variant="outline"
+              variant="primary"
               onClick={onPlay}
-              icon={<Play className="w-3.5 h-3.5 text-brand-400" />}
-              className="text-xs font-mono border-brand-500/40 text-brand-400 hover:bg-brand-500/10"
+              icon={<Play className="w-3.5 h-3.5 text-black" />}
+              className="text-xs font-sans font-bold bg-[#ffe600] text-black border border-yellow-400 hover:bg-yellow-400"
             >
               Play Trace
             </Button>
@@ -72,7 +72,7 @@ export const TracePlayback: React.FC<TracePlaybackProps> = ({
             onClick={onStepBack}
             disabled={currentStep <= 1}
             icon={<ChevronLeft className="w-3.5 h-3.5" />}
-            className="text-xs font-mono"
+            className="text-xs font-sans bg-white border-slate-300 text-slate-900 hover:bg-slate-50 font-semibold"
             title="Previous Stage"
           />
 
@@ -82,7 +82,7 @@ export const TracePlayback: React.FC<TracePlaybackProps> = ({
             onClick={onStepForward}
             disabled={currentStep >= totalSteps}
             icon={<ChevronRight className="w-3.5 h-3.5" />}
-            className="text-xs font-mono"
+            className="text-xs font-sans bg-white border-slate-300 text-slate-900 hover:bg-slate-50 font-semibold"
             title="Next Stage"
           />
 
@@ -91,23 +91,23 @@ export const TracePlayback: React.FC<TracePlaybackProps> = ({
             variant="outline"
             onClick={onReset}
             icon={<RotateCcw className="w-3.5 h-3.5" />}
-            className="text-xs font-mono"
+            className="text-xs font-sans bg-white border-slate-300 text-slate-900 hover:bg-slate-50 font-semibold"
             title="Replay from Beginning"
           >
             Replay
           </Button>
 
           {/* Speed Selector */}
-          <div className="flex items-center gap-1 ml-2 border-l border-dark-border-subtle pl-2">
+          <div className="flex items-center gap-1 ml-2 border-l border-slate-200 pl-2">
             {[0.5, 1, 2].map((s) => (
               <button
                 key={s}
                 type="button"
                 onClick={() => onChangeSpeed(s)}
-                className={`px-2 py-1 rounded text-[11px] transition-colors cursor-pointer ${
+                className={`px-2 py-0.5 rounded text-xs transition-colors cursor-pointer font-bold ${
                   speed === s
-                    ? 'bg-brand-500/20 text-brand-400 border border-brand-500/40 font-bold'
-                    : 'text-dark-text-muted hover:text-dark-text-primary'
+                    ? 'bg-[#ffe600] text-black border border-yellow-400 shadow-xs'
+                    : 'text-slate-600 hover:text-slate-950 hover:bg-slate-100'
                 }`}
               >
                 {s}x
@@ -118,15 +118,15 @@ export const TracePlayback: React.FC<TracePlaybackProps> = ({
 
         {/* Current Stage Indicator */}
         <div className="text-right text-xs">
-          <div className="text-dark-text-muted text-[10px] uppercase">Playback State</div>
-          <div className="text-dark-text-primary font-bold">
-            Stage {currentStep} of {totalSteps}: <span className="text-brand-400">{stepName || 'Trace Complete'}</span>
+          <div className="text-slate-600 font-sans font-semibold text-xs uppercase">Playback State</div>
+          <div className="text-slate-950 font-bold font-sans">
+            Stage {currentStep} of {totalSteps}: <span className="text-yellow-950 font-mono">{stepName || 'Trace Complete'}</span>
           </div>
         </div>
       </div>
 
       {/* Progress Scrubber */}
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-1.5">
         {Array.from({ length: totalSteps }).map((_, i) => {
           const stepNum = i + 1;
           const isCompleted = stepNum < currentStep;
@@ -138,12 +138,12 @@ export const TracePlayback: React.FC<TracePlaybackProps> = ({
               type="button"
               onClick={() => onJumpToStep(stepNum)}
               title={`Jump to Stage ${stepNum}`}
-              className={`h-2 flex-1 rounded-full transition-all duration-300 cursor-pointer ${
+              className={`h-2.5 flex-1 rounded-full transition-all duration-200 cursor-pointer ${
                 isCurrent
-                  ? 'bg-brand-500 ring-2 ring-brand-500/50 scale-y-125'
+                  ? 'bg-[#ffe600] ring-2 ring-yellow-400/60 scale-y-125'
                   : isCompleted
-                  ? 'bg-emerald-500/60 hover:bg-emerald-400'
-                  : 'bg-dark-bg-3 hover:bg-dark-border-default'
+                  ? 'bg-emerald-600 hover:bg-emerald-700'
+                  : 'bg-slate-200 hover:bg-slate-300'
               }`}
             />
           );

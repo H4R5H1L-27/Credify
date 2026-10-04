@@ -57,22 +57,22 @@ export const Breadcrumbs: React.FC<{ className?: string }> = ({ className }) => 
   return (
     <nav
       aria-label="Breadcrumb"
-      className={`flex items-center gap-1.5 text-xs font-medium text-dark-text-muted select-none ${className || ''}`}
+      className={`flex items-center gap-1.5 text-xs font-medium text-slate-500 select-none ${className || ''}`}
     >
       {breadcrumbItems.map((item, idx) => (
         <React.Fragment key={item.path}>
           {idx > 0 && (
-            <ChevronRight className="w-3 h-3 text-dark-text-muted/60 shrink-0" />
+            <ChevronRight className="w-3 h-3 text-slate-400 shrink-0" />
           )}
 
           {item.isLast ? (
-            <span className="font-semibold text-dark-text-primary truncate max-w-[180px] sm:max-w-xs">
+            <span className="font-semibold text-slate-950 truncate max-w-[180px] sm:max-w-xs">
               {item.label}
             </span>
           ) : (
             <Link
               to={item.path}
-              className="text-dark-text-secondary hover:text-dark-text-primary transition-colors truncate max-w-[120px] sm:max-w-none"
+              className="text-slate-600 hover:text-slate-950 transition-colors truncate max-w-[120px] sm:max-w-none"
             >
               {item.label}
             </Link>

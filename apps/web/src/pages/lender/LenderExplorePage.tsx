@@ -4,12 +4,10 @@ import { useIdentity } from '../../context/IdentityContext';
 import { useLoans, useReputation } from '../../hooks/useCredify';
 import {
   Button,
-  Badge,
   StatusBadge,
   AddressBadge,
   ProgressBar,
   Skeleton,
-  EmptyState,
   Table,
   TableHeader,
   TableBody,
@@ -17,9 +15,7 @@ import {
   TableRow,
   TableCell,
 } from '../../components/ui';
-import type { LoanSummary } from '@credify/shared';
 import {
-  formatEther,
   formatEtherNum,
   formatApr,
   formatDuration,
@@ -30,29 +26,24 @@ import {
   Coins,
   ArrowRight,
   ShieldCheck,
-  Clock,
-  Briefcase,
   AlertCircle,
-  Filter,
   LayoutGrid,
   List,
   Store,
-  Calendar,
-  Layers,
 } from 'lucide-react';
 
 /* ─── score badge sub-component ─── */
 function ReputationBadge({ address }: { address: string }) {
   const { data: rep, isLoading } = useReputation(address);
-  if (isLoading) return <span className="inline-block w-16 h-4 bg-dark-bg-3 animate-pulse rounded" />;
+  if (isLoading) return <span className="inline-block w-16 h-4 bg-slate-200 animate-pulse rounded" />;
   const score = rep?.score ?? 50;
   const colorClass = score >= 70
-    ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+    ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
     : score >= 40
-    ? 'bg-amber-500/10 text-amber-400 border-amber-500/20'
-    : 'bg-rose-500/10 text-rose-400 border-rose-500/20';
+    ? 'bg-amber-100 text-amber-900 border-amber-300'
+    : 'bg-rose-100 text-rose-900 border-rose-300';
   return (
-    <span className={`inline-flex items-center gap-1 text-[10px] font-mono font-semibold px-2 py-0.5 rounded border ${colorClass}`}>
+    <span className={`inline-flex items-center gap-1 text-[10px] font-mono font-bold px-2 py-0.5 rounded border ${colorClass}`}>
       <ShieldCheck className="w-3 h-3" />
       Score {score}
     </span>
@@ -66,33 +57,30 @@ function ReputationRow({ address }: { address: string }) {
   const successes = rep?.successfulLoans ?? 0;
   const defaults = rep?.defaultedLoans ?? 0;
   const tier = score >= 70 ? 'Tier A · Prime' : score >= 40 ? 'Tier B · Standard' : 'Tier C · High Risk';
-  const tierColor = score >= 70 ? 'text-emerald-400' : score >= 40 ? 'text-amber-400' : 'text-rose-400';
+  const tierColor = score >= 70 ? 'text-emerald-700' : score >= 40 ? 'text-amber-700' : 'text-rose-700';
   const latestOutcome = rep?.latestOutcome;
 
   return (
-    <div className="space-y-1 pt-1">
-      <div className="flex items-center justify-between text-[11px] text-dark-text-muted">
-        <span className={`font-medium ${tierColor}`}>{tier}</span>
-        <span className="font-mono">
-          <span className="text-emerald-400 font-bold">{successes} repaid</span>
-          {' · '}
-          <span className="text-rose-400 font-bold">{defaults} defaulted</span>
-          {' · '}
-          <span className="text-dark-text-secondary">{score}/100</span>
+    <div className="space-y-1.5 pt-1">
+      <div className="flex items-center justify-between text-[11px] text-slate-600">
+        <span className={`font-bold ${tierColor}`}>{tier}</span>
+        <span className="font-mono flex items-center gap-1.5">
+          <span className="text-emerald-800 font-bold bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded text-[10px]">{successes} repaid</span>
+          <span className="text-rose-800 font-bold bg-rose-50 border border-rose-200 px-1.5 py-0.5 rounded text-[10px]">{defaults} defaulted</span>
+          <span className="text-slate-900 font-bold bg-slate-100 border border-slate-200 px-1.5 py-0.5 rounded text-[10px]">{score} / 100</span>
         </span>
       </div>
       {latestOutcome && (
-        <div className={`text-[10px] px-2 py-0.5 rounded font-mono flex items-center justify-between ${
-          latestOutcome.outcome === 'SUCCESS' ? 'bg-emerald-500/10 text-emerald-300 border border-emerald-500/20' : 'bg-rose-500/10 text-rose-300 border border-rose-500/20'
+        <div className={`text-[10px] px-2 py-1 rounded font-mono flex items-center justify-between ${
+          latestOutcome.outcome === 'SUCCESS' ? 'bg-emerald-50 text-emerald-900 border border-emerald-200' : 'bg-rose-50 text-rose-900 border border-rose-200'
         }`}>
-          <span>Latest: {latestOutcome.outcome === 'SUCCESS' ? 'Repaid (+8 pts)' : 'Defaulted (−20 pts)'}</span>
-          <span className="text-dark-text-muted">{timeAgo(latestOutcome.timestamp)}</span>
+          <span className="font-bold">Latest: {latestOutcome.outcome === 'SUCCESS' ? 'Repaid (+8 pts)' : 'Defaulted (−20 pts)'}</span>
+          <span className="text-slate-600 font-medium">{timeAgo(latestOutcome.timestamp)}</span>
         </div>
       )}
     </div>
   );
 }
-
 
 export const LenderExplorePage: React.FC = () => {
   const { isVerified } = useIdentity();
@@ -128,34 +116,34 @@ export const LenderExplorePage: React.FC = () => {
   if (isLoading) {
     return (
       <div className="space-y-6 max-w-7xl mx-auto">
-        <Skeleton className="h-8 w-64 bg-dark-bg-2" />
+        <Skeleton className="h-8 w-64 bg-slate-200" />
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Skeleton className="h-20 bg-dark-bg-2 rounded-xl" />
-          <Skeleton className="h-20 bg-dark-bg-2 rounded-xl" />
-          <Skeleton className="h-20 bg-dark-bg-2 rounded-xl" />
+          <Skeleton className="h-20 bg-slate-200 rounded-xl" />
+          <Skeleton className="h-20 bg-slate-200 rounded-xl" />
+          <Skeleton className="h-20 bg-slate-200 rounded-xl" />
         </div>
-        <Skeleton className="h-96 bg-dark-bg-2 rounded-2xl" />
+        <Skeleton className="h-96 bg-slate-200 rounded-2xl" />
       </div>
     );
   }
 
   return (
-    <div className="space-y-8 max-w-7xl mx-auto">
+    <div className="space-y-8 max-w-7xl mx-auto pb-12">
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-dark-text-primary">
+          <h1 className="text-2xl font-bold tracking-tight text-slate-950">
             Find Credit Agreements
           </h1>
-          <p className="text-xs text-dark-text-secondary mt-1">
+          <p className="text-xs text-slate-600 mt-1 font-medium">
             Discover verified borrower agreements, inspect spending policies, interest rates, and on-chain borrower reputation before deploying capital.
           </p>
         </div>
 
         {!isVerified && (
           <Link to="/app/verify">
-            <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-300 text-xs font-medium hover:bg-amber-500/20 transition-colors">
-              <AlertCircle className="w-3.5 h-3.5 text-amber-400" />
+            <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-100 border border-amber-300 text-amber-950 text-xs font-bold hover:bg-amber-200 transition-colors">
+              <AlertCircle className="w-3.5 h-3.5 text-amber-700" />
               Verification Required to Deploy Capital
             </span>
           </Link>
@@ -164,47 +152,47 @@ export const LenderExplorePage: React.FC = () => {
 
       {/* Market Discovery Strip */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="rounded-xl border border-dark-border-default bg-dark-bg-2 p-4">
-          <span className="text-[11px] uppercase tracking-wider text-dark-text-muted font-medium">
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs">
+          <span className="text-[11px] uppercase tracking-wider text-slate-600 font-bold">
             Open Funding Facilities
           </span>
           <div className="mt-1 flex items-baseline gap-2">
-            <span className="text-xl font-bold font-mono text-dark-text-primary">
+            <span className="text-2xl font-bold font-mono text-slate-950">
               {metrics.openCount}
             </span>
-            <span className="text-xs text-dark-text-secondary">active syndicates</span>
+            <span className="text-xs text-slate-600 font-medium">active syndicates</span>
           </div>
         </div>
 
-        <div className="rounded-xl border border-dark-border-default bg-dark-bg-2 p-4">
-          <span className="text-[11px] uppercase tracking-wider text-dark-text-muted font-medium">
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs">
+          <span className="text-[11px] uppercase tracking-wider text-slate-600 font-bold">
             Available Capital Capacity
           </span>
           <div className="mt-1 flex items-baseline gap-2">
-            <span className="text-xl font-bold font-mono text-brand-400">
+            <span className="text-2xl font-bold font-mono text-slate-950">
               {metrics.openCapacity.toFixed(2)} ETH
             </span>
-            <span className="text-xs text-dark-text-secondary">open to fund</span>
+            <span className="text-xs text-slate-600 font-medium">open to fund</span>
           </div>
         </div>
 
-        <div className="rounded-xl border border-dark-border-default bg-dark-bg-2 p-4">
-          <span className="text-[11px] uppercase tracking-wider text-dark-text-muted font-medium">
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs">
+          <span className="text-[11px] uppercase tracking-wider text-slate-600 font-bold">
             Average Fixed APR
           </span>
           <div className="mt-1 flex items-baseline gap-2">
-            <span className="text-xl font-bold font-mono text-emerald-400">
+            <span className="text-2xl font-bold font-mono text-emerald-800">
               {formatApr(metrics.avgApr)}
             </span>
-            <span className="text-xs text-dark-text-secondary">syndicate average</span>
+            <span className="text-xs text-slate-600 font-medium">syndicate average</span>
           </div>
         </div>
       </div>
 
       {/* Filters & View Switcher */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-dark-border-default pb-3">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-3">
         {/* Status Filter Tabs */}
-        <div className="flex gap-1 overflow-x-auto text-xs font-medium">
+        <div className="flex gap-1.5 overflow-x-auto text-xs font-medium">
           {(['FUNDING', 'ACTIVE', 'REPAID', 'DEFAULTED', 'ALL'] as const).map((tab) => {
             const count = loans
               ? tab === 'ALL'
@@ -212,19 +200,21 @@ export const LenderExplorePage: React.FC = () => {
                 : loans.filter((l) => l.status === tab).length
               : 0;
 
+            const isSelected = filter === tab;
+
             return (
               <button
                 key={tab}
                 onClick={() => setFilter(tab)}
-                className={`px-3 py-1.5 rounded-lg transition-colors cursor-pointer flex items-center gap-1.5 ${
-                  filter === tab
-                    ? 'bg-dark-bg-3 text-dark-text-primary font-semibold border border-dark-border-subtle'
-                    : 'text-dark-text-secondary hover:bg-dark-bg-2 hover:text-dark-text-primary'
+                className={`px-3.5 py-1.5 rounded-lg transition-colors cursor-pointer flex items-center gap-1.5 ${
+                  isSelected
+                    ? 'bg-[#ffe600] text-black font-bold border border-yellow-400 shadow-xs'
+                    : 'bg-white text-slate-700 hover:bg-slate-100 hover:text-slate-950 border border-slate-200 font-medium'
                 }`}
               >
                 <span>{tab === 'FUNDING' ? 'Open for Funding' : tab.charAt(0) + tab.slice(1).toLowerCase()}</span>
-                <span className={`text-[10px] font-mono px-1.5 py-0.2 rounded-full ${
-                  filter === tab ? 'bg-brand-500/20 text-brand-300' : 'bg-dark-bg-1 text-dark-text-muted'
+                <span className={`text-[10px] font-mono font-bold px-1.5 py-0.5 rounded-full ${
+                  isSelected ? 'bg-black text-[#ffe600]' : 'bg-slate-100 text-slate-700'
                 }`}>
                   {count}
                 </span>
@@ -234,44 +224,44 @@ export const LenderExplorePage: React.FC = () => {
         </div>
 
         {/* View Mode Toggle */}
-        <div className="flex items-center gap-1 bg-dark-bg-1 p-1 rounded-lg border border-dark-border-default self-start sm:self-auto">
+        <div className="flex items-center gap-1 bg-white p-1 rounded-xl border border-slate-200 self-start sm:self-auto shadow-xs">
           <button
             onClick={() => setViewMode('table')}
             title="Sophisticated Table View"
-            className={`p-1.5 rounded cursor-pointer transition-colors ${
+            className={`p-1.5 rounded-lg cursor-pointer transition-colors ${
               viewMode === 'table'
-                ? 'bg-dark-bg-3 text-dark-text-primary shadow-xs'
-                : 'text-dark-text-muted hover:text-dark-text-primary'
+                ? 'bg-[#ffe600] text-black shadow-xs font-bold'
+                : 'text-slate-500 hover:text-slate-950'
             }`}
           >
-            <List className="w-3.5 h-3.5" />
+            <List className="w-4 h-4" />
           </button>
           <button
             onClick={() => setViewMode('cards')}
             title="Card Grid View"
-            className={`p-1.5 rounded cursor-pointer transition-colors ${
+            className={`p-1.5 rounded-lg cursor-pointer transition-colors ${
               viewMode === 'cards'
-                ? 'bg-dark-bg-3 text-dark-text-primary shadow-xs'
-                : 'text-dark-text-muted hover:text-dark-text-primary'
+                ? 'bg-[#ffe600] text-black shadow-xs font-bold'
+                : 'text-slate-500 hover:text-slate-950'
             }`}
           >
-            <LayoutGrid className="w-3.5 h-3.5" />
+            <LayoutGrid className="w-4 h-4" />
           </button>
         </div>
       </div>
 
       {/* Directory Content */}
       {filteredLoans.length === 0 ? (
-        <div className="py-16 text-center border border-dashed border-dark-border-default rounded-2xl bg-dark-bg-2 space-y-3">
-          <Coins className="w-10 h-10 text-dark-text-muted mx-auto" />
-          <h3 className="text-sm font-semibold text-dark-text-primary">No Credit Agreements Found</h3>
-          <p className="text-xs text-dark-text-secondary max-w-sm mx-auto">
+        <div className="py-16 text-center border-2 border-dashed border-slate-200 rounded-2xl bg-white space-y-3 shadow-xs">
+          <Coins className="w-10 h-10 text-yellow-600 mx-auto" />
+          <h3 className="text-sm font-bold text-slate-950">No Credit Agreements Found</h3>
+          <p className="text-xs text-slate-600 max-w-sm mx-auto font-medium">
             There are no credit agreements matching the selected filter state ({filter}).
           </p>
         </div>
       ) : viewMode === 'table' ? (
         /* ─── Sophisticated Financial Ledger Table ─── */
-        <div className="rounded-2xl border border-dark-border-default bg-dark-bg-2 overflow-hidden shadow-dark-md">
+        <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-xs">
           <Table>
             <TableHeader>
               <TableRow>
@@ -298,11 +288,11 @@ export const LenderExplorePage: React.FC = () => {
                     <TableCell>
                       <div className="space-y-1">
                         <div className="flex items-center gap-2">
-                          <span className="font-semibold text-xs text-dark-text-primary">
+                          <span className="font-bold text-xs text-slate-950">
                             {loan.borrower.displayName}
                           </span>
                           {loan.borrower.verified && (
-                            <span className="flex items-center gap-0.5 text-[9px] font-medium text-emerald-400 bg-emerald-500/10 px-1 py-0.2 rounded border border-emerald-500/20">
+                            <span className="flex items-center gap-0.5 text-[9px] font-bold text-emerald-800 bg-emerald-100 px-1.5 py-0.5 rounded border border-emerald-300">
                               <ShieldCheck className="w-2.5 h-2.5" />
                               KYC
                             </span>
@@ -319,7 +309,7 @@ export const LenderExplorePage: React.FC = () => {
                     <TableCell>
                       <div className="space-y-1">
                         <StatusBadge status={loan.status} />
-                        <div className="text-[10px] text-dark-text-muted font-mono">
+                        <div className="text-[10px] text-slate-500 font-mono font-bold">
                           Pool <AddressBadge address={loan.address} digits={4} />
                         </div>
                       </div>
@@ -327,10 +317,10 @@ export const LenderExplorePage: React.FC = () => {
 
                     {/* Target Facility */}
                     <TableCell className="font-mono">
-                      <div className="font-bold text-dark-text-primary text-xs">
+                      <div className="font-bold text-slate-950 text-xs">
                         {target.toFixed(2)} ETH
                       </div>
-                      <div className="text-[10px] text-dark-text-muted">
+                      <div className="text-[10px] text-slate-600 font-medium">
                         {loan.status === 'FUNDING'
                           ? `${remaining.toFixed(2)} ETH remaining`
                           : 'Target reached'}
@@ -340,38 +330,38 @@ export const LenderExplorePage: React.FC = () => {
                     {/* Subscription Progress */}
                     <TableCell>
                       <div className="w-32 space-y-1 font-mono text-xs">
-                        <div className="flex justify-between text-[10px] text-dark-text-secondary">
+                        <div className="flex justify-between text-[10px] text-slate-700 font-bold">
                           <span>{funded.toFixed(2)} ETH</span>
-                          <span className="font-bold text-dark-text-primary">{pct}%</span>
+                          <span className="font-bold text-slate-950">{pct}%</span>
                         </div>
                         <ProgressBar
                           value={pct}
-                          variant={pct >= 100 ? 'success' : 'brand'}
-                          className="h-1.5"
+                          variant={pct >= 100 ? 'success' : 'primary'}
+                          className="h-2"
                         />
-                        <div className="text-[10px] text-dark-text-muted">
+                        <div className="text-[10px] text-slate-500 font-medium">
                           {loan.lenders.length} lenders
                         </div>
                       </div>
                     </TableCell>
 
                     {/* Fixed APR */}
-                    <TableCell className="font-mono text-xs font-semibold text-emerald-400">
+                    <TableCell className="font-mono text-xs font-bold text-emerald-800">
                       {formatApr(loan.aprBps)} fixed
                     </TableCell>
 
                     {/* Tenor */}
-                    <TableCell className="text-xs text-dark-text-secondary">
+                    <TableCell className="text-xs text-slate-800 font-bold">
                       <div>{formatDuration(loan.durationSeconds)}</div>
-                      <div className="text-[10px] text-dark-text-muted font-mono">
+                      <div className="text-[10px] text-slate-500 font-mono font-medium">
                         Due {formatDate(loan.maturity)}
                       </div>
                     </TableCell>
 
                     {/* Spend Policy */}
-                    <TableCell className="text-xs text-dark-text-secondary">
+                    <TableCell className="text-xs text-slate-700 font-medium">
                       <div className="flex items-center gap-1">
-                        <Store className="w-3 h-3 text-dark-text-muted" />
+                        <Store className="w-3.5 h-3.5 text-slate-500" />
                         <span>{loan.merchants.length} suppliers</span>
                       </div>
                     </TableCell>
@@ -381,8 +371,9 @@ export const LenderExplorePage: React.FC = () => {
                       <Link to={`/app/loans/${loan.address}`}>
                         <Button
                           size="xs"
-                          variant={loan.status === 'FUNDING' ? 'primary' : 'outline'}
+                          variant={loan.status === 'FUNDING' ? 'primary' : 'secondary'}
                           icon={<ArrowRight className="w-3 h-3" />}
+                          className="font-bold"
                         >
                           {loan.status === 'FUNDING' ? 'Contribute' : 'Inspect'}
                         </Button>
@@ -406,24 +397,24 @@ export const LenderExplorePage: React.FC = () => {
             return (
               <div
                 key={loan.address}
-                className="p-5 rounded-2xl border border-dark-border-default bg-dark-bg-2 hover:border-dark-border-subtle transition-all shadow-dark-md space-y-4 flex flex-col justify-between"
+                className="p-6 rounded-2xl border border-slate-200 bg-white hover:border-yellow-400 hover:shadow-md transition-all shadow-xs space-y-4 flex flex-col justify-between"
               >
                 <div className="space-y-3">
                   <div className="flex justify-between items-start">
                     <div className="space-y-1">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-bold text-dark-text-primary text-sm">
+                        <span className="font-bold text-slate-950 text-sm">
                           {loan.borrower.displayName}
                         </span>
                         {loan.borrower.verified && (
-                          <span className="flex items-center gap-1 text-[10px] font-medium text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">
+                          <span className="flex items-center gap-1 text-[10px] font-bold text-emerald-800 bg-emerald-100 px-1.5 py-0.5 rounded border border-emerald-300">
                             <ShieldCheck className="w-3 h-3" />
                             KYC Verified
                           </span>
                         )}
                         <ReputationBadge address={loan.borrower.walletAddress} />
                       </div>
-                      <div className="text-[11px] text-dark-text-muted font-mono">
+                      <div className="text-[11px] text-slate-500 font-mono font-medium">
                         Pool <AddressBadge address={loan.address} digits={5} />
                       </div>
                     </div>
@@ -436,19 +427,19 @@ export const LenderExplorePage: React.FC = () => {
                   {/* Progress Meter */}
                   <div className="space-y-1.5 pt-1">
                     <div className="flex justify-between text-xs">
-                      <span className="text-dark-text-secondary font-medium">Syndicate Subscription</span>
-                      <span className="font-mono text-dark-text-primary font-bold">
+                      <span className="text-slate-700 font-bold">Syndicate Subscription</span>
+                      <span className="font-mono text-slate-950 font-bold">
                         {funded.toFixed(2)} / {target.toFixed(2)} ETH ({percent}%)
                       </span>
                     </div>
                     <ProgressBar
                       value={percent}
-                      variant={percent >= 100 ? 'success' : 'brand'}
-                      className="h-2"
+                      variant={percent >= 100 ? 'success' : 'primary'}
+                      className="h-2.5"
                     />
-                    <div className="flex justify-between text-[11px] text-dark-text-muted font-mono">
+                    <div className="flex justify-between text-[11px] text-slate-600 font-mono font-medium">
                       <span>{loan.lenders.length} lenders participating</span>
-                      <span>
+                      <span className="font-bold text-slate-900">
                         {loan.status === 'FUNDING'
                           ? `${remaining.toFixed(2)} ETH capacity`
                           : 'Fully Subscribed'}
@@ -457,39 +448,40 @@ export const LenderExplorePage: React.FC = () => {
                   </div>
 
                   {/* Key Loan Terms */}
-                  <div className="grid grid-cols-2 gap-2 p-3 bg-dark-bg-1 rounded-xl text-xs border border-dark-border-subtle">
+                  <div className="grid grid-cols-2 gap-2 p-3.5 bg-slate-50 rounded-xl text-xs border border-slate-200">
                     <div>
-                      <span className="text-dark-text-muted text-[11px]">Interest Rate:</span>
-                      <div className="font-bold text-emerald-400 font-mono">{formatApr(loan.aprBps)} fixed</div>
+                      <span className="text-slate-600 text-[11px] font-medium">Interest Rate:</span>
+                      <div className="font-bold text-emerald-800 font-mono">{formatApr(loan.aprBps)} fixed</div>
                     </div>
                     <div>
-                      <span className="text-dark-text-muted text-[11px]">Duration:</span>
-                      <div className="font-bold text-dark-text-primary">{formatDuration(loan.durationSeconds)}</div>
+                      <span className="text-slate-600 text-[11px] font-medium">Duration:</span>
+                      <div className="font-bold text-slate-950">{formatDuration(loan.durationSeconds)}</div>
                     </div>
                     <div>
-                      <span className="text-dark-text-muted text-[11px]">Spend Policy:</span>
-                      <div className="font-medium text-dark-text-secondary">{loan.merchants.length} approved suppliers</div>
+                      <span className="text-slate-600 text-[11px] font-medium">Spend Policy:</span>
+                      <div className="font-bold text-slate-900">{loan.merchants.length} approved suppliers</div>
                     </div>
                     <div>
-                      <span className="text-dark-text-muted text-[11px]">Maturity:</span>
-                      <div className="font-medium text-dark-text-secondary font-mono">{formatDate(loan.maturity)}</div>
+                      <span className="text-slate-600 text-[11px] font-medium">Maturity:</span>
+                      <div className="font-bold text-slate-900 font-mono">{formatDate(loan.maturity)}</div>
                     </div>
                   </div>
                 </div>
 
-                <div className="pt-3 border-t border-dark-border-subtle flex items-center justify-between">
+                <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
                   <div className="text-xs">
-                    <span className="text-dark-text-muted">Available Allocation:</span>
-                    <span className="font-mono font-bold text-dark-text-primary ml-1">
+                    <span className="text-slate-600 font-medium">Available Allocation:</span>
+                    <span className="font-mono font-bold text-slate-950 ml-1">
                       {remaining.toFixed(2)} ETH
                     </span>
                   </div>
 
                   <Link to={`/app/loans/${loan.address}`}>
                     <Button
-                      variant={loan.status === 'FUNDING' ? 'primary' : 'outline'}
+                      variant={loan.status === 'FUNDING' ? 'primary' : 'secondary'}
                       size="sm"
                       icon={<ArrowRight className="w-3.5 h-3.5" />}
+                      className="font-bold"
                     >
                       {loan.status === 'FUNDING' ? 'Contribute Capital' : 'Inspect Ledger'}
                     </Button>

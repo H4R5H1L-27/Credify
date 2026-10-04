@@ -46,89 +46,89 @@ export const ReplayStageCard: React.FC<ReplayStageCardProps> = ({
   onInspect,
 }) => {
   // Determine card visual styling based on state
-  let cardBorder = 'border-dark-border-subtle bg-dark-bg-3/50 opacity-50';
-  let badgeColor = 'text-dark-text-muted bg-dark-bg-2 border-dark-border-subtle';
-  let statusIcon = <Clock className="w-3 h-3 text-dark-text-muted" />;
+  let cardBorder = 'border-slate-200 bg-white/60 opacity-60';
+  let badgeColor = 'text-slate-600 bg-slate-100 border-slate-200';
+  let statusIcon = <Clock className="w-3.5 h-3.5 text-slate-500" />;
   let labelText = 'PENDING';
 
   if (stage.state === 'COMPLETED') {
-    cardBorder = 'border-dark-border-default bg-dark-bg-3 hover:border-emerald-500/40 opacity-100';
-    badgeColor = 'text-emerald-400 bg-emerald-500/10 border-emerald-500/30';
-    statusIcon = <CheckCircle2 className="w-3 h-3 text-emerald-400" />;
+    cardBorder = 'border-slate-200 bg-white hover:border-yellow-400 shadow-xs hover:shadow-md opacity-100';
+    badgeColor = 'text-emerald-900 bg-emerald-50 border-emerald-300 font-bold';
+    statusIcon = <CheckCircle2 className="w-3.5 h-3.5 text-emerald-700" />;
     labelText = 'CONFIRMED';
   } else if (stage.state === 'ACTIVE') {
-    cardBorder = 'border-brand-500 bg-dark-bg-3 shadow-[0_0_20px_rgba(99,102,241,0.25)] opacity-100 ring-2 ring-brand-500/50';
-    badgeColor = 'text-brand-400 bg-brand-500/20 border-brand-500/50 font-bold';
-    statusIcon = <Zap className="w-3 h-3 text-brand-400 motion-safe:animate-pulse" />;
+    cardBorder = 'border-yellow-400 bg-yellow-50/50 shadow-md ring-2 ring-yellow-400/50 opacity-100';
+    badgeColor = 'text-yellow-950 bg-yellow-100 border-yellow-400 font-bold';
+    statusIcon = <Zap className="w-3.5 h-3.5 text-yellow-900 motion-safe:animate-pulse" />;
     labelText = 'REPLAYING...';
   } else if (stage.state === 'REVERTED') {
-    cardBorder = 'border-rose-500/60 bg-rose-500/5 shadow-[0_0_15px_rgba(244,63,94,0.2)] opacity-100';
-    badgeColor = 'text-rose-400 bg-rose-500/20 border-rose-500/40 font-bold';
-    statusIcon = <XCircle className="w-3 h-3 text-rose-400" />;
+    cardBorder = 'border-rose-300 bg-rose-50/50 shadow-sm opacity-100';
+    badgeColor = 'text-rose-900 bg-rose-50 border-rose-300 font-bold';
+    statusIcon = <XCircle className="w-3.5 h-3.5 text-rose-700" />;
     labelText = 'REVERTED';
   }
 
   const getCategoryIcon = () => {
     switch (stage.step) {
       case 1:
-        return <Monitor className="w-4 h-4 text-brand-400" />;
+        return <Monitor className="w-4 h-4 text-black" />;
       case 2:
-        return <Wallet className="w-4 h-4 text-amber-400" />;
+        return <Wallet className="w-4 h-4 text-yellow-900" />;
       case 3:
       case 4:
-        return <ArrowRight className="w-4 h-4 text-blue-400" />;
+        return <ArrowRight className="w-4 h-4 text-blue-800" />;
       case 5:
-        return <Cpu className="w-4 h-4 text-brand-400" />;
+        return <Cpu className="w-4 h-4 text-slate-950" />;
       case 6:
-        return <Layers className="w-4 h-4 text-purple-400" />;
+        return <Layers className="w-4 h-4 text-purple-800" />;
       case 7:
-        return <Radio className="w-4 h-4 text-purple-400" />;
+        return <Radio className="w-4 h-4 text-purple-800" />;
       case 8:
-        return <Database className="w-4 h-4 text-indigo-400" />;
+        return <Database className="w-4 h-4 text-indigo-800" />;
       case 9:
-        return <CheckCircle2 className="w-4 h-4 text-emerald-400" />;
+        return <CheckCircle2 className="w-4 h-4 text-emerald-800" />;
       default:
-        return <FileCode2 className="w-4 h-4 text-dark-text-muted" />;
+        return <FileCode2 className="w-4 h-4 text-slate-700" />;
     }
   };
 
   return (
     <div
-      className={`p-4 rounded-xl border transition-all duration-500 font-mono space-y-3 ${cardBorder}`}
+      className={`p-5 rounded-xl border transition-all duration-200 font-mono space-y-3.5 ${cardBorder}`}
     >
       {/* Top Header Row */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-        <div className="flex items-center gap-2.5">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+        <div className="flex items-center gap-3">
           <div
-            className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${
+            className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${
               stage.state === 'ACTIVE'
-                ? 'bg-brand-500 text-white shadow-sm'
+                ? 'bg-[#ffe600] text-black border border-yellow-400 shadow-xs'
                 : stage.state === 'COMPLETED'
-                ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                ? 'bg-emerald-100 text-emerald-950 border border-emerald-300'
                 : stage.state === 'REVERTED'
-                ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30'
-                : 'bg-dark-bg-2 border border-dark-border-subtle text-dark-text-muted'
+                ? 'bg-rose-100 text-rose-950 border border-rose-300'
+                : 'bg-slate-100 border border-slate-300 text-slate-700'
             }`}
           >
             {stage.step}
           </div>
 
-          <div className="p-1.5 rounded-md bg-dark-bg-2 border border-dark-border-subtle">
+          <div className="p-1.5 rounded-lg bg-yellow-50 border border-yellow-300">
             {getCategoryIcon()}
           </div>
 
           <div>
-            <div className="font-bold text-xs text-dark-text-primary flex items-center gap-2">
+            <div className="font-bold text-sm text-slate-950 flex items-center gap-2">
               <span>{stage.name}</span>
             </div>
-            <div className="text-[10px] text-dark-text-muted">
+            <div className="text-xs text-slate-600 font-sans font-medium">
               {stage.category}
             </div>
           </div>
         </div>
 
         <span
-          className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded text-[10px] uppercase font-semibold border ${badgeColor} self-start sm:self-auto`}
+          className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xs uppercase font-bold border ${badgeColor} self-start sm:self-auto font-sans`}
         >
           {statusIcon}
           <span>{labelText}</span>
@@ -136,17 +136,17 @@ export const ReplayStageCard: React.FC<ReplayStageCardProps> = ({
       </div>
 
       {/* Summary Narrative */}
-      <div className="text-xs text-dark-text-secondary font-sans leading-relaxed pl-8">
+      <div className="text-xs text-slate-700 font-sans font-medium leading-relaxed sm:pl-10">
         {stage.summary}
       </div>
 
       {/* Captured Evidence Table */}
       {stage.details && Object.keys(stage.details).length > 0 && stage.state !== 'PENDING' && (
-        <div className="ml-8 p-2.5 rounded-lg bg-dark-bg-2 border border-dark-border-subtle/80 space-y-1 text-[11px]">
+        <div className="sm:ml-10 p-3 rounded-lg bg-slate-50 border border-slate-200 space-y-1.5 text-xs">
           {Object.entries(stage.details).map(([k, v]) => (
             <div key={k} className="flex items-center justify-between gap-3">
-              <span className="text-dark-text-muted text-[10px]">{k}:</span>
-              <span className="text-dark-text-primary font-bold truncate max-w-[280px]">
+              <span className="text-slate-600 font-sans font-semibold text-xs">{k}:</span>
+              <span className="text-slate-950 font-bold truncate max-w-[280px]">
                 {String(v)}
               </span>
             </div>
@@ -156,14 +156,14 @@ export const ReplayStageCard: React.FC<ReplayStageCardProps> = ({
 
       {/* Action Footer */}
       {onInspect && stage.state !== 'PENDING' && (
-        <div className="pt-2 pl-8 border-t border-dark-border-subtle/50 flex justify-end">
+        <div className="pt-2 sm:pl-10 border-t border-slate-200 flex justify-end">
           <button
             type="button"
             onClick={() => onInspect(stage)}
-            className="inline-flex items-center gap-1.5 text-xs text-brand-400 hover:text-brand-300 font-bold transition-colors cursor-pointer"
+            className="inline-flex items-center gap-1.5 text-xs text-yellow-900 hover:text-black font-bold transition-colors cursor-pointer"
           >
             <span>Inspect Evidence Proof</span>
-            <ArrowRight className="w-3.5 h-3.5" />
+            <ArrowRight className="w-3.5 h-3.5 text-slate-900" />
           </button>
         </div>
       )}
