@@ -2,6 +2,7 @@
 /* tslint:disable */
 /* eslint-disable */
 export * as loanPoolSol from './LoanPool.sol/index.js';
+export * as test from './test/index.js';
 export { KYCRegistry__factory } from './KYCRegistry__factory.js';
 export { LoanFactory__factory } from './LoanFactory__factory.js';
 export { ReputationRegistry__factory } from './ReputationRegistry__factory.js';

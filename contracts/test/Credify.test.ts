@@ -12,6 +12,7 @@ async function expectRevert(action: () => Promise<unknown>, token: string) {
 
 describe('Credify protocol', function () {
   let ethers: any;
+  let deployer: any;
   let kyc: any;
   let reputation: any;
   let factory: any;
@@ -25,7 +26,7 @@ describe('Credify protocol', function () {
 
   beforeEach(async function () {
     ({ ethers } = await network.create());
-    [, borrower, lenderA, lenderB, lenderC, merchantA, outsider] = await ethers.getSigners();
+    [deployer, borrower, lenderA, lenderB, lenderC, merchantA, outsider] = await ethers.getSigners();
 
     kyc = await ethers.deployContract('KYCRegistry');
     await kyc.waitForDeployment();
@@ -334,5 +335,340 @@ describe('Credify protocol', function () {
     await tx.wait();
     const after = await ethers.provider.getBalance(lenderA.address);
     expect(after).to.be.greaterThan(before - ethers.parseEther('0.01'));
+  });
+
+  it('enforces cancelUnfunded timing, refund path, double refund, and event emission', async function () {
+    await pool.connect(lenderA).contribute({ value: ethers.parseEther('4') });
+
+    // 1. cancelUnfunded before maturity reverts with FundingNotExpired
+    await expectRevert(() => pool.cancelUnfunded(), 'FundingNotExpired');
+
+    // 2. Fast-forward past maturity
+    await ethers.provider.send('evm_increaseTime', [15 * 24 * 60 * 60]);
+    await ethers.provider.send('evm_mine', []);
+
+    // 3. cancelUnfunded succeeds, transitions to Cancelled (4), and emits FundingCancelled
+    const cancelTx = await pool.connect(lenderA).cancelUnfunded();
+    await expect(cancelTx).to.emit(pool, 'FundingCancelled');
+    expect(await pool.status()).to.equal(4); // Status.Cancelled
+
+    // 4. Calling cancelUnfunded when already Cancelled reverts with FundingClosed
+    await expectRevert(() => pool.cancelUnfunded(), 'FundingClosed');
+
+    // 5. Non-contributor claiming refund reverts with NothingToClaim
+    await expectRevert(() => pool.connect(outsider).claimFundingRefund(), 'NothingToClaim');
+
+    // 6. Valid refund claim transfers ETH and emits FundingRefunded
+    const balBefore = await ethers.provider.getBalance(lenderA.address);
+    const refundTx = await pool.connect(lenderA).claimFundingRefund();
+    await expect(refundTx).to.emit(pool, 'FundingRefunded').withArgs(lenderA.address, ethers.parseEther('4'));
+    const receipt = await refundTx.wait();
+    const gas = receipt.gasUsed * receipt.gasPrice;
+    const balAfter = await ethers.provider.getBalance(lenderA.address);
+    expect(balAfter + gas - balBefore).to.equal(ethers.parseEther('4'));
+    expect(await pool.refunded(lenderA.address)).to.equal(true);
+
+    // 7. Double refund attempt reverts with AlreadyRefunded
+    await expectRevert(() => pool.connect(lenderA).claimFundingRefund(), 'AlreadyRefunded');
+  });
+
+  it('rejects double claim of repayment', async function () {
+    // Fund pool to activate
+    await pool.connect(lenderA).contribute({ value: ethers.parseEther('6') });
+    await pool.connect(lenderB).contribute({ value: ethers.parseEther('4') });
+
+    // Partial repayment of 5.4 ETH
+    await pool.connect(borrower).repay({ value: ethers.parseEther('5.4') });
+
+    // Lender A claims 3.24 ETH (60%)
+    const claimTx = await pool.connect(lenderA).claimRepayment();
+    await expect(claimTx).to.emit(pool, 'RepaymentClaimed').withArgs(lenderA.address, ethers.parseEther('3.24'));
+    expect(await pool.claimed(lenderA.address)).to.equal(ethers.parseEther('3.24'));
+
+    // Immediate second claim reverts with NothingToClaim
+    await expectRevert(() => pool.connect(lenderA).claimRepayment(), 'NothingToClaim');
+  });
+
+  it('allows claiming pro-rata repayment share after loan defaults, and rejects zero/duplicate claim', async function () {
+    // Fund pool: lender A (6 ETH = 60%), lender B (4 ETH = 40%)
+    await pool.connect(lenderA).contribute({ value: ethers.parseEther('6') });
+    await pool.connect(lenderB).contribute({ value: ethers.parseEther('4') });
+
+    // Borrower repays 2 ETH partially before default
+    await pool.connect(borrower).repay({ value: ethers.parseEther('2') });
+
+    // Fast forward past maturity
+    await ethers.provider.send('evm_increaseTime', [15 * 24 * 60 * 60]);
+    await ethers.provider.send('evm_mine', []);
+
+    // Lender A votes default (6 ETH > 5.001 ETH threshold -> triggers default)
+    const defaultTx = await pool.connect(lenderA).voteDefault();
+    await expect(defaultTx).to.emit(pool, 'LoanDefaulted');
+    expect(await pool.status()).to.equal(3); // Status.Defaulted
+
+    // Lender A claims pro-rata share of totalRepaid (2 ETH * 60% = 1.2 ETH)
+    const claimTxA = await pool.connect(lenderA).claimRepayment();
+    await expect(claimTxA).to.emit(pool, 'RepaymentClaimed').withArgs(lenderA.address, ethers.parseEther('1.2'));
+
+    // Duplicate claim by Lender A reverts with NothingToClaim
+    await expectRevert(() => pool.connect(lenderA).claimRepayment(), 'NothingToClaim');
+
+    // Lender B claims pro-rata share of totalRepaid (2 ETH * 40% = 0.8 ETH)
+    const claimTxB = await pool.connect(lenderB).claimRepayment();
+    await expect(claimTxB).to.emit(pool, 'RepaymentClaimed').withArgs(lenderB.address, ethers.parseEther('0.8'));
+
+    // Duplicate claim by Lender B reverts with NothingToClaim
+    await expectRevert(() => pool.connect(lenderB).claimRepayment(), 'NothingToClaim');
+  });
+
+  it('reverts on each LoanFactory validation check with the expected custom error', async function () {
+    // 1. Borrower not verified
+    await expectRevert(
+      () => factory.createLoan(outsider.address, ethers.parseEther('10'), 86400, 800, ethers.parseEther('8'), 5001, [merchantA.address]),
+      'BorrowerNotVerified'
+    );
+
+    // 2. targetWei == 0
+    await expectRevert(
+      () => factory.createLoan(borrower.address, 0, 86400, 800, ethers.parseEther('8'), 5001, [merchantA.address]),
+      'InvalidTarget'
+    );
+
+    // 3. durationSeconds == 0
+    await expectRevert(
+      () => factory.createLoan(borrower.address, ethers.parseEther('10'), 0, 800, ethers.parseEther('8'), 5001, [merchantA.address]),
+      'InvalidDuration'
+    );
+
+    // 4. maxSpendWei == 0
+    await expectRevert(
+      () => factory.createLoan(borrower.address, ethers.parseEther('10'), 86400, 800, 0, 5001, [merchantA.address]),
+      'InvalidSpendLimit'
+    );
+
+    // 5. maxSpendWei > targetWei
+    await expectRevert(
+      () => factory.createLoan(borrower.address, ethers.parseEther('10'), 86400, 800, ethers.parseEther('11'), 5001, [merchantA.address]),
+      'InvalidSpendLimit'
+    );
+
+    // 6. defaultQuorumBps <= 5000 (e.g. 5000, 4999)
+    await expectRevert(
+      () => factory.createLoan(borrower.address, ethers.parseEther('10'), 86400, 800, ethers.parseEther('8'), 5000, [merchantA.address]),
+      'InvalidQuorum'
+    );
+    await expectRevert(
+      () => factory.createLoan(borrower.address, ethers.parseEther('10'), 86400, 800, ethers.parseEther('8'), 4999, [merchantA.address]),
+      'InvalidQuorum'
+    );
+
+    // 7. defaultQuorumBps > 10000 (e.g. 10001)
+    await expectRevert(
+      () => factory.createLoan(borrower.address, ethers.parseEther('10'), 86400, 800, ethers.parseEther('8'), 10001, [merchantA.address]),
+      'InvalidQuorum'
+    );
+
+    // 8. merchants.length == 0
+    await expectRevert(
+      () => factory.createLoan(borrower.address, ethers.parseEther('10'), 86400, 800, ethers.parseEther('8'), 5001, []),
+      'NoMerchants'
+    );
+  });
+
+  it('rejects unauthorized caller in ReputationRegistry and accepts authorized pool with events', async function () {
+    const freshReputation = await ethers.deployContract('ReputationRegistry');
+    await freshReputation.waitForDeployment();
+
+    // 1. Non-owner calling authorizePool reverts
+    await expectRevert(
+      () => freshReputation.connect(outsider).authorizePool(lenderA.address, true),
+      'OwnableUnauthorizedAccount'
+    );
+
+    // 2. Caller not authorized in authorizedPools reverts with NotAuthorizedPool
+    await expectRevert(
+      () => freshReputation.connect(outsider).recordOutcome(borrower.address, true),
+      'NotAuthorizedPool'
+    );
+
+    // 3. Owner authorizes an address and emits PoolAuthorized
+    const authTx = await freshReputation.authorizePool(lenderA.address, true);
+    await expect(authTx).to.emit(freshReputation, 'PoolAuthorized').withArgs(lenderA.address, true);
+    expect(await freshReputation.authorizedPools(lenderA.address)).to.equal(true);
+
+    // 4. Authorized caller records successful outcome, emits ReputationUpdated
+    const recTx1 = await freshReputation.connect(lenderA).recordOutcome(borrower.address, true);
+    await expect(recTx1).to.emit(freshReputation, 'ReputationUpdated').withArgs(borrower.address, true, 58, 1, 0);
+
+    // 5. Authorized caller records default outcome
+    const recTx2 = await freshReputation.connect(lenderA).recordOutcome(borrower.address, false);
+    await expect(recTx2).to.emit(freshReputation, 'ReputationUpdated').withArgs(borrower.address, false, 38, 1, 1);
+  });
+
+  it('enforces KYCRegistry owner-only access and already-in-state revert', async function () {
+    const ref1 = ethers.id('credential-v1');
+    const ref2 = ethers.id('credential-v2');
+
+    // 1. Non-owner cannot call setVerified
+    await expectRevert(
+      () => kyc.connect(outsider).setVerified(outsider.address, true, ref1),
+      'OwnableUnauthorizedAccount'
+    );
+
+    // 2. Owner sets verification and emits VerificationUpdated
+    const tx1 = await kyc.setVerified(outsider.address, true, ref1);
+    await expect(tx1).to.emit(kyc, 'VerificationUpdated').withArgs(outsider.address, true, ref1);
+    expect(await kyc.isVerified(outsider.address)).to.equal(true);
+
+    // 3. Re-setting identical verification state and ref reverts with AddressAlreadyInState
+    await expectRevert(
+      () => kyc.setVerified(outsider.address, true, ref1),
+      'AddressAlreadyInState'
+    );
+
+    // 4. Updating ref or status succeeds
+    const tx2 = await kyc.setVerified(outsider.address, true, ref2);
+    await expect(tx2).to.emit(kyc, 'VerificationUpdated').withArgs(outsider.address, true, ref2);
+  });
+
+  it('prevents reentrancy attack on spend via malicious merchant and on claimRepayment via malicious lender', async function () {
+    // Deploy malicious merchant
+    const malMerchant = await ethers.deployContract('MaliciousMerchant');
+    await malMerchant.waitForDeployment();
+    const malMerchantAddress = await malMerchant.getAddress();
+
+    // Create a pool approving the malicious merchant
+    const malTx = await factory.createLoan(
+      borrower.address,
+      ethers.parseEther('10'),
+      14 * 24 * 60 * 60,
+      800,
+      ethers.parseEther('8'),
+      5001,
+      [malMerchantAddress]
+    );
+    await malTx.wait();
+    const pools = await factory.getPools();
+    const malPool = await ethers.getContractAt('LoanPool', pools[pools.length - 1]);
+
+    // Fund the pool to activate
+    await malPool.connect(lenderA).contribute({ value: ethers.parseEther('6') });
+    await malPool.connect(lenderB).contribute({ value: ethers.parseEther('4') });
+    expect(await malPool.status()).to.equal(1); // Active
+
+    // 1. Borrower spends to MaliciousMerchant -> MaliciousMerchant tries to re-enter spend -> reverts
+    await expectRevert(
+      () => malPool.connect(borrower).spend(malMerchantAddress, ethers.parseEther('1'), ethers.id('test')),
+      'merchant transfer failed'
+    );
+
+    // Deploy malicious lender
+    const malLender = await ethers.deployContract('MaliciousLender');
+    await malLender.waitForDeployment();
+    const malLenderAddress = await malLender.getAddress();
+
+    // Verify the malicious lender in KYC so it can contribute
+    await kyc.setVerified(malLenderAddress, true, ethers.id('malicious-lender'));
+
+    // Create another pool for lender reentrancy test
+    const loanTx2 = await factory.createLoan(
+      borrower.address,
+      ethers.parseEther('10'),
+      14 * 24 * 60 * 60,
+      800,
+      ethers.parseEther('8'),
+      5001,
+      [merchantA.address]
+    );
+    await loanTx2.wait();
+    const pools2 = await factory.getPools();
+    const malPool2 = await ethers.getContractAt('LoanPool', pools2[pools2.length - 1]);
+
+    // Malicious lender funds 6 ETH, Lender B funds 4 ETH -> pool activates
+    await malLender.fund(await malPool2.getAddress(), { value: ethers.parseEther('6') });
+    await malPool2.connect(lenderB).contribute({ value: ethers.parseEther('4') });
+    expect(await malPool2.status()).to.equal(1); // Active
+
+    // Borrower repays 5.4 ETH (50%)
+    await malPool2.connect(borrower).repay({ value: ethers.parseEther('5.4') });
+
+    // 2. Malicious lender claims repayment -> receives ETH -> tries to reenter claimRepayment -> reverts
+    await expectRevert(
+      () => malLender.claim(),
+      'lender transfer failed'
+    );
+  });
+
+  it('asserts events for all contract lifecycle and state transitions', async function () {
+    // 1. KYCRegistry VerificationUpdated
+    const kycRef = ethers.id('audit-ref');
+    const kycTx = await kyc.setVerified(outsider.address, true, kycRef);
+    await expect(kycTx).to.emit(kyc, 'VerificationUpdated').withArgs(outsider.address, true, kycRef);
+
+    // 2. LoanFactory LoanCreated & LoanPool LoanPoolCreated
+    const createTx = await factory.createLoan(
+      borrower.address,
+      ethers.parseEther('10'),
+      14 * 24 * 60 * 60,
+      800,
+      ethers.parseEther('8'),
+      5001,
+      [merchantA.address]
+    );
+    const pools = await factory.getPools();
+    const testPoolAddress = pools[pools.length - 1];
+    const testPool = await ethers.getContractAt('LoanPool', testPoolAddress);
+    const maturity = await testPool.maturity();
+
+    await expect(createTx)
+      .to.emit(factory, 'LoanCreated')
+      .withArgs(testPoolAddress, borrower.address, ethers.parseEther('10'), maturity, 800);
+    await expect(createTx)
+      .to.emit(testPool, 'LoanPoolCreated')
+      .withArgs(borrower.address, ethers.parseEther('10'), maturity, 800);
+
+    // 3. ReputationRegistry PoolAuthorized
+    expect(await reputation.authorizedPools(testPoolAddress)).to.equal(true);
+
+    // 4. LoanPool Funded & LoanActivated
+    const fundTx1 = await testPool.connect(lenderA).contribute({ value: ethers.parseEther('6') });
+    await expect(fundTx1)
+      .to.emit(testPool, 'Funded')
+      .withArgs(lenderA.address, ethers.parseEther('6'), ethers.parseEther('6'));
+
+    const fundTx2 = await testPool.connect(lenderB).contribute({ value: ethers.parseEther('4') });
+    await expect(fundTx2)
+      .to.emit(testPool, 'Funded')
+      .withArgs(lenderB.address, ethers.parseEther('4'), ethers.parseEther('10'));
+    await expect(fundTx2).to.emit(testPool, 'LoanActivated');
+
+    // 5. LoanPool SpendExecuted
+    const spendCat = ethers.id('inventory');
+    const spendTx = await testPool.connect(borrower).spend(merchantA.address, ethers.parseEther('2'), spendCat);
+    await expect(spendTx)
+      .to.emit(testPool, 'SpendExecuted')
+      .withArgs(merchantA.address, ethers.parseEther('2'), spendCat);
+
+    // 6. LoanPool RepaymentReceived
+    const repayTx1 = await testPool.connect(borrower).repay({ value: ethers.parseEther('5.4') });
+    await expect(repayTx1)
+      .to.emit(testPool, 'RepaymentReceived')
+      .withArgs(borrower.address, ethers.parseEther('5.4'), ethers.parseEther('5.4'));
+
+    // 7. LoanPool RepaymentClaimed
+    const claimTx = await testPool.connect(lenderA).claimRepayment();
+    await expect(claimTx)
+      .to.emit(testPool, 'RepaymentClaimed')
+      .withArgs(lenderA.address, ethers.parseEther('3.24'));
+
+    // 8. LoanPool LoanRepaid & ReputationRegistry ReputationUpdated
+    const repayTx2 = await testPool.connect(borrower).repay({ value: ethers.parseEther('5.4') });
+    await expect(repayTx2)
+      .to.emit(testPool, 'RepaymentReceived')
+      .withArgs(borrower.address, ethers.parseEther('5.4'), ethers.parseEther('10.8'));
+    await expect(repayTx2)
+      .to.emit(testPool, 'LoanRepaid')
+      .withArgs(ethers.parseEther('10.8'));
+    await expect(repayTx2).to.emit(reputation, 'ReputationUpdated');
   });
 });

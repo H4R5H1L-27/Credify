@@ -3,16 +3,26 @@
 /* eslint-disable */
 import type * as loanPoolSol from './LoanPool.sol/index.js';
 export type { loanPoolSol };
+import type * as test from './test/index.js';
+export type { test };
 export type { KYCRegistry } from './KYCRegistry.js';
 export type { LoanFactory } from './LoanFactory.js';
 export type { ReputationRegistry } from './ReputationRegistry.js';
 export * as factories from './factories/index.js';
+export { LoanFactory__factory } from './factories/LoanFactory__factory.js';
+export { KYCRegistry__factory } from './factories/KYCRegistry__factory.js';
 export type { IKYCRegistry } from './LoanPool.sol/IKYCRegistry.js';
 export { IKYCRegistry__factory } from './factories/LoanPool.sol/IKYCRegistry__factory.js';
 export type { IReputationRegistry } from './LoanPool.sol/IReputationRegistry.js';
 export { IReputationRegistry__factory } from './factories/LoanPool.sol/IReputationRegistry__factory.js';
 export type { LoanPool } from './LoanPool.sol/LoanPool.js';
 export { LoanPool__factory } from './factories/LoanPool.sol/LoanPool__factory.js';
-export { KYCRegistry__factory } from './factories/KYCRegistry__factory.js';
-export { LoanFactory__factory } from './factories/LoanFactory__factory.js';
 export { ReputationRegistry__factory } from './factories/ReputationRegistry__factory.js';
+export type { ILoanPoolLender } from './test/MaliciousContracts.sol/ILoanPoolLender.js';
+export { ILoanPoolLender__factory } from './factories/test/MaliciousContracts.sol/ILoanPoolLender__factory.js';
+export type { ILoanPoolSpend } from './test/MaliciousContracts.sol/ILoanPoolSpend.js';
+export { ILoanPoolSpend__factory } from './factories/test/MaliciousContracts.sol/ILoanPoolSpend__factory.js';
+export type { MaliciousLender } from './test/MaliciousContracts.sol/MaliciousLender.js';
+export { MaliciousLender__factory } from './factories/test/MaliciousContracts.sol/MaliciousLender__factory.js';
+export type { MaliciousMerchant } from './test/MaliciousContracts.sol/MaliciousMerchant.js';
+export { MaliciousMerchant__factory } from './factories/test/MaliciousContracts.sol/MaliciousMerchant__factory.js';
