@@ -4,5 +4,6 @@
 export * as loanFactorySol from './LoanFactory.sol/index.js';
 export * as loanPoolSol from './LoanPool.sol/index.js';
 export * as test from './test/index.js';
+export { IKYCRegistry__factory } from './IKYCRegistry__factory.js';
 export { KYCRegistry__factory } from './KYCRegistry__factory.js';
 export { ReputationRegistry__factory } from './ReputationRegistry__factory.js';

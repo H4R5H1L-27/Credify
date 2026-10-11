@@ -214,11 +214,16 @@ export const api = {
       method: 'POST',
       body: JSON.stringify(data),
     }),
-  reviewVerificationRequest: (id: string, data: ReviewVerificationRequestInput) =>
-    request<VerificationRequest>(`${API_BASE}/verification/requests/${id}/review`, {
+  reviewVerificationRequest: (id: string, data: ReviewVerificationRequestInput, verifierToken?: string) => {
+    const token = verifierToken || (typeof window !== 'undefined' ? localStorage.getItem('credify_verifier_token') || 'credify-verifier-secret-test' : 'credify-verifier-secret-test');
+    return request<VerificationRequest>(`${API_BASE}/verification/requests/${id}/review`, {
       method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      },
       body: JSON.stringify(data),
-    }),
+    });
+  },
 
   // Suppliers
   getSuppliers: () => request<SupplierProfile[]>(`${API_BASE}/suppliers`),

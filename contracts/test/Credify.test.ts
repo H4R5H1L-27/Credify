@@ -46,7 +46,7 @@ describe('Credify protocol', function () {
     ({ ethers } = await network.create());
     [deployer, borrower, lenderA, lenderB, lenderC, merchantA, merchantB, outsider] = await ethers.getSigners();
 
-    kyc = await ethers.deployContract('KYCRegistry');
+    kyc = await ethers.deployContract('KYCRegistry', [deployer.address, deployer.address]);
     await kyc.waitForDeployment();
     reputation = await ethers.deployContract('ReputationRegistry');
     await reputation.waitForDeployment();
@@ -54,8 +54,15 @@ describe('Credify protocol', function () {
     await factory.waitForDeployment();
     await reputation.transferOwnership(await factory.getAddress());
 
-    for (const [i, s] of [borrower, lenderA, lenderB, lenderC, merchantA, merchantB].entries()) {
-      await kyc.setVerified(s.address, true, ethers.id(`test:${i}`));
+    const Role = { None: 0, Borrower: 1, Lender: 2, Supplier: 3 };
+    const oneYear = Math.floor(Date.now() / 1000) + 365 * 24 * 60 * 60;
+
+    await kyc.setVerified(borrower.address, Role.Borrower, true, oneYear, ethers.id('test:borrower'));
+    for (const [i, s] of [lenderA, lenderB, lenderC].entries()) {
+      await kyc.setVerified(s.address, Role.Lender, true, oneYear, ethers.id(`test:lender:${i}`));
+    }
+    for (const [i, s] of [merchantA, merchantB].entries()) {
+      await kyc.setVerified(s.address, Role.Supplier, true, oneYear, ethers.id(`test:merchant:${i}`));
     }
 
     const terms = defaultTerms(borrower.address);
@@ -555,6 +562,24 @@ describe('Credify protocol', function () {
       () => factory.connect(borrower).createLoan(defaultTerms(borrower.address, { merchants: [merchantA.address], merchantCapsWei: [ethers.parseEther('9')] })),
       'InvalidMerchantCap'
     );
+
+    // 21. SupplierNotVerified (unverified merchant)
+    await expectRevert(
+      () => factory.connect(borrower).createLoan(defaultTerms(borrower.address, { merchants: [outsider.address], merchantCapsWei: [ethers.parseEther('8')] })),
+      'SupplierNotVerified'
+    );
+
+    // 22. SupplierNotVerified (merchant holding Lender role instead of Supplier role)
+    await expectRevert(
+      () => factory.connect(borrower).createLoan(defaultTerms(borrower.address, { merchants: [lenderA.address], merchantCapsWei: [ethers.parseEther('8')] })),
+      'SupplierNotVerified'
+    );
+
+    // 23. BorrowerNotVerified (borrower holding Lender role instead of Borrower role)
+    await expectRevert(
+      () => factory.connect(lenderA).createLoan(defaultTerms(lenderA.address, { merchants: [merchantA.address], merchantCapsWei: [ethers.parseEther('8')] })),
+      'BorrowerNotVerified'
+    );
   });
 
   it('rejects unauthorized caller in ReputationRegistry and accepts authorized pool with events', async function () {
@@ -587,30 +612,204 @@ describe('Credify protocol', function () {
     await expect(recTx2).to.emit(freshReputation, 'ReputationUpdated').withArgs(borrower.address, false, 38, 1, 1);
   });
 
-  it('enforces KYCRegistry owner-only access and already-in-state revert', async function () {
+  it('enforces AccessControl and role separation on KYCRegistry', async function () {
+    const VERIFIER_ROLE = ethers.keccak256(ethers.toUtf8Bytes('VERIFIER_ROLE'));
     const ref1 = ethers.id('credential-v1');
     const ref2 = ethers.id('credential-v2');
+    const exp = Math.floor(Date.now() / 1000) + 365 * 24 * 60 * 60;
 
-    // 1. Non-owner cannot call setVerified
+    // 1. Non-verifier cannot call setVerified or revokeVerification
     await expectRevert(
-      () => kyc.connect(outsider).setVerified(outsider.address, true, ref1),
-      'OwnableUnauthorizedAccount'
+      () => kyc.connect(outsider).setVerified(outsider.address, 2, true, exp, ref1),
+      'AccessControlUnauthorizedAccount'
+    );
+    await expectRevert(
+      () => kyc.connect(outsider).revokeVerification(borrower.address),
+      'AccessControlUnauthorizedAccount'
     );
 
-    // 2. Owner sets verification and emits VerificationUpdated
-    const tx1 = await kyc.setVerified(outsider.address, true, ref1);
-    await expect(tx1).to.emit(kyc, 'VerificationUpdated').withArgs(outsider.address, true, ref1);
-    expect(await kyc.isVerified(outsider.address)).to.equal(true);
+    // 2. DEFAULT_ADMIN_ROLE can grant VERIFIER_ROLE to outsider
+    await kyc.grantRole(VERIFIER_ROLE, outsider.address);
+    expect(await kyc.hasRole(VERIFIER_ROLE, outsider.address)).to.equal(true);
 
-    // 3. Re-setting identical verification state and ref reverts with AddressAlreadyInState
+    // 3. Outsider can now verify accounts
+    await kyc.connect(outsider).setVerified(outsider.address, 2, true, exp, ref1);
+    expect(await kyc['isVerified(address,uint8)'](outsider.address, 2)).to.equal(true);
+
+    // 4. Admin revokes VERIFIER_ROLE from outsider
+    await kyc.revokeRole(VERIFIER_ROLE, outsider.address);
     await expectRevert(
-      () => kyc.setVerified(outsider.address, true, ref1),
+      () => kyc.connect(outsider).setVerified(outsider.address, 2, true, exp, ref2),
+      'AccessControlUnauthorizedAccount'
+    );
+
+    // 5. Role separation: verified as Lender (2), not Borrower (1) or Supplier (3)
+    expect(await kyc['isVerified(address,uint8)'](outsider.address, 2)).to.equal(true);
+    expect(await kyc['isVerified(address,uint8)'](outsider.address, 1)).to.equal(false);
+    expect(await kyc['isVerified(address,uint8)'](outsider.address, 3)).to.equal(false);
+    expect(await kyc['isVerified(address)'](outsider.address)).to.equal(true);
+
+    // 6. Re-setting identical verification state and ref reverts with AddressAlreadyInState
+    await expectRevert(
+      () => kyc.setVerified(outsider.address, 2, true, exp, ref1),
       'AddressAlreadyInState'
     );
 
-    // 4. Updating ref or status succeeds
-    const tx2 = await kyc.setVerified(outsider.address, true, ref2);
-    await expect(tx2).to.emit(kyc, 'VerificationUpdated').withArgs(outsider.address, true, ref2);
+    // 7. Setting invalid role (Role.None = 0) reverts with InvalidRole
+    await expectRevert(
+      () => kyc.setVerified(outsider.address, 0, true, exp, ref2),
+      'InvalidRole'
+    );
+
+    // 8. Setting invalid account (address(0)) reverts with InvalidAccount
+    await expectRevert(
+      () => kyc.setVerified(ethers.ZeroAddress, 2, true, exp, ref2),
+      'InvalidAccount'
+    );
+
+    // 9. getRecord returns complete verification tuple
+    const [rRole, rVerified, rExp, rHash] = await kyc.getRecord(outsider.address);
+    expect(rRole).to.equal(2);
+    expect(rVerified).to.equal(true);
+    expect(rExp).to.equal(exp);
+    expect(rHash).to.equal(ref1);
+
+    // 10. setVerification convenience helper
+    const ref3 = ethers.id('credential-v3');
+    await kyc.setVerification(outsider.address, 3, exp + 100, ref3);
+    expect(await kyc['isVerified(address,uint8)'](outsider.address, 3)).to.equal(true);
+
+    // 11. setVerified with verified=false emits VerificationRevoked
+    const setFalseTx = await kyc.setVerified(outsider.address, 3, false, exp + 100, ref3);
+    await expect(setFalseTx).to.emit(kyc, 'VerificationRevoked');
+
+    // 12. revokeVerification on address(0) reverts with InvalidAccount
+    await expectRevert(() => kyc.revokeVerification(ethers.ZeroAddress), 'InvalidAccount');
+
+    // 13. Constructor default deploy with (ZeroAddress, ZeroAddress) assigns deployer VERIFIER_ROLE
+    const defaultKyc = await ethers.deployContract('KYCRegistry', [ethers.ZeroAddress, ethers.ZeroAddress]);
+    await defaultKyc.waitForDeployment();
+    expect(await defaultKyc.hasRole(VERIFIER_ROLE, deployer.address)).to.equal(true);
+    expect(await defaultKyc.hasRole(ethers.ZeroHash, deployer.address)).to.equal(true);
+  });
+
+  it('enforces verification expiry: expired accounts lose verification status', async function () {
+    const blk = await ethers.provider.getBlock('latest');
+    const pastTime = blk.timestamp - 100;
+    const futureExpiry = blk.timestamp + 300; // 300 seconds from now
+
+    // 1. Setting past expiry reverts with InvalidExpiry
+    await expectRevert(
+      () => kyc.setVerified(outsider.address, 2, true, pastTime, ethers.id('expired-test')),
+      'InvalidExpiry'
+    );
+
+    // 2. Set with short future expiry
+    await kyc.setVerified(outsider.address, 2, true, futureExpiry, ethers.id('future-test'));
+    expect(await kyc['isVerified(address,uint8)'](outsider.address, 2)).to.equal(true);
+    expect(await kyc['isVerified(address)'](outsider.address)).to.equal(true);
+
+    // 3. Fast-forward past expiry
+    await ethers.provider.send('evm_increaseTime', [400]);
+    await ethers.provider.send('evm_mine', []);
+
+    // 4. Verification views return false
+    expect(await kyc['isVerified(address,uint8)'](outsider.address, 2)).to.equal(false);
+    expect(await kyc['isVerified(address)'](outsider.address)).to.equal(false);
+  });
+
+  it('enforces complete revocation policy across borrower, lender, and supplier lifecycles', async function () {
+    const oneYear = Math.floor(Date.now() / 1000) + 365 * 24 * 60 * 60;
+
+    // --- Part 1: Revoked Lender ---
+    // Revoke Lender A
+    await kyc.revokeVerification(lenderA.address);
+    expect(await kyc['isVerified(address,uint8)'](lenderA.address, 2)).to.equal(false);
+
+    // Double revocation reverts with AddressAlreadyInState
+    await expectRevert(() => kyc.revokeVerification(lenderA.address), 'AddressAlreadyInState');
+
+    // Revoked lender cannot contribute
+    await expectRevert(() => pool.connect(lenderA).contribute({ value: ethers.parseEther('1') }), 'NotVerifiedLender');
+
+    // Temporarily re-verify Lender A to fund and activate pool
+    await kyc.setVerified(lenderA.address, 2, true, oneYear, ethers.id('lender-a-reverified'));
+    await pool.connect(lenderA).contribute({ value: ethers.parseEther('6') });
+    await pool.connect(lenderB).contribute({ value: ethers.parseEther('4') });
+    expect(await pool.status()).to.equal(1); // Active
+
+    // Revoke Lender A again while pool is active
+    await kyc.revokeVerification(lenderA.address);
+    expect(await kyc['isVerified(address,uint8)'](lenderA.address, 2)).to.equal(false);
+
+    // Borrower repays full loan (10.8 ETH) -> status transitions to Repaid
+    await pool.connect(borrower).repay({ value: ethers.parseEther('10.8') });
+    expect(await pool.status()).to.equal(2); // Repaid
+
+    // REVOCATION POLICY: Revoked lender CAN still claim repayments
+    const aBalBefore = await ethers.provider.getBalance(lenderA.address);
+    const claimTx = await pool.connect(lenderA).claimRepayment();
+    const receipt = await claimTx.wait();
+    const gasCost = receipt.gasUsed * receipt.gasPrice;
+    const aBalAfter = await ethers.provider.getBalance(lenderA.address);
+    // Lender A funded 60% of 10 ETH pool with 10 ETH unspent + 10.8 repaid = 20.8 total distributable -> 12.48 ETH
+    expect(aBalAfter + gasCost - aBalBefore).to.equal(ethers.parseEther('12.48'));
+
+    // --- Part 2: Revoked Lender refund path & default vote ---
+    // Create new loan pool to test cancellation and refund
+    const cancelTerms = defaultTerms(borrower.address, { fundingDurationSeconds: 300 });
+    const cTx = await factory.connect(borrower).createLoan(cancelTerms);
+    await cTx.wait();
+    const pools = await factory.getPools();
+    const cancelPool = await ethers.getContractAt('LoanPool', pools[pools.length - 1]);
+
+    // Re-verify Lender A, contribute 2 ETH
+    await kyc.setVerified(lenderA.address, 2, true, oneYear, ethers.id('lender-a-cancel-test'));
+    await cancelPool.connect(lenderA).contribute({ value: ethers.parseEther('2') });
+
+    // Expire funding window and cancel pool
+    await ethers.provider.send('evm_increaseTime', [400]);
+    await ethers.provider.send('evm_mine', []);
+    await cancelPool.cancelUnfunded();
+
+    // Revoke Lender A
+    await kyc.revokeVerification(lenderA.address);
+
+    // REVOCATION POLICY: Revoked lender CAN still claim refund
+    const refundTx = await cancelPool.connect(lenderA).claimFundingRefund();
+    await expect(refundTx).to.emit(cancelPool, 'FundingRefunded').withArgs(lenderA.address, ethers.parseEther('2'));
+
+    // --- Part 3: Revoked Borrower cannot create loans or spend, but CAN repay ---
+    // 1. Revoked borrower cannot create loan via factory
+    await kyc.revokeVerification(borrower.address);
+    await expectRevert(
+      () => factory.connect(borrower).createLoan(defaultTerms(borrower.address)),
+      'BorrowerNotVerified'
+    );
+
+    // 2. Create an active pool with re-verified borrower
+    await kyc.setVerified(borrower.address, 1, true, oneYear, ethers.id('borrower-spend-test'));
+    const spendTerms = defaultTerms(borrower.address);
+    const sTx = await factory.connect(borrower).createLoan(spendTerms);
+    await sTx.wait();
+    const pools2 = await factory.getPools();
+    const spendPool = await ethers.getContractAt('LoanPool', pools2[pools2.length - 1]);
+    await spendPool.connect(lenderB).contribute({ value: ethers.parseEther('10') });
+    expect(await spendPool.status()).to.equal(1); // Active
+
+    // Revoke borrower now
+    await kyc.revokeVerification(borrower.address);
+
+    // REVOCATION POLICY: Revoked borrower cannot spend
+    await expectRevert(
+      () => spendPool.connect(borrower).spend(merchantA.address, ethers.parseEther('1'), ethers.id('inventory')),
+      'BorrowerNotVerified'
+    );
+
+    // REVOCATION POLICY: Revoked borrower CAN still repay
+    const repayTx = await spendPool.connect(borrower).repay({ value: ethers.parseEther('10.8') });
+    await expect(repayTx).to.emit(spendPool, 'RepaymentReceived');
+    expect(await spendPool.status()).to.equal(2); // Repaid
   });
 
   it('prevents reentrancy attack on spend via malicious merchant and on claimRepayment via malicious lender', async function () {
@@ -618,6 +817,10 @@ describe('Credify protocol', function () {
     const malMerchant = await ethers.deployContract('MaliciousMerchant');
     await malMerchant.waitForDeployment();
     const malMerchantAddress = await malMerchant.getAddress();
+    const exp = Math.floor(Date.now() / 1000) + 365 * 24 * 60 * 60;
+
+    // Verify malicious merchant as Supplier in KYC
+    await kyc.setVerified(malMerchantAddress, 3, true, exp, ethers.id('malicious-merchant'));
 
     // Create a pool approving the malicious merchant
     const malTx = await factory.connect(borrower).createLoan(
@@ -643,8 +846,8 @@ describe('Credify protocol', function () {
     await malLender.waitForDeployment();
     const malLenderAddress = await malLender.getAddress();
 
-    // Verify the malicious lender in KYC so it can contribute
-    await kyc.setVerified(malLenderAddress, true, ethers.id('malicious-lender'));
+    // Verify the malicious lender as Lender in KYC so it can contribute
+    await kyc.setVerified(malLenderAddress, 2, true, exp, ethers.id('malicious-lender'));
 
     // Create another pool for lender reentrancy test
     const loanTx2 = await factory.connect(borrower).createLoan(defaultTerms(borrower.address));
@@ -670,8 +873,11 @@ describe('Credify protocol', function () {
   it('asserts events for all contract lifecycle and state transitions', async function () {
     // 1. KYCRegistry VerificationUpdated
     const kycRef = ethers.id('audit-ref');
-    const kycTx = await kyc.setVerified(outsider.address, true, kycRef);
-    await expect(kycTx).to.emit(kyc, 'VerificationUpdated').withArgs(outsider.address, true, kycRef);
+    const expTime = Math.floor(Date.now() / 1000) + 365 * 24 * 60 * 60;
+    const kycTx = await kyc.setVerified(outsider.address, 2, true, expTime, kycRef);
+    await expect(kycTx)
+      .to.emit(kyc, 'VerificationUpdated')
+      .withArgs(outsider.address, 2, true, expTime, kycRef, deployer.address);
 
     // 2. LoanFactory LoanCreated & LoanPool LoanPoolCreated
     const customHash = ethers.id('test agreement hash v2');

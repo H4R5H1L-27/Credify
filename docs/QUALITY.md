@@ -162,3 +162,44 @@ Following the implementation of Work Package 1 (Contract fixes, distributable un
 - `LoanPool.claimRepayment`: 50,000 - 68,000 gas (computing `distributable()`).
 - `LoanPool.voteDefault`: 77,558 - 115,902 gas.
 
+---
+
+## 6. Work Package 2: Role-Based KYC, Access Control & Revocation Policy
+
+Following the implementation of Work Package 2:
+
+### 6.1 Test Suite & Revocation Coverage (31 tests)
+- **Total Tests**: 31 (all passing, 0 failing)
+- **Suite Additions**:
+  - `enforces OpenZeppelin AccessControl, role separation, and verification expiry`:
+    - Non-verifier calling `setVerification` reverts with `AccessControlUnauthorizedAccount`.
+    - Revoking/granting `VERIFIER_ROLE` verified.
+    - Role separation verified (`Role.Borrower` rejected for lender contributions; `Role.Lender` accepted).
+    - Verification expiry verified (`expiresAt` in the past causes `isVerified` to return false and blocks contribution).
+  - `enforces revocation policy across borrower, lender, and supplier lifecycles`:
+    - Revoked/expired borrower cannot create loans (`BorrowerNotVerified`).
+    - Revoked/expired supplier cannot receive disbursements (`SupplierNotVerified`).
+    - Revoked lender cannot make new contributions (`NotVerifiedLender`).
+    - Revoked borrower CAN repay outstanding loan debt.
+    - Revoked lender CAN claim repayment proceeds (`claimRepayment`), claim funding refunds (`claimFundingRefund`), and vote default (`voteDefault`).
+- **API Unit Tests** (`apps/api/src/verification.test.ts`):
+  - `verification lifecycle transitions through states correctly`: Validates state machine from `NOT_STARTED` -> `PENDING` -> `REJECTED` -> `PENDING` -> `VERIFIED`, cryptographic salt generation, and salted credential hash consistency.
+  - `unauthenticated verification review is rejected with 401 Unauthorized`: Validates security boundary on the API verification review endpoint.
+
+### 6.2 Code Coverage (Post-WP2)
+| Contract | Line Coverage (%) | Statement Coverage (%) | Uncovered Lines |
+| :--- | :--- | :--- | :--- |
+| **`contracts/KYCRegistry.sol`** | **95.35%** | **95.56%** | 68, 77 |
+| **`contracts/LoanFactory.sol`** | **100.00%** | **100.00%** | - |
+| **`contracts/LoanPool.sol`** | **97.39%** | **97.92%** | 118, 140, 257 |
+| **`contracts/ReputationRegistry.sol`** | **88.24%** | **90.91%** | 37, 39 |
+| **Protocol Total** | **96.85%** | **97.40%** | |
+| *`contracts/test/MaliciousContracts.sol`* | 100.00% | 100.00% | - |
+
+### 6.3 Gas Usage (Post-WP2)
+- `KYCRegistry.setVerified`: ~54,000 gas.
+- `KYCRegistry.setVerification`: ~70,000 gas (stores full struct including role, expiry, and credential hash).
+- `KYCRegistry.revokeVerification`: ~31,000 gas.
+- `LoanFactory.createLoan`: ~3,600,000 gas (including verification checks for borrower and all merchants).
+
+

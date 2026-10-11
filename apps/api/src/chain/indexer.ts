@@ -208,9 +208,10 @@ export class ChainIndexer {
       }
     }
 
+    const reputationUpdatedEvent = reputationAbi.find((x) => x.type === 'event' && x.name === 'ReputationUpdated')!;
     const reputationLogs = await this.chain.publicClient.getLogs({
       address: this.chain.deployment.contracts.reputationRegistry,
-      event: reputationAbi[1],
+      event: reputationUpdatedEvent as any,
       fromBlock: from,
       toBlock: to
     });
@@ -234,30 +235,62 @@ export class ChainIndexer {
       });
     }
 
-    const kycLogs = await this.chain.publicClient.getLogs({
-      address: this.chain.deployment.contracts.kycRegistry,
-      event: kycAbi[2],
-      fromBlock: from,
-      toBlock: to
-    });
-    for (const log of kycLogs as any[]) {
-      const args = log.args ?? {};
-      const { actorName, actorRole } = await resolveActor(this.chain, args.account);
-      out.push({
-        id: `${log.transactionHash}-${log.logIndex}`,
-        loanId: 'kyc',
-        eventName: 'VerificationUpdated',
-        transactionHash: log.transactionHash,
-        blockNumber: log.blockNumber.toString(),
-        contractAddress: this.chain.deployment.contracts.kycRegistry,
-        contractName: 'KYCRegistry',
-        actor: args.account,
-        actorName,
-        actorRole,
-        summary: summaryFor('VerificationUpdated', args),
-        timestamp: await timestampFor(log.blockNumber),
-        data: Object.fromEntries(Object.entries(args).map(([k, v]) => [k, typeof v === 'bigint' ? v.toString() : String(v)]))
+    const verificationUpdatedEvent = kycAbi.find((x) => x.type === 'event' && x.name === 'VerificationUpdated');
+    if (verificationUpdatedEvent) {
+      const kycLogs = await this.chain.publicClient.getLogs({
+        address: this.chain.deployment.contracts.kycRegistry,
+        event: verificationUpdatedEvent as any,
+        fromBlock: from,
+        toBlock: to
       });
+      for (const log of kycLogs as any[]) {
+        const args = log.args ?? {};
+        const { actorName, actorRole } = await resolveActor(this.chain, args.account);
+        out.push({
+          id: `${log.transactionHash}-${log.logIndex}`,
+          loanId: 'kyc',
+          eventName: 'VerificationUpdated',
+          transactionHash: log.transactionHash,
+          blockNumber: log.blockNumber.toString(),
+          contractAddress: this.chain.deployment.contracts.kycRegistry,
+          contractName: 'KYCRegistry',
+          actor: args.account,
+          actorName,
+          actorRole,
+          summary: summaryFor('VerificationUpdated', args),
+          timestamp: await timestampFor(log.blockNumber),
+          data: Object.fromEntries(Object.entries(args).map(([k, v]) => [k, typeof v === 'bigint' ? v.toString() : String(v)]))
+        });
+      }
+    }
+
+    const verificationRevokedEvent = kycAbi.find((x) => x.type === 'event' && x.name === 'VerificationRevoked');
+    if (verificationRevokedEvent) {
+      const revokeLogs = await this.chain.publicClient.getLogs({
+        address: this.chain.deployment.contracts.kycRegistry,
+        event: verificationRevokedEvent as any,
+        fromBlock: from,
+        toBlock: to
+      });
+      for (const log of revokeLogs as any[]) {
+        const args = log.args ?? {};
+        const { actorName, actorRole } = await resolveActor(this.chain, args.account);
+        out.push({
+          id: `${log.transactionHash}-${log.logIndex}`,
+          loanId: 'kyc',
+          eventName: 'VerificationRevoked',
+          transactionHash: log.transactionHash,
+          blockNumber: log.blockNumber.toString(),
+          contractAddress: this.chain.deployment.contracts.kycRegistry,
+          contractName: 'KYCRegistry',
+          actor: args.account,
+          actorName,
+          actorRole,
+          summary: `Verification revoked on-chain for ${actorName || args.account}.`,
+          timestamp: await timestampFor(log.blockNumber),
+          data: Object.fromEntries(Object.entries(args).map(([k, v]) => [k, typeof v === 'bigint' ? v.toString() : String(v)]))
+        });
+      }
     }
 
 

@@ -144,17 +144,45 @@ export const VerificationWorkflowPage: React.FC = () => {
               {request && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-3 border-t border-emerald-200 text-xs font-mono">
                   <div>
-                    <span className="text-slate-600 font-sans font-medium">Credential Reference:</span>
-                    <div className="font-bold text-slate-950">{request.profile.referenceId}</div>
+                    <span className="text-slate-600 font-sans font-medium">Verified Role:</span>
+                    <div className="font-bold text-slate-950 font-sans">{request.role}</div>
                   </div>
                   <div>
                     <span className="text-slate-600 font-sans font-medium">Organization:</span>
                     <div className="font-bold text-slate-950">{request.profile.organization}</div>
                   </div>
                   <div>
-                    <span className="text-slate-600 font-sans font-medium">Credential Hash:</span>
-                    <div className="truncate text-slate-800 font-semibold">{request.credentialHash}</div>
+                    <span className="text-slate-600 font-sans font-medium">Credential Reference:</span>
+                    <div className="font-bold text-slate-950">{request.profile.referenceId}</div>
                   </div>
+                  <div>
+                    <span className="text-slate-600 font-sans font-medium">Approver Address:</span>
+                    <div className="font-bold text-slate-950">
+                      {request.reviewedBy ? <AddressBadge address={request.reviewedBy} chars={6} /> : 'On-Chain Verifier'}
+                    </div>
+                  </div>
+                  <div>
+                    <span className="text-slate-600 font-sans font-medium">Approval Time:</span>
+                    <div className="font-bold text-slate-950">
+                      {request.reviewedAt ? new Date(request.reviewedAt).toLocaleString() : 'Confirmed'}
+                    </div>
+                  </div>
+                  <div>
+                    <span className="text-slate-600 font-sans font-medium">Expiry:</span>
+                    <div className="font-bold text-slate-950">
+                      {request.expiresAt ? new Date(request.expiresAt).toLocaleDateString() : '1 Year Active'}
+                    </div>
+                  </div>
+                  <div className="sm:col-span-2">
+                    <span className="text-slate-600 font-sans font-medium">Salted Credential Hash:</span>
+                    <div className="truncate text-slate-800 font-semibold" title={request.credentialHash}>{request.credentialHash}</div>
+                  </div>
+                  {request.salt && (
+                    <div className="sm:col-span-2">
+                      <span className="text-slate-600 font-sans font-medium">Cryptographic Salt:</span>
+                      <div className="truncate text-slate-700 text-[11px]" title={request.salt}>{request.salt}</div>
+                    </div>
+                  )}
                   {request.attestationTxHash && (
                     <div>
                       <span className="text-slate-600 font-sans font-medium">Attestation Tx:</span>

@@ -14,5 +14,6 @@ ignition/deployments/
 .DS_Store
 Thumbs.db
 apps/api/data/
+data/
 contracts/deployments/*.json
 !contracts/deployments/local.json

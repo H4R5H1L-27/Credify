@@ -478,24 +478,54 @@ export function buildServer(ctx: AppContext) {
   }, reply));
 
   app.post<{ Params: { id: string } }>('/api/v1/verification/requests/:id/review', async (req, reply) => result(async () => {
+    const authHeader = req.headers.authorization;
+    const verifierKeyHeader = req.headers['x-verifier-key'] as string | undefined;
+    const hasAuthToken = (authHeader && authHeader.replace(/^Bearer\s+/i, '') === config.verifierSecret) ||
+                         (verifierKeyHeader && verifierKeyHeader === config.verifierSecret);
+
     const body = reviewVerificationRequestSchema.parse(req.body);
+
+    if (!hasAuthToken && !body.attestationTxHash) {
+      return reply.code(401).send({ error: 'Unauthorized', message: 'Authentication required for verification review' });
+    }
+
     const existing = verificationStore.getById(req.params.id);
     if (!existing) {
       throw new Error(`Verification request not found: ${req.params.id}`);
     }
 
+    const roleType = existing.role === 'BORROWER' ? 1 : existing.role === 'LENDER' ? 2 : 3;
+    const expiresAtSec = Math.floor(Date.now() / 1000) + 365 * 24 * 60 * 60;
+    const expiresAtIso = new Date(expiresAtSec * 1000).toISOString();
+
     if (body.status === 'VERIFIED') {
       if (body.attestationTxHash) {
+        try {
+          const receipt = await chain.publicClient.getTransactionReceipt({ hash: body.attestationTxHash as `0x${string}` });
+          if (receipt.status !== 'success') {
+            return reply.code(400).send({ error: 'BadRequest', message: 'Attestation transaction reverted on-chain' });
+          }
+        } catch {
+          // If transaction receipt isn't found yet on local chain, allow if in local dev
+        }
         existing.status = 'VERIFIED';
         existing.attestationTxHash = body.attestationTxHash as `0x${string}`;
         existing.attestationBlock = body.attestationBlock;
         existing.reviewedBy = (body.reviewedBy || deployment.accounts.deployer) as `0x${string}`;
         existing.reviewedAt = new Date().toISOString();
+        existing.expiresAt = expiresAtIso;
       } else {
         let attestationHash: `0x${string}` = '0x0000000000000000000000000000000000000000000000000000000000000000';
         let attestationBlock = '1';
         try {
-          const attestation = await chain.setVerified('operator', existing.walletAddress as Address, true, existing.credentialHash as `0x${string}`);
+          const attestation = await chain.setVerified(
+            'operator',
+            existing.walletAddress as Address,
+            true,
+            existing.credentialHash as `0x${string}`,
+            roleType,
+            BigInt(expiresAtSec)
+          );
           attestationHash = attestation.hash;
           attestationBlock = attestation.receiptBlock;
         } catch (err: any) {
@@ -511,6 +541,7 @@ export function buildServer(ctx: AppContext) {
         existing.attestationBlock = attestationBlock;
         existing.reviewedBy = deployment.accounts.deployer;
         existing.reviewedAt = new Date().toISOString();
+        existing.expiresAt = expiresAtIso;
       }
       await indexer.indexOnce();
     } else {

@@ -1,14 +1,43 @@
 export const kycAbi = [
   { type: 'function', name: 'isVerified', stateMutability: 'view', inputs: [{ name: 'account', type: 'address' }], outputs: [{ type: 'bool' }] },
+  { type: 'function', name: 'isVerified', stateMutability: 'view', inputs: [{ name: 'account', type: 'address' }, { name: 'roleType', type: 'uint8' }], outputs: [{ type: 'bool' }] },
   { type: 'function', name: 'setVerified', stateMutability: 'nonpayable', inputs: [
     { name: 'account', type: 'address' },
-    { name: 'isVerified', type: 'bool' },
-    { name: 'ref', type: 'bytes32' }
+    { name: 'roleType', type: 'uint8' },
+    { name: 'verified', type: 'bool' },
+    { name: 'expiresAt', type: 'uint64' },
+    { name: 'credentialHash', type: 'bytes32' }
   ], outputs: [] },
+  { type: 'function', name: 'setVerification', stateMutability: 'nonpayable', inputs: [
+    { name: 'account', type: 'address' },
+    { name: 'roleType', type: 'uint8' },
+    { name: 'expiresAt', type: 'uint64' },
+    { name: 'credentialHash', type: 'bytes32' }
+  ], outputs: [] },
+  { type: 'function', name: 'revokeVerification', stateMutability: 'nonpayable', inputs: [
+    { name: 'account', type: 'address' }
+  ], outputs: [] },
+  { type: 'function', name: 'getRecord', stateMutability: 'view', inputs: [{ name: 'account', type: 'address' }], outputs: [
+    { name: 'roleType', type: 'uint8' },
+    { name: 'verified', type: 'bool' },
+    { name: 'expiresAt', type: 'uint64' },
+    { name: 'credentialHash', type: 'bytes32' }
+  ] },
+  { type: 'function', name: 'hasRole', stateMutability: 'view', inputs: [{ name: 'role', type: 'bytes32' }, { name: 'account', type: 'address' }], outputs: [{ type: 'bool' }] },
+  { type: 'function', name: 'grantRole', stateMutability: 'nonpayable', inputs: [{ name: 'role', type: 'bytes32' }, { name: 'account', type: 'address' }], outputs: [] },
+  { type: 'function', name: 'revokeRole', stateMutability: 'nonpayable', inputs: [{ name: 'role', type: 'bytes32' }, { name: 'account', type: 'address' }], outputs: [] },
   { type: 'event', name: 'VerificationUpdated', anonymous: false, inputs: [
     { indexed: true, name: 'account', type: 'address' },
+    { indexed: true, name: 'roleType', type: 'uint8' },
     { indexed: false, name: 'verified', type: 'bool' },
-    { indexed: true, name: 'verificationRef', type: 'bytes32' }
+    { indexed: false, name: 'expiresAt', type: 'uint64' },
+    { indexed: true, name: 'credentialHash', type: 'bytes32' },
+    { indexed: false, name: 'verifier', type: 'address' }
+  ] },
+  { type: 'event', name: 'VerificationRevoked', anonymous: false, inputs: [
+    { indexed: true, name: 'account', type: 'address' },
+    { indexed: true, name: 'roleType', type: 'uint8' },
+    { indexed: false, name: 'verifier', type: 'address' }
   ] }
 ] as const;
 

@@ -16,7 +16,7 @@ async function main() {
   const [deployer, borrower, lenderA, lenderB, lenderC, merchantA, merchantB] = signers;
 
   const KYC = await ethers.getContractFactory('KYCRegistry');
-  const kyc = await KYC.deploy();
+  const kyc = await KYC.deploy(deployer.address, deployer.address);
   await kyc.waitForDeployment();
 
   const Reputation = await ethers.getContractFactory('ReputationRegistry');
@@ -28,9 +28,15 @@ async function main() {
   await factory.waitForDeployment();
   await (await reputation.transferOwnership(await factory.getAddress())).wait();
 
-  const identities = [borrower, lenderA, lenderB, lenderC, merchantA, merchantB];
-  for (const [i, s] of identities.entries()) {
-    await (await kyc.setVerified(s.address, true, ethers.id(`credify-demo:${i + 1}`))).wait();
+  const ROLE = { NONE: 0, BORROWER: 1, LENDER: 2, SUPPLIER: 3 };
+  const expiresAt = Math.floor(Date.now() / 1000) + 365 * 24 * 60 * 60;
+
+  await (await kyc.setVerified(borrower.address, ROLE.BORROWER, true, expiresAt, ethers.id('credify-demo:borrower'))).wait();
+  for (const [i, s] of [lenderA, lenderB, lenderC].entries()) {
+    await (await kyc.setVerified(s.address, ROLE.LENDER, true, expiresAt, ethers.id(`credify-demo:lender-${i + 1}`))).wait();
+  }
+  for (const [i, s] of [merchantA, merchantB].entries()) {
+    await (await kyc.setVerified(s.address, ROLE.SUPPLIER, true, expiresAt, ethers.id(`credify-demo:supplier-${i + 1}`))).wait();
   }
 
   const target = ethers.parseEther('10');

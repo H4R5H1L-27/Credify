@@ -3,30 +3,30 @@
 /* eslint-disable */
 import type { Addressable } from "ethers";
 import { Contract, ContractFactory, ContractTransactionResponse, Interface } from "ethers"
-import type { Signer, ContractDeployTransaction, ContractRunner } from "ethers"
+import type { Signer, AddressLike, ContractDeployTransaction, ContractRunner } from "ethers"
 import type { NonPayableOverrides } from "../common.js"
   import type { KYCRegistry, KYCRegistryInterface } from "../KYCRegistry.js";
 
   const _abi = [
   {
-    "inputs": [],
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "admin",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "verifier",
+        "type": "address"
+      }
+    ],
     "stateMutability": "nonpayable",
     "type": "constructor"
   },
   {
     "inputs": [],
-    "name": "AddressAlreadyInState",
-    "type": "error"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "owner",
-        "type": "address"
-      }
-    ],
-    "name": "OwnableInvalidOwner",
+    "name": "AccessControlBadConfirmation",
     "type": "error"
   },
   {
@@ -35,9 +35,34 @@ import type { NonPayableOverrides } from "../common.js"
         "internalType": "address",
         "name": "account",
         "type": "address"
+      },
+      {
+        "internalType": "bytes32",
+        "name": "neededRole",
+        "type": "bytes32"
       }
     ],
-    "name": "OwnableUnauthorizedAccount",
+    "name": "AccessControlUnauthorizedAccount",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "AddressAlreadyInState",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "InvalidAccount",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "InvalidExpiry",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "InvalidRole",
     "type": "error"
   },
   {
@@ -45,18 +70,74 @@ import type { NonPayableOverrides } from "../common.js"
     "inputs": [
       {
         "indexed": true,
+        "internalType": "bytes32",
+        "name": "role",
+        "type": "bytes32"
+      },
+      {
+        "indexed": true,
+        "internalType": "bytes32",
+        "name": "previousAdminRole",
+        "type": "bytes32"
+      },
+      {
+        "indexed": true,
+        "internalType": "bytes32",
+        "name": "newAdminRole",
+        "type": "bytes32"
+      }
+    ],
+    "name": "RoleAdminChanged",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "bytes32",
+        "name": "role",
+        "type": "bytes32"
+      },
+      {
+        "indexed": true,
         "internalType": "address",
-        "name": "previousOwner",
+        "name": "account",
         "type": "address"
       },
       {
         "indexed": true,
         "internalType": "address",
-        "name": "newOwner",
+        "name": "sender",
         "type": "address"
       }
     ],
-    "name": "OwnershipTransferred",
+    "name": "RoleGranted",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "bytes32",
+        "name": "role",
+        "type": "bytes32"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "sender",
+        "type": "address"
+      }
+    ],
+    "name": "RoleRevoked",
     "type": "event"
   },
   {
@@ -67,6 +148,37 @@ import type { NonPayableOverrides } from "../common.js"
         "internalType": "address",
         "name": "account",
         "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "enum IKYCRegistry.Role",
+        "name": "roleType",
+        "type": "uint8"
+      },
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "verifier",
+        "type": "address"
+      }
+    ],
+    "name": "VerificationRevoked",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "enum IKYCRegistry.Role",
+        "name": "roleType",
+        "type": "uint8"
       },
       {
         "indexed": false,
@@ -75,14 +187,171 @@ import type { NonPayableOverrides } from "../common.js"
         "type": "bool"
       },
       {
+        "indexed": false,
+        "internalType": "uint64",
+        "name": "expiresAt",
+        "type": "uint64"
+      },
+      {
         "indexed": true,
         "internalType": "bytes32",
-        "name": "verificationRef",
+        "name": "credentialHash",
         "type": "bytes32"
+      },
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "verifier",
+        "type": "address"
       }
     ],
     "name": "VerificationUpdated",
     "type": "event"
+  },
+  {
+    "inputs": [],
+    "name": "DEFAULT_ADMIN_ROLE",
+    "outputs": [
+      {
+        "internalType": "bytes32",
+        "name": "",
+        "type": "bytes32"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "VERIFIER_ROLE",
+    "outputs": [
+      {
+        "internalType": "bytes32",
+        "name": "",
+        "type": "bytes32"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
+      }
+    ],
+    "name": "getRecord",
+    "outputs": [
+      {
+        "internalType": "enum IKYCRegistry.Role",
+        "name": "roleType",
+        "type": "uint8"
+      },
+      {
+        "internalType": "bool",
+        "name": "verified",
+        "type": "bool"
+      },
+      {
+        "internalType": "uint64",
+        "name": "expiresAt",
+        "type": "uint64"
+      },
+      {
+        "internalType": "bytes32",
+        "name": "credentialHash",
+        "type": "bytes32"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "role",
+        "type": "bytes32"
+      }
+    ],
+    "name": "getRoleAdmin",
+    "outputs": [
+      {
+        "internalType": "bytes32",
+        "name": "",
+        "type": "bytes32"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "role",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
+      }
+    ],
+    "name": "grantRole",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "role",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
+      }
+    ],
+    "name": "hasRole",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
+      },
+      {
+        "internalType": "enum IKYCRegistry.Role",
+        "name": "roleType",
+        "type": "uint8"
+      }
+    ],
+    "name": "isVerified",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
   },
   {
     "inputs": [
@@ -104,21 +373,84 @@ import type { NonPayableOverrides } from "../common.js"
     "type": "function"
   },
   {
-    "inputs": [],
-    "name": "owner",
-    "outputs": [
+    "inputs": [
       {
         "internalType": "address",
         "name": "",
         "type": "address"
       }
     ],
+    "name": "records",
+    "outputs": [
+      {
+        "internalType": "enum IKYCRegistry.Role",
+        "name": "roleType",
+        "type": "uint8"
+      },
+      {
+        "internalType": "bool",
+        "name": "verified",
+        "type": "bool"
+      },
+      {
+        "internalType": "uint64",
+        "name": "expiresAt",
+        "type": "uint64"
+      },
+      {
+        "internalType": "bytes32",
+        "name": "credentialHash",
+        "type": "bytes32"
+      }
+    ],
     "stateMutability": "view",
     "type": "function"
   },
   {
-    "inputs": [],
-    "name": "renounceOwnership",
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "role",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "address",
+        "name": "callerConfirmation",
+        "type": "address"
+      }
+    ],
+    "name": "renounceRole",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "role",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
+      }
+    ],
+    "name": "revokeRole",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
+      }
+    ],
+    "name": "revokeVerification",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -131,13 +463,51 @@ import type { NonPayableOverrides } from "../common.js"
         "type": "address"
       },
       {
-        "internalType": "bool",
-        "name": "isVerified",
-        "type": "bool"
+        "internalType": "enum IKYCRegistry.Role",
+        "name": "roleType",
+        "type": "uint8"
+      },
+      {
+        "internalType": "uint64",
+        "name": "expiresAt",
+        "type": "uint64"
       },
       {
         "internalType": "bytes32",
-        "name": "ref",
+        "name": "credentialHash",
+        "type": "bytes32"
+      }
+    ],
+    "name": "setVerification",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
+      },
+      {
+        "internalType": "enum IKYCRegistry.Role",
+        "name": "roleType",
+        "type": "uint8"
+      },
+      {
+        "internalType": "bool",
+        "name": "verified",
+        "type": "bool"
+      },
+      {
+        "internalType": "uint64",
+        "name": "expiresAt",
+        "type": "uint64"
+      },
+      {
+        "internalType": "bytes32",
+        "name": "credentialHash",
         "type": "bytes32"
       }
     ],
@@ -149,44 +519,12 @@ import type { NonPayableOverrides } from "../common.js"
   {
     "inputs": [
       {
-        "internalType": "address",
-        "name": "newOwner",
-        "type": "address"
+        "internalType": "bytes4",
+        "name": "interfaceId",
+        "type": "bytes4"
       }
     ],
-    "name": "transferOwnership",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "name": "verificationRef",
-    "outputs": [
-      {
-        "internalType": "bytes32",
-        "name": "",
-        "type": "bytes32"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "name": "verified",
+    "name": "supportsInterface",
     "outputs": [
       {
         "internalType": "bool",
@@ -199,7 +537,7 @@ import type { NonPayableOverrides } from "../common.js"
   }
 ] as const;
 
-  const _bytecode = "0x608060405234801561000f575f80fd5b50335f73ffffffffffffffffffffffffffffffffffffffff168173ffffffffffffffffffffffffffffffffffffffff1603610081575f6040517f1e4fbdf70000000000000000000000000000000000000000000000000000000081526004016100789190610196565b60405180910390fd5b6100908161009660201b60201c565b506101af565b5f805f9054906101000a900473ffffffffffffffffffffffffffffffffffffffff169050815f806101000a81548173ffffffffffffffffffffffffffffffffffffffff021916908373ffffffffffffffffffffffffffffffffffffffff1602179055508173ffffffffffffffffffffffffffffffffffffffff168173ffffffffffffffffffffffffffffffffffffffff167f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e060405160405180910390a35050565b5f73ffffffffffffffffffffffffffffffffffffffff82169050919050565b5f61018082610157565b9050919050565b61019081610176565b82525050565b5f6020820190506101a95f830184610187565b92915050565b6107b0806101bc5f395ff3fe608060405234801561000f575f80fd5b506004361061007b575f3560e01c80638da5cb5b116100595780638da5cb5b146100d5578063b9209e33146100f3578063e1714cd614610123578063f2fde38b146101535761007b565b80630db065f41461007f5780633c191cbb146100af578063715018a6146100cb575b5f80fd5b6100996004803603810190610094919061061f565b61016f565b6040516100a69190610664565b60405180910390f35b6100c960048036038101906100c491906106da565b61018c565b005b6100d361034d565b005b6100dd610360565b6040516100ea9190610739565b60405180910390f35b61010d6004803603810190610108919061061f565b610387565b60405161011a9190610664565b60405180910390f35b61013d6004803603810190610138919061061f565b6103d9565b60405161014a9190610761565b60405180910390f35b61016d6004803603810190610168919061061f565b6103ee565b005b6001602052805f5260405f205f915054906101000a900460ff1681565b610194610472565b81151560015f8573ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1681526020019081526020015f205f9054906101000a900460ff16151514801561022c57508060025f8573ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1681526020019081526020015f2054145b15610263576040517f9c655edd00000000000000000000000000000000000000000000000000000000815260040160405180910390fd5b8160015f8573ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1681526020019081526020015f205f6101000a81548160ff0219169083151502179055508060025f8573ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1681526020019081526020015f2081905550808373ffffffffffffffffffffffffffffffffffffffff167f05450293e4aacd5724f281a8578d00330bd366d80eb9154b8ed9a9a92879eb7e846040516103409190610664565b60405180910390a3505050565b610355610472565b61035e5f6104f9565b565b5f805f9054906101000a900473ffffffffffffffffffffffffffffffffffffffff16905090565b5f60015f8373ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1681526020019081526020015f205f9054906101000a900460ff169050919050565b6002602052805f5260405f205f915090505481565b6103f6610472565b5f73ffffffffffffffffffffffffffffffffffffffff168173ffffffffffffffffffffffffffffffffffffffff1603610466575f6040517f1e4fbdf700000000000000000000000000000000000000000000000000000000815260040161045d9190610739565b60405180910390fd5b61046f816104f9565b50565b61047a6105ba565b73ffffffffffffffffffffffffffffffffffffffff16610498610360565b73ffffffffffffffffffffffffffffffffffffffff16146104f7576104bb6105ba565b6040517f118cdaa70000000000000000000000000000000000000000000000000000000081526004016104ee9190610739565b60405180910390fd5b565b5f805f9054906101000a900473ffffffffffffffffffffffffffffffffffffffff169050815f806101000a81548173ffffffffffffffffffffffffffffffffffffffff021916908373ffffffffffffffffffffffffffffffffffffffff1602179055508173ffffffffffffffffffffffffffffffffffffffff168173ffffffffffffffffffffffffffffffffffffffff167f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e060405160405180910390a35050565b5f33905090565b5f80fd5b5f73ffffffffffffffffffffffffffffffffffffffff82169050919050565b5f6105ee826105c5565b9050919050565b6105fe816105e4565b8114610608575f80fd5b50565b5f81359050610619816105f5565b92915050565b5f60208284031215610634576106336105c1565b5b5f6106418482850161060b565b91505092915050565b5f8115159050919050565b61065e8161064a565b82525050565b5f6020820190506106775f830184610655565b92915050565b6106868161064a565b8114610690575f80fd5b50565b5f813590506106a18161067d565b92915050565b5f819050919050565b6106b9816106a7565b81146106c3575f80fd5b50565b5f813590506106d4816106b0565b92915050565b5f805f606084860312156106f1576106f06105c1565b5b5f6106fe8682870161060b565b935050602061070f86828701610693565b9250506040610720868287016106c6565b9150509250925092565b610733816105e4565b82525050565b5f60208201905061074c5f83018461072a565b92915050565b61075b816106a7565b82525050565b5f6020820190506107745f830184610752565b9291505056fea2646970667358221220dc6678a172a92bdb984d412a7a32c1241e8edcb38dd7a3c33b0660c87aa76aae64736f6c63430008180033";
+  const _bytecode = "0x608060405234801562000010575f80fd5b506040516200198a3803806200198a833981810160405281019062000036919062000334565b5f8073ffffffffffffffffffffffffffffffffffffffff168373ffffffffffffffffffffffffffffffffffffffff161462000072578262000074565b335b90506200008a5f801b826200016a60201b60201c565b505f73ffffffffffffffffffffffffffffffffffffffff168273ffffffffffffffffffffffffffffffffffffffff1614620000f857620000f17f0ce23c3e399818cfee81a7ab0880f714e53d7672b08df0fa62f2843416e1ea09836200016a60201b60201c565b5062000161565b5f73ffffffffffffffffffffffffffffffffffffffff168373ffffffffffffffffffffffffffffffffffffffff160362000160576200015e7f0ce23c3e399818cfee81a7ab0880f714e53d7672b08df0fa62f2843416e1ea09336200016a60201b60201c565b505b5b50505062000379565b5f6200017d83836200026560201b60201c565b6200025b5760015f808581526020019081526020015f205f015f8473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1681526020019081526020015f205f6101000a81548160ff021916908315150217905550620001f7620002c860201b60201c565b73ffffffffffffffffffffffffffffffffffffffff168273ffffffffffffffffffffffffffffffffffffffff16847f2f8788117e7eff1d82e926ec794901d17c78024a50270940304540a733656f0d60405160405180910390a4600190506200025f565b5f90505b92915050565b5f805f8481526020019081526020015f205f015f8373ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1681526020019081526020015f205f9054906101000a900460ff16905092915050565b5f33905090565b5f80fd5b5f73ffffffffffffffffffffffffffffffffffffffff82169050919050565b5f620002fe82620002d3565b9050919050565b6200031081620002f2565b81146200031b575f80fd5b50565b5f815190506200032e8162000305565b92915050565b5f80604083850312156200034d576200034c620002cf565b5b5f6200035c858286016200031e565b92505060206200036f858286016200031e565b9150509250929050565b61160380620003875f395ff3fe608060405234801561000f575f80fd5b50600436106100f3575f3560e01c8063617fba0411610095578063d0863e7711610064578063d0863e77146102bf578063d547741f146102db578063e7705db6146102f7578063e998d2fa14610315576100f3565b8063617fba041461020e57806391d1485414610241578063a217fddf14610271578063b9209e331461028f576100f3565b806336568abe116100d157806336568abe14610173578063469e90671461018f578063496dbd72146101c25780635e96b78c146101f2576100f3565b806301ffc9a7146100f7578063248a9ca3146101275780632f2ff15d14610157575b5f80fd5b610111600480360381019061010c919061113a565b610331565b60405161011e919061117f565b60405180910390f35b610141600480360381019061013c91906111cb565b6103aa565b60405161014e9190611205565b60405180910390f35b610171600480360381019061016c9190611278565b6103c6565b005b61018d60048036038101906101889190611278565b6103e8565b005b6101a960048036038101906101a491906112b6565b610463565b6040516101b99493929190611376565b60405180910390f35b6101dc60048036038101906101d791906113dc565b6104ba565b6040516101e9919061117f565b60405180910390f35b61020c60048036038101906102079190611444565b6105c8565b005b610228600480360381019061022391906112b6565b610607565b6040516102389493929190611376565b60405180910390f35b61025b60048036038101906102569190611278565b610699565b604051610268919061117f565b60405180910390f35b6102796106fc565b6040516102869190611205565b60405180910390f35b6102a960048036038101906102a491906112b6565b610702565b6040516102b6919061117f565b60405180910390f35b6102d960048036038101906102d491906114d2565b61080f565b005b6102f560048036038101906102f09190611278565b610bbe565b005b6102ff610be0565b60405161030c9190611205565b60405180910390f35b61032f600480360381019061032a91906112b6565b610c04565b005b5f7f7965db0b000000000000000000000000000000000000000000000000000000007bffffffffffffffffffffffffffffffffffffffffffffffffffffffff1916827bffffffffffffffffffffffffffffffffffffffffffffffffffffffff191614806103a357506103a282610e3a565b5b9050919050565b5f805f8381526020019081526020015f20600101549050919050565b6103cf826103aa565b6103d881610ea3565b6103e28383610eb7565b50505050565b6103f0610fa0565b73ffffffffffffffffffffffffffffffffffffffff168173ffffffffffffffffffffffffffffffffffffffff1614610454576040517f6697b23200000000000000000000000000000000000000000000000000000000815260040160405180910390fd5b61045e8282610fa7565b505050565b6001602052805f5260405f205f91509050805f015f9054906101000a900460ff1690805f0160019054906101000a900460ff1690805f0160029054906101000a900467ffffffffffffffff16908060010154905084565b5f8060015f8573ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1681526020019081526020015f209050805f0160019054906101000a900460ff16610519575f9150506105c2565b82600381111561052c5761052b6112e1565b5b815f015f9054906101000a900460ff16600381111561054e5761054d6112e1565b5b1461055c575f9150506105c2565b5f815f0160029054906101000a900467ffffffffffffffff1667ffffffffffffffff16141580156105ae5750805f0160029054906101000a900467ffffffffffffffff1667ffffffffffffffff164210155b156105bc575f9150506105c2565b60019150505b92915050565b7f0ce23c3e399818cfee81a7ab0880f714e53d7672b08df0fa62f2843416e1ea096105f281610ea3565b61060085856001868661080f565b5050505050565b5f805f805f60015f8773ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1681526020019081526020015f209050805f015f9054906101000a900460ff16815f0160019054906101000a900460ff16825f0160029054906101000a900467ffffffffffffffff1683600101549450945094509450509193509193565b5f805f8481526020019081526020015f205f015f8373ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1681526020019081526020015f205f9054906101000a900460ff16905092915050565b5f801b81565b5f8060015f8473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1681526020019081526020015f209050805f0160019054906101000a900460ff16610761575f91505061080a565b5f6003811115610774576107736112e1565b5b815f015f9054906101000a900460ff166003811115610796576107956112e1565b5b036107a4575f91505061080a565b5f815f0160029054906101000a900467ffffffffffffffff1667ffffffffffffffff16141580156107f65750805f0160029054906101000a900467ffffffffffffffff1667ffffffffffffffff164210155b15610804575f91505061080a565b60019150505b919050565b7f0ce23c3e399818cfee81a7ab0880f714e53d7672b08df0fa62f2843416e1ea0961083981610ea3565b5f73ffffffffffffffffffffffffffffffffffffffff168673ffffffffffffffffffffffffffffffffffffffff160361089e576040517f6d187b2800000000000000000000000000000000000000000000000000000000815260040160405180910390fd5b5f60038111156108b1576108b06112e1565b5b8560038111156108c4576108c36112e1565b5b036108fb576040517fd954416a00000000000000000000000000000000000000000000000000000000815260040160405180910390fd5b83801561091257505f8367ffffffffffffffff1614155b80156109285750428367ffffffffffffffff1611155b1561095f576040517fd36c850000000000000000000000000000000000000000000000000000000000815260040160405180910390fd5b5f60015f8873ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1681526020019081526020015f209050841515815f0160019054906101000a900460ff1615151480156109f457508560038111156109d0576109cf6112e1565b5b815f015f9054906101000a900460ff1660038111156109f2576109f16112e1565b5b145b8015610a2a57508367ffffffffffffffff16815f0160029054906101000a900467ffffffffffffffff1667ffffffffffffffff16145b8015610a395750828160010154145b15610a70576040517f9c655edd00000000000000000000000000000000000000000000000000000000815260040160405180910390fd5b85815f015f6101000a81548160ff02191690836003811115610a9557610a946112e1565b5b021790555084815f0160016101000a81548160ff02191690831515021790555083815f0160026101000a81548167ffffffffffffffff021916908367ffffffffffffffff16021790555082816001018190555082866003811115610afc57610afb6112e1565b5b8873ffffffffffffffffffffffffffffffffffffffff167fead1ef892cb254a35967f4ba78fc81f975215d9f195cf890508b5bf2845f19ba888833604051610b4693929190611558565b60405180910390a484610bb557856003811115610b6657610b656112e1565b5b8773ffffffffffffffffffffffffffffffffffffffff167f4e61eead8f4122ea5478440539e0f50a3b023fe0d50a6ab5bec886e1207a86e433604051610bac919061158d565b60405180910390a35b50505050505050565b610bc7826103aa565b610bd081610ea3565b610bda8383610fa7565b50505050565b7f0ce23c3e399818cfee81a7ab0880f714e53d7672b08df0fa62f2843416e1ea0981565b7f0ce23c3e399818cfee81a7ab0880f714e53d7672b08df0fa62f2843416e1ea09610c2e81610ea3565b5f73ffffffffffffffffffffffffffffffffffffffff168273ffffffffffffffffffffffffffffffffffffffff1603610c93576040517f6d187b2800000000000000000000000000000000000000000000000000000000815260040160405180910390fd5b5f60015f8473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1681526020019081526020015f209050805f0160019054906101000a900460ff16610d1a576040517f9c655edd00000000000000000000000000000000000000000000000000000000815260040160405180910390fd5b5f815f0160016101000a81548160ff021916908315150217905550805f015f9054906101000a900460ff166003811115610d5757610d566112e1565b5b8373ffffffffffffffffffffffffffffffffffffffff167f4e61eead8f4122ea5478440539e0f50a3b023fe0d50a6ab5bec886e1207a86e433604051610d9d919061158d565b60405180910390a38060010154815f015f9054906101000a900460ff166003811115610dcc57610dcb6112e1565b5b8473ffffffffffffffffffffffffffffffffffffffff167fead1ef892cb254a35967f4ba78fc81f975215d9f195cf890508b5bf2845f19ba5f855f0160029054906101000a900467ffffffffffffffff1633604051610e2d93929190611558565b60405180910390a4505050565b5f7f01ffc9a7000000000000000000000000000000000000000000000000000000007bffffffffffffffffffffffffffffffffffffffffffffffffffffffff1916827bffffffffffffffffffffffffffffffffffffffffffffffffffffffff1916149050919050565b610eb481610eaf610fa0565b611090565b50565b5f610ec28383610699565b610f965760015f808581526020019081526020015f205f015f8473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1681526020019081526020015f205f6101000a81548160ff021916908315150217905550610f33610fa0565b73ffffffffffffffffffffffffffffffffffffffff168273ffffffffffffffffffffffffffffffffffffffff16847f2f8788117e7eff1d82e926ec794901d17c78024a50270940304540a733656f0d60405160405180910390a460019050610f9a565b5f90505b92915050565b5f33905090565b5f610fb28383610699565b15611086575f805f8581526020019081526020015f205f015f8473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1681526020019081526020015f205f6101000a81548160ff021916908315150217905550611023610fa0565b73ffffffffffffffffffffffffffffffffffffffff168273ffffffffffffffffffffffffffffffffffffffff16847ff6391f5c32d9c69d2a47ea670b442974b53935d1edc7fd64eb21e047a839171b60405160405180910390a46001905061108a565b5f90505b92915050565b61109a8282610699565b6110dd5780826040517fe2517d3f0000000000000000000000000000000000000000000000000000000081526004016110d49291906115a6565b60405180910390fd5b5050565b5f80fd5b5f7fffffffff0000000000000000000000000000000000000000000000000000000082169050919050565b611119816110e5565b8114611123575f80fd5b50565b5f8135905061113481611110565b92915050565b5f6020828403121561114f5761114e6110e1565b5b5f61115c84828501611126565b91505092915050565b5f8115159050919050565b61117981611165565b82525050565b5f6020820190506111925f830184611170565b92915050565b5f819050919050565b6111aa81611198565b81146111b4575f80fd5b50565b5f813590506111c5816111a1565b92915050565b5f602082840312156111e0576111df6110e1565b5b5f6111ed848285016111b7565b91505092915050565b6111ff81611198565b82525050565b5f6020820190506112185f8301846111f6565b92915050565b5f73ffffffffffffffffffffffffffffffffffffffff82169050919050565b5f6112478261121e565b9050919050565b6112578161123d565b8114611261575f80fd5b50565b5f813590506112728161124e565b92915050565b5f806040838503121561128e5761128d6110e1565b5b5f61129b858286016111b7565b92505060206112ac85828601611264565b9150509250929050565b5f602082840312156112cb576112ca6110e1565b5b5f6112d884828501611264565b91505092915050565b7f4e487b71000000000000000000000000000000000000000000000000000000005f52602160045260245ffd5b6004811061131f5761131e6112e1565b5b50565b5f81905061132f8261130e565b919050565b5f61133e82611322565b9050919050565b61134e81611334565b82525050565b5f67ffffffffffffffff82169050919050565b61137081611354565b82525050565b5f6080820190506113895f830187611345565b6113966020830186611170565b6113a36040830185611367565b6113b060608301846111f6565b95945050505050565b600481106113c5575f80fd5b50565b5f813590506113d6816113b9565b92915050565b5f80604083850312156113f2576113f16110e1565b5b5f6113ff85828601611264565b9250506020611410858286016113c8565b9150509250929050565b61142381611354565b811461142d575f80fd5b50565b5f8135905061143e8161141a565b92915050565b5f805f806080858703121561145c5761145b6110e1565b5b5f61146987828801611264565b945050602061147a878288016113c8565b935050604061148b87828801611430565b925050606061149c878288016111b7565b91505092959194509250565b6114b181611165565b81146114bb575f80fd5b50565b5f813590506114cc816114a8565b92915050565b5f805f805f60a086880312156114eb576114ea6110e1565b5b5f6114f888828901611264565b9550506020611509888289016113c8565b945050604061151a888289016114be565b935050606061152b88828901611430565b925050608061153c888289016111b7565b9150509295509295909350565b6115528161123d565b82525050565b5f60608201905061156b5f830186611170565b6115786020830185611367565b6115856040830184611549565b949350505050565b5f6020820190506115a05f830184611549565b92915050565b5f6040820190506115b95f830185611549565b6115c660208301846111f6565b939250505056fea2646970667358221220b08d97f0c7754cb3dfb9628fbc45322e5027dcc15328fd8118875fcf03d9943564736f6c63430008180033";
 
   
       type KYCRegistryConstructorParams = [signer?: Signer] | ConstructorParameters<typeof ContractFactory>;
@@ -219,11 +557,11 @@ import type { NonPayableOverrides } from "../common.js"
         
       }
     
-    override getDeployTransaction(overrides?: NonPayableOverrides & { from?: string }): Promise<ContractDeployTransaction> {
-      return super.getDeployTransaction(overrides || {});
+    override getDeployTransaction(admin: AddressLike, verifier: AddressLike, overrides?: NonPayableOverrides & { from?: string }): Promise<ContractDeployTransaction> {
+      return super.getDeployTransaction(admin, verifier, overrides || {});
     };
-    override deploy(overrides?: NonPayableOverrides & { from?: string }) {
-      return super.deploy(overrides || {}) as Promise<KYCRegistry & {
+    override deploy(admin: AddressLike, verifier: AddressLike, overrides?: NonPayableOverrides & { from?: string }) {
+      return super.deploy(admin, verifier, overrides || {}) as Promise<KYCRegistry & {
         deploymentTransaction(): ContractTransactionResponse;
       }>;
     }

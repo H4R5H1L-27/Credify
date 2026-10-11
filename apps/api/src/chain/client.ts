@@ -170,17 +170,60 @@ export class ChainClient {
     return this.publicClient.readContract({ address: this.deployment.contracts.reputationRegistry, abi: reputationAbi, functionName: 'getScore', args: [address] });
   }
 
-  async verified(address: Address) {
-    return this.publicClient.readContract({ address: this.deployment.contracts.kycRegistry, abi: kycAbi, functionName: 'isVerified', args: [address] });
+  async verified(address: Address, roleType?: number) {
+    if (roleType !== undefined) {
+      return this.publicClient.readContract({
+        address: this.deployment.contracts.kycRegistry,
+        abi: kycAbi,
+        functionName: 'isVerified',
+        args: [address, roleType]
+      });
+    }
+    return this.publicClient.readContract({
+      address: this.deployment.contracts.kycRegistry,
+      abi: kycAbi,
+      functionName: 'isVerified',
+      args: [address]
+    });
   }
 
-  async setVerified(operatorPrincipalId: string, address: Address, isVerified: boolean, ref: `0x${string}`) {
+  async getKycRecord(address: Address) {
+    return this.publicClient.readContract({
+      address: this.deployment.contracts.kycRegistry,
+      abi: kycAbi,
+      functionName: 'getRecord',
+      args: [address]
+    });
+  }
+
+  async setVerified(
+    operatorPrincipalId: string,
+    address: Address,
+    isVerified: boolean,
+    ref: `0x${string}`,
+    roleType = 1,
+    expiresAt = BigInt(Math.floor(Date.now() / 1000) + 365 * 24 * 60 * 60)
+  ) {
     const wallet = this.walletForPrincipalId(operatorPrincipalId);
     const { request } = await this.publicClient.simulateContract({
       address: this.deployment.contracts.kycRegistry,
       abi: kycAbi,
       functionName: 'setVerified',
-      args: [address, isVerified, ref],
+      args: [address, roleType, isVerified, expiresAt, ref],
+      account: wallet.account!
+    });
+    const hash = await wallet.writeContract(request);
+    const receipt = await this.publicClient.waitForTransactionReceipt({ hash });
+    return { hash, receiptBlock: receipt.blockNumber.toString() };
+  }
+
+  async revokeVerification(operatorPrincipalId: string, address: Address) {
+    const wallet = this.walletForPrincipalId(operatorPrincipalId);
+    const { request } = await this.publicClient.simulateContract({
+      address: this.deployment.contracts.kycRegistry,
+      abi: kycAbi,
+      functionName: 'revokeVerification',
+      args: [address],
       account: wallet.account!
     });
     const hash = await wallet.writeContract(request);

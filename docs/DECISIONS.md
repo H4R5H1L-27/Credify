@@ -58,3 +58,35 @@ Work package WP1 introduces configurable credit terms, unspent principal recover
 
 ### Status
 Accepted and implemented in WP1.
+
+---
+
+## ADR-003: Role-Based Expiring Salted KYC Verification and Revocation Policy (WP2)
+
+### Context
+Work package WP2 redesigns KYC verification from a simple binary flag into a granular, role-based, expiring credential verification system with access control, off-chain salted privacy-preserving commitments, and explicit contract revocation policies.
+
+### Decisions
+1. **Granular Role Architecture**:
+   - `IKYCRegistry.Role` enum defines `None (0)`, `Borrower (1)`, `Lender (2)`, and `Supplier (3)`.
+   - `Record` struct stores `{ Role roleType, bool verified, uint256 expiresAt, bytes32 credentialHash }`.
+   - `isVerified(account, roleType)` validates `record.verified && record.roleType == roleType && record.expiresAt > block.timestamp`.
+2. **Access Control**:
+   - `KYCRegistry` inherits OpenZeppelin `AccessControl`.
+   - Deployer receives `DEFAULT_ADMIN_ROLE` and `VERIFIER_ROLE`.
+   - Only addresses with `VERIFIER_ROLE` can invoke `setVerified`, `setVerification`, or `revokeVerification`.
+3. **Off-Chain Salted Privacy-Preserving Hashing**:
+   - Raw profile attributes are canonicalized (keys sorted) into JSON.
+   - A unique 32-byte cryptographically secure random salt is generated per request.
+   - Hash is computed via `keccak256(abi.encode(canonicalProfileJson, salt))`.
+   - Only the resulting 32-byte digest is anchored on-chain. Salt and structured metadata are stored securely off-chain, protecting applicant privacy while allowing deterministic zero-knowledge-ready verification.
+4. **Lifecycle Revocation Policy**:
+   - **Lenders**: Revoked or expired lenders cannot commit fresh capital (`contribute()`), but retain fundamental property rights to withdraw their funds (`claimRepayment()`, `claimFundingRefund()`) and participate in default governance (`voteDefault()`).
+   - **Borrowers**: Revoked or expired borrowers cannot deploy new credit pools (`createLoan()`) or draw down funds (`spend()`), but retain the obligation and capability to settle debt (`repay()`).
+   - **Suppliers**: Revoked or expired merchants cannot receive pool disbursements (`spend()`), preventing capital leakage to compromised vendors.
+5. **API Verifier Authentication**:
+   - Verification review (`POST /api/v1/verification/requests/:id/review`) requires verifier authentication via `Authorization: Bearer <secret>` or a signed on-chain `attestationTxHash`. Unauthenticated requests return `401 Unauthorized`.
+
+### Status
+Accepted and verified in WP2.
+

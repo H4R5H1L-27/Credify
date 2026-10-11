@@ -1,6 +1,7 @@
-﻿import test from 'node:test';
+import test from 'node:test';
 import assert from 'node:assert/strict';
-import { VerificationStore } from './store/verification.js';
+import { VerificationStore, computeSaltedCredentialHash } from './store/verification.js';
+import { buildServer } from './server.js';
 
 test('verification lifecycle transitions through states correctly', async () => {
   const store = new VerificationStore('test-verification-requests.json');
@@ -69,6 +70,12 @@ test('verification lifecycle transitions through states correctly', async () => 
   assert.equal(resubmitted.rejectionReason, undefined);
   assert.equal(store.getByAddress(testAddress)?.status, 'PENDING');
 
+  assert.ok(registered.salt && registered.salt.startsWith('0x') && registered.salt.length === 66);
+  assert.equal(
+    computeSaltedCredentialHash(registered.profile as any, registered.salt as `0x${string}`),
+    registered.credentialHash
+  );
+
   // 5. Verifier approves on-chain -> status: VERIFIED with attestation metadata
   const verified = store.update(resubmitted.id, {
     status: 'VERIFIED',
@@ -82,3 +89,41 @@ test('verification lifecycle transitions through states correctly', async () => 
   assert.equal(verified.attestationTxHash, '0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890');
   assert.equal(store.getByAddress(testAddress)?.status, 'VERIFIED');
 });
+
+test('unauthenticated verification review is rejected with 401 Unauthorized', async () => {
+  const store = new VerificationStore('test-unauth-requests.json');
+  await store.load();
+  const req = store.create({
+    walletAddress: '0x1111111111111111111111111111111111111111',
+    role: 'BORROWER',
+    profile: {
+      fullName: 'Unauth User',
+      organization: 'None',
+      role: 'BORROWER',
+      referenceId: 'CRD-UNAUTH-001'
+    }
+  });
+
+  const app = buildServer({
+    deployment: { accounts: { deployer: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266' } } as any,
+    chain: { publicClient: {} } as any,
+    store: { allEvents: () => [] } as any,
+    verificationStore: store,
+    indexer: { indexOnce: async () => 0 } as any,
+    loans: {} as any,
+    observability: {} as any
+  });
+
+  // Call review without authorization header or on-chain attestation
+  const res = await app.inject({
+    method: 'POST',
+    url: `/api/v1/verification/requests/${req.id}/review`,
+    payload: { status: 'VERIFIED' }
+  });
+
+  assert.equal(res.statusCode, 401);
+  const body = JSON.parse(res.body);
+  assert.equal(body.error, 'Unauthorized');
+  assert.equal(body.message, 'Authentication required for verification review');
+});
+

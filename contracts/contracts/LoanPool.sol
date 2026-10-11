@@ -3,10 +3,7 @@ pragma solidity ^0.8.24;
 
 import {ReentrancyGuard} from '@openzeppelin/contracts/utils/ReentrancyGuard.sol';
 import {LoanTerms} from './LoanTypes.sol';
-
-interface IKYCRegistry {
-    function isVerified(address account) external view returns (bool);
-}
+import {IKYCRegistry} from './IKYCRegistry.sol';
 
 interface IReputationRegistry {
     function recordOutcome(address borrower, bool successful) external;
@@ -14,6 +11,7 @@ interface IReputationRegistry {
 
 contract LoanPool is ReentrancyGuard {
     error NotBorrower();
+    error BorrowerNotVerified();
     error BorrowerCannotContribute();
     error NotVerifiedLender();
     error NotLender();
@@ -110,7 +108,7 @@ contract LoanPool is ReentrancyGuard {
     function contribute() external payable nonReentrant {
         if (status != Status.Funding) revert FundingClosed();
         if (msg.sender == borrower) revert BorrowerCannotContribute();
-        if (!IKYCRegistry(kycRegistry).isVerified(msg.sender)) revert NotVerifiedLender();
+        if (!IKYCRegistry(kycRegistry).isVerified(msg.sender, IKYCRegistry.Role.Lender)) revert NotVerifiedLender();
         if (msg.value == 0) revert ContributionIsZero();
         uint256 remaining = targetWei - totalContributed;
         if (msg.value > remaining) revert TargetExceeded(msg.value, remaining);
@@ -145,6 +143,7 @@ contract LoanPool is ReentrancyGuard {
     function spend(address payable merchant, uint256 amount, bytes32 category) external nonReentrant {
         if (msg.sender != borrower) revert NotBorrower();
         if (status != Status.Active) revert NotActive();
+        if (!IKYCRegistry(kycRegistry).isVerified(borrower, IKYCRegistry.Role.Borrower)) revert BorrowerNotVerified();
         if (!approvedMerchant[merchant]) revert MerchantNotApproved();
         uint256 remainingGlobal = maxSpendWei - totalSpent;
         if (amount > remainingGlobal) revert SpendLimitExceeded(amount, remainingGlobal);

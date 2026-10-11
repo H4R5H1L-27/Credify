@@ -24,5 +24,6 @@ export const config = {
   demoMnemonic: process.env.DEMO_MNEMONIC ?? 'test test test test test test test test test test test junk',
   termsParser: process.env.TERMS_PARSER ?? 'demo',
   geminiApiKey: process.env.GEMINI_API_KEY ?? '',
-  geminiModel: process.env.GEMINI_MODEL ?? ''
+  geminiModel: process.env.GEMINI_MODEL ?? '',
+  verifierSecret: process.env.VERIFIER_SECRET || process.env.AUTH_SECRET || 'credify-verifier-secret-test'
 };

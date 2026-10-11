@@ -1,5 +1,6 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
-import { keccak256, toHex, type Address } from 'viem';
+import { encodeAbiParameters, parseAbiParameters, keccak256, type Address } from 'viem';
+import crypto from 'node:crypto';
 import { config } from '../config.js';
 import type {
   VerificationRequest,
@@ -9,12 +10,27 @@ import type {
   StructuredCredential
 } from '@credify/shared';
 
-function generateCredentialHash(profile: Record<string, unknown>): `0x${string}` {
-  const serialized = JSON.stringify(profile, Object.keys(profile).sort());
-  return keccak256(toHex(serialized));
+export function generateSalt(): `0x${string}` {
+  return `0x${crypto.randomBytes(32).toString('hex')}` as `0x${string}`;
+}
+
+export function computeSaltedCredentialHash(profile: Record<string, unknown>, salt: `0x${string}`): `0x${string}` {
+  const canonicalProfileJson = JSON.stringify(profile, Object.keys(profile).sort());
+  const encoded = encodeAbiParameters(
+    parseAbiParameters('string, bytes32'),
+    [canonicalProfileJson, salt]
+  );
+  return keccak256(encoded);
 }
 
 function initialRequests(): VerificationRequest[] {
+  const saltBorrower = '0x1111111111111111111111111111111111111111111111111111111111111111' as `0x${string}`;
+  const saltLenderA = '0x2222222222222222222222222222222222222222222222222222222222222222' as `0x${string}`;
+  const saltLenderB = '0x3333333333333333333333333333333333333333333333333333333333333333' as `0x${string}`;
+  const saltLenderC = '0x4444444444444444444444444444444444444444444444444444444444444444' as `0x${string}`;
+  const saltMerchantA = '0x5555555555555555555555555555555555555555555555555555555555555555' as `0x${string}`;
+  const saltMerchantB = '0x6666666666666666666666666666666666666666666666666666666666666666' as `0x${string}`;
+
   return [
     {
       id: 'req_v1_borrower',
@@ -27,16 +43,18 @@ function initialRequests(): VerificationRequest[] {
         referenceId: 'CRD-BRW-001',
         details: { department: 'Robotics', program: 'Academic Equipment Financing' }
       },
-      credentialHash: generateCredentialHash({
+      salt: saltBorrower,
+      credentialHash: computeSaltedCredentialHash({
         fullName: 'Aarav Menon',
         organization: 'Department of Computing & Robotics, University Lab',
         role: 'BORROWER',
         referenceId: 'CRD-BRW-001'
-      }),
+      }, saltBorrower),
       submittedAt: new Date(Date.now() - 86400000 * 5).toISOString(),
       status: 'VERIFIED',
       reviewedBy: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',
       reviewedAt: new Date(Date.now() - 86400000 * 4).toISOString(),
+      expiresAt: new Date(Date.now() + 86400000 * 365).toISOString(),
       attestationTxHash: '0x1a2b3c4d5e6f7081920314253647586970819203142536475869708192031425',
       attestationBlock: '1'
     },
@@ -51,16 +69,18 @@ function initialRequests(): VerificationRequest[] {
         referenceId: 'CRD-LND-001',
         details: { fundType: 'Academic Research Endowment', mandate: 'Hardware Credit' }
       },
-      credentialHash: generateCredentialHash({
+      salt: saltLenderA,
+      credentialHash: computeSaltedCredentialHash({
         fullName: 'Meera Capital',
         organization: 'Meera Capital Strategic Endowment Fund',
         role: 'LENDER',
         referenceId: 'CRD-LND-001'
-      }),
+      }, saltLenderA),
       submittedAt: new Date(Date.now() - 86400000 * 4).toISOString(),
       status: 'VERIFIED',
       reviewedBy: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',
       reviewedAt: new Date(Date.now() - 86400000 * 3).toISOString(),
+      expiresAt: new Date(Date.now() + 86400000 * 365).toISOString(),
       attestationTxHash: '0x2b3c4d5e6f708192031425364758697081920314253647586970819203142536',
       attestationBlock: '1'
     },
@@ -75,16 +95,18 @@ function initialRequests(): VerificationRequest[] {
         referenceId: 'CRD-LND-002',
         details: { focus: 'Lab Infrastructure' }
       },
-      credentialHash: generateCredentialHash({
+      salt: saltLenderB,
+      credentialHash: computeSaltedCredentialHash({
         fullName: 'Northstar Labs',
         organization: 'Northstar Innovation Grants',
         role: 'LENDER',
         referenceId: 'CRD-LND-002'
-      }),
+      }, saltLenderB),
       submittedAt: new Date(Date.now() - 86400000 * 3).toISOString(),
       status: 'VERIFIED',
       reviewedBy: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',
       reviewedAt: new Date(Date.now() - 86400000 * 2).toISOString(),
+      expiresAt: new Date(Date.now() + 86400000 * 365).toISOString(),
       attestationTxHash: '0x3c4d5e6f70819203142536475869708192031425364758697081920314253647',
       attestationBlock: '1'
     },
@@ -99,16 +121,18 @@ function initialRequests(): VerificationRequest[] {
         referenceId: 'CRD-LND-003',
         details: { allocation: 'Syndicated Debt' }
       },
-      credentialHash: generateCredentialHash({
+      salt: saltLenderC,
+      credentialHash: computeSaltedCredentialHash({
         fullName: 'Blue Oak Partners',
         organization: 'Blue Oak Research Credit Facility',
         role: 'LENDER',
         referenceId: 'CRD-LND-003'
-      }),
+      }, saltLenderC),
       submittedAt: new Date(Date.now() - 86400000 * 2).toISOString(),
       status: 'VERIFIED',
       reviewedBy: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',
       reviewedAt: new Date(Date.now() - 86400000 * 1).toISOString(),
+      expiresAt: new Date(Date.now() + 86400000 * 365).toISOString(),
       attestationTxHash: '0x4d5e6f7081920314253647586970819203142536475869708192031425364758',
       attestationBlock: '1'
     },
@@ -124,16 +148,18 @@ function initialRequests(): VerificationRequest[] {
         businessCategory: 'Laboratory Materials & Sensors',
         details: { vendorCode: 'VND-0881', authorizedCategory: 'Hardware' }
       },
-      credentialHash: generateCredentialHash({
+      salt: saltMerchantA,
+      credentialHash: computeSaltedCredentialHash({
         fullName: 'BuildRight Supplies',
         organization: 'BuildRight Hardware & Materials Ltd.',
         role: 'MERCHANT',
         referenceId: 'CRD-SUP-001'
-      }),
+      }, saltMerchantA),
       submittedAt: new Date(Date.now() - 86400000 * 3).toISOString(),
       status: 'VERIFIED',
       reviewedBy: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',
       reviewedAt: new Date(Date.now() - 86400000 * 2).toISOString(),
+      expiresAt: new Date(Date.now() + 86400000 * 365).toISOString(),
       attestationTxHash: '0x5e6f708192031425364758697081920314253647586970819203142536475869',
       attestationBlock: '1'
     },
@@ -149,12 +175,13 @@ function initialRequests(): VerificationRequest[] {
         businessCategory: 'Precision Optical & Computing Gear',
         details: { vendorCode: 'VND-1042', authorizedCategory: 'Instruments' }
       },
-      credentialHash: generateCredentialHash({
+      salt: saltMerchantB,
+      credentialHash: computeSaltedCredentialHash({
         fullName: 'StudioGrid Equipment',
         organization: 'StudioGrid Scientific Instruments Corp.',
         role: 'MERCHANT',
         referenceId: 'CRD-SUP-002'
-      }),
+      }, saltMerchantB),
       submittedAt: new Date(Date.now() - 3600000 * 4).toISOString(),
       status: 'PENDING',
     }
@@ -213,12 +240,14 @@ export class VerificationStore {
       (r) => r.walletAddress.toLowerCase() === input.walletAddress.toLowerCase()
     );
 
-    const credentialHash = generateCredentialHash(input.profile as unknown as Record<string, unknown>);
+    const salt = generateSalt();
+    const credentialHash = computeSaltedCredentialHash(input.profile as unknown as Record<string, unknown>, salt);
     const request: VerificationRequest = {
       id: existingIndex >= 0 ? this.requests[existingIndex].id : `req_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`,
       walletAddress: input.walletAddress as `0x${string}`,
       role: input.role,
       profile: input.profile,
+      salt,
       credentialHash,
       submittedAt: new Date().toISOString(),
       status: 'NOT_STARTED',
@@ -238,12 +267,14 @@ export class VerificationStore {
       (r) => r.walletAddress.toLowerCase() === input.walletAddress.toLowerCase()
     );
 
-    const credentialHash = generateCredentialHash(input.profile as unknown as Record<string, unknown>);
+    const salt = generateSalt();
+    const credentialHash = computeSaltedCredentialHash(input.profile as unknown as Record<string, unknown>, salt);
     const request: VerificationRequest = {
       id: existingIndex >= 0 ? this.requests[existingIndex].id : `req_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`,
       walletAddress: input.walletAddress as `0x${string}`,
       role: input.role,
       profile: input.profile,
+      salt,
       credentialHash,
       submittedAt: new Date().toISOString(),
       status: 'PENDING',
