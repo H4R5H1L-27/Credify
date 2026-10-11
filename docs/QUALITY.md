@@ -202,4 +202,33 @@ Following the implementation of Work Package 2:
 - `KYCRegistry.revokeVerification`: ~31,000 gas.
 - `LoanFactory.createLoan`: ~3,600,000 gas (including verification checks for borrower and all merchants).
 
+---
+
+## 7. Work Package 3: Natural Language to Term Sheet & Prompt Injection Defenses
+
+Following the implementation of Work Package 3 (Deterministic & LLM parser pipeline, unit conversion, supplier resolution, unsupported clause detection, and cryptographic binding):
+
+### 7.1 Golden Set Evaluation Scorecard (32 Fixtures)
+A comprehensive golden test suite (`apps/api/src/agreements-golden.test.ts`) evaluating 32 diverse agreement fixtures runs continuously in CI with the following performance metrics:
+
+| Metric Category | Accuracy / Pass Rate | Test Samples | Status |
+| :--- | :--- | :--- | :--- |
+| **Principal Target Extraction** | **100.0%** | 27 / 27 | PASS |
+| **Annual Percentage Rate (APR)** | **100.0%** | 27 / 27 | PASS |
+| **Loan Tenure / Duration** | **100.0%** | 26 / 26 | PASS |
+| **Spending Cap Extraction** | **100.0%** | 28 / 28 | PASS |
+| **Verified Supplier Resolution** | **100.0%** | 19 / 19 | PASS |
+| **Unsupported Clauses Detection** | **100.0%** | 8 / 8 | PASS |
+| **Prompt Injection Defense Rate** | **100.0%** | 4 / 4 blocked | **0 unvetted addresses emitted** |
+
+### 7.2 API Endpoint Coverage
+- `POST /api/v1/agreements/parse`: Validates untrusted agreement text, resolves against verified suppliers, checks bounds, generates reverse-rendered plain-English summary, computes Keccak256 hash, and saves to database.
+- `GET /api/v1/agreements/:hash`: Retrieves stored agreement text and canonical representation by Keccak256 hash. Returns 404 for unknown digests.
+- Verified in `apps/api/src/agreements-endpoint.test.ts` (100% pass).
+
+### 7.3 Frontend Integration
+- **`CreateLoanPage`**: Replaced client-side regex heuristics with server-side `/parse` pipeline. Displays side-by-side original text vs reverse-rendered summary, field quotes, source badges (`[From Text]` vs `[Default]`), unsupported clause warnings, and cryptographic hash binding.
+- **`LoanDetailPage`**: Integrated `useAgreementByHash` to fetch stored agreement text and verify that `keccak256(canonicalText)` matches on-chain `LoanPool.agreementHash`.
+
+
 

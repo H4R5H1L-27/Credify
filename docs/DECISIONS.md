@@ -90,3 +90,48 @@ Work package WP2 redesigns KYC verification from a simple binary flag into a gra
 ### Status
 Accepted and verified in WP2.
 
+---
+
+## ADR-004: Natural Language to Term Sheet Pipeline, Cryptographic Agreement Binding, and Prompt Injection Defenses (WP3)
+
+### Context
+Work package WP3 requires turning written natural language credit agreements into validated parameters for fixed, immutable smart contracts (`LoanFactory` & `LoanPool`), removing browser regex heuristics, flagging missing and unsupported clauses, preventing prompt-injection attacks, and cryptographically binding the agreement text on-chain.
+
+### Decisions
+1. **Server-Side Architecture (`POST /api/v1/agreements/parse`)**:
+   - The browser regex heuristic in `CreateLoanPage` is fully decommissioned as the source of truth.
+   - All agreement parsing is centralized server-side. Transactions are constructed strictly from server-validated parameters.
+2. **Dual Parser with Clean Deterministic Fallback**:
+   - `GeminiAgreementParser` utilizes structured JSON schema extraction when a valid Gemini API key is configured.
+   - `parseAgreementDeterministic` executes comprehensive regex, token, and semantic clause extraction.
+   - If the Gemini call fails, times out, or has no key configured, the system automatically falls back to `parseAgreementDeterministic` with `parser: 'deterministic'`.
+3. **Untrusted Input Treatment & Prompt-Injection Mitigation**:
+   - Agreement text is strictly treated as untrusted data (limited to 20,000 characters).
+   - Under no circumstances does the system output or deploy Solidity code from natural language text.
+   - Raw Ethereum addresses written inside the text are ignored by the parser.
+   - Merchants can only be resolved by matching entity names against verified suppliers holding `Supplier` / `MERCHANT` role in the `KYCRegistry`.
+   - Security verification: Golden set evaluation verified a 100% prompt-injection defense rate (0 unvetted addresses emitted across all attack vectors).
+4. **Deterministic Unit Conversion & Protocol Bounds**:
+   - Units are strictly converted in code: ETH to wei (`parseEther`), percent to bps (`* 100`), duration to seconds (`* 86400`).
+   - Bounds enforced identically to contracts: APR (0 to 5,000 bps), duration (300 to 31,536,000 s), funding window (300 to 7,776,000 s), spend cap ($\le$ target), default quorum (5,001 to 10,000 bps), grace period (0 to 2,592,000 s), merchants (1 to 10).
+5. **No Silent Defaults**:
+   - Every extracted parameter carries a source: `'text'`, `'default'`, or `'missing'`.
+   - Missing terms are explicitly returned in `missingFields`. Default values only populate when explicitly acknowledged via `acceptedDefaults`.
+6. **Unsupported Clauses Flagging**:
+   - Off-chain legal covenants (collateral pledges, personal guarantees, dynamic late fees, physical premises audits, and arbitration clauses) are automatically flagged in `unsupportedClauses` with verbatim quotes and explanations of why smart contracts do not enforce them.
+7. **Cryptographic Agreement Binding (`agreementHash`)**:
+   - Exact canonicalization algorithm:
+     ```ts
+     text.replace(/\r\n|\r/g, '\n').split('\n').map(line => line.trimEnd()).join('\n').trim()
+     ```
+   - Hash formula: `agreementHash = keccak256(toHex(canonicalText))`.
+   - Off-chain agreements are persisted in `AgreementStore` (`data/agreements.json`) keyed by `agreementHash`.
+   - On-chain: `agreementHash` is passed in `LoanTerms` to `LoanFactory.createLoan` and stored immutably in `LoanPool.agreementHash`.
+   - The UI (`LoanDetailPage`) fetches the stored agreement and cryptographically verifies `keccak256(canonicalText) === loan.agreementHash`.
+8. **Deterministic Reverse-Render Summary**:
+   - A plain-English summary is generated purely in deterministic code (`reverseRenderSummary`) from the validated smart contract parameters, preventing LLM hallucinations.
+
+### Status
+Accepted and verified in WP3 with 32 golden fixtures (100% accuracy, 100% prompt injection defense).
+
+

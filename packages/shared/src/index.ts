@@ -231,5 +231,6 @@ export interface SupplierProfile {
 
 export * from './abis.js';
 export * from './observability.js';
+export * from './agreements.js';
 
 

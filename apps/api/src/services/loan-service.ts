@@ -3,7 +3,8 @@ import type { Address } from 'viem';
 import { ChainClient } from '../chain/client.js';
 import { ProjectionStore } from '../store/projection.js';
 import { principalById, principalForAddress } from './principals.js';
-import { agreementParser } from './llm-terms.js';
+import { createAgreementParser } from './llm-terms.js';
+import { canonicalizeAgreementText, computeAgreementHash } from '@credify/shared';
 import type { CreateLoanInput, ContributeInput } from '@credify/shared';
 
 const statusMap = ['FUNDING', 'ACTIVE', 'REPAID', 'DEFAULTED', 'CANCELLED'] as const;
@@ -108,32 +109,47 @@ export class LoanService {
     const borrower = principalById(this.chain, input.borrowerId);
     if (!borrower) throw new Error('UNKNOWN_PRINCIPAL');
     const merchants = this.chain.deployment.accounts.merchants;
-    const parsed = input.parsedTerms
-      ? { terms: input.parsedTerms, source: 'provided-terms' as const, assumptions: [] as string[] }
-      : await agreementParser().parse(input.naturalLanguageAgreement, merchants);
-    const requestedMerchants = parsed.terms.merchants as Address[];
+    let termsToUse: any = input.parsedTerms;
+    let agreementHash: `0x${string}` = '0x0000000000000000000000000000000000000000000000000000000000000000';
+
+    if (input.naturalLanguageAgreement) {
+      const canonical = canonicalizeAgreementText(input.naturalLanguageAgreement);
+      agreementHash = computeAgreementHash(canonical);
+    }
+
+    if (!termsToUse) {
+      const parsed = await createAgreementParser().parse(input.naturalLanguageAgreement);
+      if (!parsed.terms) {
+        throw new Error(`INCOMPLETE_TERMS: missing [${parsed.missingFields.join(', ')}]`);
+      }
+      termsToUse = parsed.terms;
+      agreementHash = parsed.agreementHash;
+    } else if (termsToUse.agreementHash) {
+      agreementHash = termsToUse.agreementHash as `0x${string}`;
+    }
+
+    const requestedMerchants = termsToUse.merchants as Address[];
     const allowed = new Set(merchants.map((x) => x.toLowerCase()));
     if (requestedMerchants.some((m) => !allowed.has(m.toLowerCase()))) throw new Error('UNKNOWN_MERCHANT');
 
     const defaultFundingDuration = 7 * 24 * 60 * 60;
     const defaultGracePeriod = 3 * 24 * 60 * 60;
-    const fundingDurationSeconds = (parsed.terms as any).fundingDurationSeconds ?? defaultFundingDuration;
-    const gracePeriodSeconds = (parsed.terms as any).gracePeriodSeconds ?? defaultGracePeriod;
-    const agreementHash = ((parsed.terms as any).agreementHash ?? '0x0000000000000000000000000000000000000000000000000000000000000000') as `0x${string}`;
-    const maxSpendWei = BigInt(parsed.terms.maxSpendWei);
+    const fundingDurationSeconds = termsToUse.fundingDurationSeconds ?? defaultFundingDuration;
+    const gracePeriodSeconds = termsToUse.gracePeriodSeconds ?? defaultGracePeriod;
+    const maxSpendWei = BigInt(termsToUse.maxSpendWei);
     const count = requestedMerchants.length || 1;
-    const merchantCapsWei = (parsed.terms as any).merchantCapsWei
-      ? (parsed.terms as any).merchantCapsWei.map((c: any) => BigInt(c))
+    const merchantCapsWei = termsToUse.merchantCapsWei
+      ? termsToUse.merchantCapsWei.map((c: any) => BigInt(c))
       : requestedMerchants.map(() => maxSpendWei / BigInt(count));
 
     const tx = await this.chain.createLoan(input.borrowerId, {
       borrower: borrower.walletAddress as Address,
-      targetWei: BigInt(parsed.terms.targetWei),
-      durationSeconds: parsed.terms.durationSeconds,
+      targetWei: BigInt(termsToUse.targetWei),
+      durationSeconds: termsToUse.durationSeconds,
       fundingDurationSeconds,
-      aprBps: parsed.terms.aprBps,
+      aprBps: termsToUse.aprBps,
       maxSpendWei,
-      defaultQuorumBps: parsed.terms.defaultQuorumBps,
+      defaultQuorumBps: termsToUse.defaultQuorumBps,
       gracePeriodSeconds,
       agreementHash,
       merchants: requestedMerchants,
@@ -141,7 +157,7 @@ export class LoanService {
     });
     const pools = await this.chain.getPools();
     const address = pools[pools.length - 1];
-    return { loanId: address, transactionHash: tx.hash, parsed };
+    return { loanId: address, transactionHash: tx.hash, parsed: { terms: termsToUse, agreementHash } };
   }
 
   principal(id: string) { return principalById(this.chain, id); }

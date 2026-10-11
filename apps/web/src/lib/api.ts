@@ -20,6 +20,7 @@ import type {
   IndexerStateObservability,
   VerificationAttestationObservability,
   AgreementObservability,
+  AgreementParseResult,
 } from '@credify/shared';
 
 
@@ -143,6 +144,28 @@ export const api = {
   getLoans: () => request<LoanSummary[]>(`${API_BASE}/loans`),
   getLoan: (poolAddress: string) => request<LoanSummary>(`${API_BASE}/loans/${poolAddress}`),
   getLoanActivity: (poolAddress: string) => request<ActivityEvent[]>(`${API_BASE}/loans/${poolAddress}/activity`),
+
+  // Agreements (WP3)
+  parseAgreement: (payload: {
+    agreementText: string;
+    acceptedDefaults?: Record<string, any>;
+    borrowerAddress?: string;
+  }) =>
+    request<AgreementParseResult>(`${API_BASE}/agreements/parse`, {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    }),
+
+  getAgreementByHash: (hash: string) =>
+    request<{
+      agreementHash: string;
+      rawText: string;
+      canonicalText: string;
+      createdAt: string;
+      summary?: string;
+      terms?: TermSheet;
+      parser?: string;
+    }>(`${API_BASE}/agreements/${hash}`),
 
   // Loan Mutations
   createLoan: (input: CreateLoanInput) =>

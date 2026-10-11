@@ -58,6 +58,15 @@ export function useReputation(address?: string) {
   });
 }
 
+export function useAgreementByHash(hash?: string) {
+  return useQuery({
+    queryKey: ['agreements', hash],
+    queryFn: () => (hash ? api.getAgreementByHash(hash) : null),
+    enabled: Boolean(hash && hash !== '0x0000000000000000000000000000000000000000000000000000000000000000'),
+    staleTime: 60000,
+  });
+}
+
 export function useReputationHistory(address?: string) {
   return useQuery({
     queryKey: address ? ['reputation', address, 'history'] : ['reputation', 'null', 'history'],

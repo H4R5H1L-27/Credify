@@ -9,9 +9,10 @@ const merchants = [
 
 test('demo agreement parser produces validated term sheet', () => {
   const parsed = parseAgreement('10 ETH for 14 days at 8% with a spend cap of 8 ETH.', merchants);
-  assert.equal(parsed.terms.targetWei, '10000000000000000000');
-  assert.equal(parsed.terms.durationSeconds, 1209600);
-  assert.equal(parsed.terms.aprBps, 800);
-  assert.equal(parsed.terms.maxSpendWei, '8000000000000000000');
-  assert.equal(parsed.terms.defaultQuorumBps, 5001);
+  assert.ok(parsed.terms);
+  assert.equal(parsed.terms!.targetWei, '10000000000000000000');
+  assert.equal(parsed.terms!.durationSeconds, 1209600);
+  assert.equal(parsed.terms!.aprBps, 800);
+  assert.equal(parsed.terms!.maxSpendWei, '8000000000000000000');
+  assert.equal(parsed.terms!.defaultQuorumBps, 5001);
 });

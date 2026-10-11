@@ -17,8 +17,11 @@ import {
   createVerificationRequestSchema,
   reviewVerificationRequestSchema,
   registerIdentitySchema,
-  DEMO_ACCOUNTS
+  DEMO_ACCOUNTS,
+  parseAgreementRequestSchema
 } from '@credify/shared';
+import { AgreementStore } from './store/agreement-store.js';
+import { createAgreementParser } from './services/llm-terms.js';
 import { ScenarioSeeder } from './services/scenario-seeder.js';
 import { config } from './config.js';
 
@@ -29,6 +32,7 @@ export type AppContext = {
   chain: ChainClient;
   store: ProjectionStore;
   verificationStore: VerificationStore;
+  agreementStore?: AgreementStore;
   indexer: ChainIndexer;
   loans: LoanService;
   observability: ObservabilityService;
@@ -36,6 +40,8 @@ export type AppContext = {
 
 export function buildServer(ctx: AppContext) {
   const { deployment, chain, store, verificationStore, indexer, loans, observability } = ctx;
+  const agreementStore = ctx.agreementStore ?? new AgreementStore();
+  void agreementStore.load();
   const app = Fastify({ logger: { level: 'info' } });
   app.addHook('onRequest', async (req, reply) => {
     reply.header('Access-Control-Allow-Origin', config.corsOrigin);
@@ -87,8 +93,43 @@ export function buildServer(ctx: AppContext) {
   app.post('/api/v1/loans', async (req, reply) => result(async () => {
     const body = createLoanSchema.parse(req.body);
     const created = await loans.create(body);
+    if (body.naturalLanguageAgreement) {
+      agreementStore.saveAgreement(body.naturalLanguageAgreement, body.parsedTerms);
+    }
     await indexer.indexOnce();
     return created;
+  }, reply));
+
+  // Agreement Parsing & Cryptographic Binding Endpoints (WP3)
+  app.post('/api/v1/agreements/parse', async (req, reply) => result(async () => {
+    const body = parseAgreementRequestSchema.parse(req.body);
+    const verifiedMerchants = verificationStore
+      .getAll('VERIFIED')
+      .filter((r) => r.role === 'MERCHANT')
+      .map((m) => ({
+        name: m.profile.fullName,
+        address: m.walletAddress as Address,
+        organization: m.profile.organization,
+        category: m.profile.businessCategory
+      }));
+
+    const parser = createAgreementParser();
+    const parsed = await parser.parse(body.agreementText, {
+      acceptedDefaults: body.acceptedDefaults,
+      verifiedSuppliers: verifiedMerchants.length > 0 ? verifiedMerchants : undefined
+    });
+
+    agreementStore.saveAgreement(parsed.rawText, parsed.terms, parsed.summary, parsed.parser);
+    return parsed;
+  }, reply));
+
+  app.get<{ Params: { hash: string } }>('/api/v1/agreements/:hash', async (req, reply) => result(async () => {
+    const agreement = agreementStore.getByHash(req.params.hash);
+    if (!agreement) {
+      reply.code(404);
+      return { code: 'NOT_FOUND', message: 'Agreement not found for the specified cryptographic hash' };
+    }
+    return agreement;
   }, reply));
 
   app.post<{ Params: { pool: string } }>('/api/v1/loans/:pool/contribute', async (req, reply) => result(async () => {
@@ -797,11 +838,13 @@ async function main() {
   const verificationStore = new VerificationStore();
   const indexer = new ChainIndexer(chain, store);
   const loans = new LoanService(chain, store);
+  const agreementStore = new AgreementStore();
   await store.load();
   await verificationStore.load();
+  await agreementStore.load();
   const observability = new ObservabilityService(chain, store, verificationStore, loans);
 
-  const app = buildServer({ deployment, chain, store, verificationStore, indexer, loans, observability });
+  const app = buildServer({ deployment, chain, store, verificationStore, agreementStore, indexer, loans, observability });
 
   setInterval(() => { indexer.indexOnce().catch((e) => app.log.error(e)); }, 2500).unref();
 
