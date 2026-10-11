@@ -3,9 +3,10 @@ import { factoryAbi, kycAbi, poolAbi, reputationAbi } from './abis.js';
 import { ChainClient } from './client.js';
 import { ProjectionStore } from '../store/projection.js';
 import { principalForAddress } from '../services/principals.js';
+import { config } from '../config.js';
 import type { ActivityEvent } from '@credify/shared';
 
-function isoFromTimestamp(value: bigint) {
+function isoFromTimestamp(value: bigint | number) {
   return new Date(Number(value) * 1000).toISOString();
 }
 
@@ -19,11 +20,13 @@ async function resolveActor(chain: ChainClient, address?: string) {
   }
 }
 
-
-function summaryFor(eventName: string, args: any) {
+export function summaryFor(eventName: string, args: any) {
   switch (eventName) {
     case 'Funded': return `Lender contributed ${args.amount?.toString()} wei to the pool.`;
-    case 'LoanActivated': return 'Funding target reached; the loan is now active.';
+    case 'LoanActivated': {
+      const maturityDate = args.maturity ? ` Maturity set to ${isoFromTimestamp(args.maturity)}.` : '';
+      return `Funding target reached; the loan is now active.${maturityDate}`;
+    }
     case 'SpendExecuted': {
       let categoryText = '';
       try {
@@ -56,6 +59,7 @@ function summaryFor(eventName: string, args: any) {
         ? `Lender cast default vote with ${ethWeight} voting weight (${args.weight?.toString()} wei). Cumulative votes: ${totalEth}.`
         : `Lender cast default vote with ${ethWeight} voting weight (${args.weight?.toString()} wei).`;
     }
+    case 'DefaultThresholdReached':
     case 'LoanDefaulted': {
       const totalEth = args.totalVoteWeight ? `${(Number(args.totalVoteWeight) / 1e18).toFixed(4)} ETH` : '';
       return totalEth
@@ -75,13 +79,67 @@ function summaryFor(eventName: string, args: any) {
       return `${outcome} recorded on-chain. Reputation score updated to ${args.score?.toString()}/100 (${delta} pts). Repayments: ${args.successes?.toString()}, Defaults: ${args.defaults?.toString()}.`;
     }
     case 'VerificationUpdated': return args.verified ? `On-chain identity verified for ${args.account}.` : `On-chain identity verification revoked for ${args.account}.`;
+    case 'VerificationRevoked': return `On-chain identity verification revoked for ${args.account}.`;
     default: return `Blockchain event: ${eventName}`;
   }
 }
 
 export class ChainIndexer {
   private indexPromise: Promise<number> = Promise.resolve(0);
+  private polling = false;
+  private timer: NodeJS.Timeout | null = null;
+  private lastError: string | null = null;
+  private lastIndexedAt: string | null = null;
+
   constructor(private readonly chain: ChainClient, private readonly store: ProjectionStore) {}
+
+  /**
+   * Starts continuous background polling worker.
+   */
+  startPolling(intervalMs?: number) {
+    if (this.polling) return;
+    this.polling = true;
+    const interval = intervalMs || config.indexerPollIntervalMs || 2000;
+
+    const poll = async () => {
+      if (!this.polling) return;
+      try {
+        await this.indexOnce();
+        this.lastError = null;
+      } catch (err: any) {
+        this.lastError = err?.message || String(err);
+      }
+      if (this.polling) {
+        this.timer = setTimeout(poll, interval);
+      }
+    };
+
+    void poll();
+  }
+
+  /**
+   * Stops continuous background polling worker cleanly.
+   */
+  stopPolling() {
+    this.polling = false;
+    if (this.timer) {
+      clearTimeout(this.timer);
+      this.timer = null;
+    }
+  }
+
+  isPolling(): boolean {
+    return this.polling;
+  }
+
+  getStatus() {
+    return {
+      running: this.polling,
+      lastIndexedBlock: this.store.lastIndexedBlock.toString(),
+      lastIndexedAt: this.lastIndexedAt || this.store.allEvents()[0]?.timestamp || null,
+      lastError: this.lastError
+    };
+  }
 
   async indexOnce(): Promise<number> {
     this.indexPromise = this.indexPromise.then(
@@ -94,14 +152,51 @@ export class ChainIndexer {
   private async doIndexOnce(): Promise<number> {
     await this.store.load();
     const latest = await this.chain.blockNumber();
+
+    // Reorg Check 1: Chain reset / node rewind past lastIndexedBlock
     if (latest < this.store.lastIndexedBlock) {
-      await this.store.reset();
+      await this.store.rewindTo(latest);
     }
+
+    // Reorg Check 2: Block hash mismatch at boundary (detects shallow chain reorganizations)
+    if (this.store.lastIndexedBlock > 0n) {
+      const storedHash = this.store.getBlockHash(this.store.lastIndexedBlock);
+      if (storedHash) {
+        try {
+          const currentBoundaryBlock = await this.chain.publicClient.getBlock({ blockNumber: this.store.lastIndexedBlock });
+          if (currentBoundaryBlock?.hash && currentBoundaryBlock.hash.toLowerCase() !== storedHash.toLowerCase()) {
+            // Reorg detected at last indexed block!
+            // Search backwards up to indexerReorgDepth to find the last valid common ancestor
+            let reorgPoint = this.store.lastIndexedBlock;
+            const depth = BigInt(config.indexerReorgDepth || 3);
+            const minBlock = this.store.lastIndexedBlock > depth ? this.store.lastIndexedBlock - depth : 0n;
+
+            for (let b = this.store.lastIndexedBlock - 1n; b >= minBlock; b--) {
+              const bStored = this.store.getBlockHash(b);
+              if (!bStored) { reorgPoint = b; break; }
+              const bCurrent = await this.chain.publicClient.getBlock({ blockNumber: b });
+              if (bCurrent?.hash && bCurrent.hash.toLowerCase() === bStored.toLowerCase()) {
+                reorgPoint = b + 1n; // Reorg began at block b + 1
+                break;
+              }
+              reorgPoint = b;
+            }
+
+            await this.store.rewindTo(reorgPoint);
+          }
+        } catch {
+          // If RPC fails during block lookup, continue with normal query
+        }
+      }
+    }
+
     const to = latest;
     const from = this.store.lastIndexedBlock + 1n;
     if (from > latest) return 0;
+
     const out: ActivityEvent[] = [];
     const blockTimestamp = new Map<string, string>();
+
     const timestampFor = async (blockNumber: bigint) => {
       const key = blockNumber.toString();
       const cached = blockTimestamp.get(key);
@@ -109,6 +204,9 @@ export class ChainIndexer {
       const block = await this.chain.publicClient.getBlock({ blockNumber });
       const value = isoFromTimestamp(block.timestamp);
       blockTimestamp.set(key, value);
+      if (block.hash) {
+        this.store.setBlockHash(blockNumber, block.hash);
+      }
       return value;
     };
 
@@ -126,7 +224,7 @@ export class ChainIndexer {
       return undefined;
     };
 
-
+    // 1. LoanFactory: LoanCreated
     const loanCreatedEvent = factoryAbi.find((x) => x.type === 'event' && x.name === 'LoanCreated')!;
     const factoryLogs = await this.chain.publicClient.getLogs({
       address: this.chain.deployment.contracts.loanFactory,
@@ -161,6 +259,7 @@ export class ChainIndexer {
       });
     }
 
+    // 2. LoanPool: All pool events
     const pools = await this.chain.getPools();
     for (const pool of pools) {
       const logs = await this.chain.publicClient.getLogs({ address: pool, fromBlock: from, toBlock: to });
@@ -174,6 +273,7 @@ export class ChainIndexer {
         const args = (decoded.args ?? {}) as Record<string, any>;
         const timestamp = await timestampFor(log.blockNumber);
         const eventData = Object.fromEntries(Object.entries(args).map(([k, v]) => [k, typeof v === 'bigint' ? v.toString() : String(v)]));
+
         if (decoded.eventName === 'SpendExecuted' && args.category) {
           try {
             let str = '';
@@ -187,6 +287,7 @@ export class ChainIndexer {
             eventData.categoryText = 'General Procurement';
           }
         }
+
         const actorAddress = args.lender ?? args.borrower ?? args.merchant ?? (await senderFor(log.transactionHash));
         const { actorName, actorRole } = await resolveActor(this.chain, actorAddress);
 
@@ -208,6 +309,7 @@ export class ChainIndexer {
       }
     }
 
+    // 3. ReputationRegistry: ReputationUpdated
     const reputationUpdatedEvent = reputationAbi.find((x) => x.type === 'event' && x.name === 'ReputationUpdated')!;
     const reputationLogs = await this.chain.publicClient.getLogs({
       address: this.chain.deployment.contracts.reputationRegistry,
@@ -235,6 +337,7 @@ export class ChainIndexer {
       });
     }
 
+    // 4. KYCRegistry: VerificationUpdated
     const verificationUpdatedEvent = kycAbi.find((x) => x.type === 'event' && x.name === 'VerificationUpdated');
     if (verificationUpdatedEvent) {
       const kycLogs = await this.chain.publicClient.getLogs({
@@ -264,6 +367,7 @@ export class ChainIndexer {
       }
     }
 
+    // 5. KYCRegistry: VerificationRevoked
     const verificationRevokedEvent = kycAbi.find((x) => x.type === 'event' && x.name === 'VerificationRevoked');
     if (verificationRevokedEvent) {
       const revokeLogs = await this.chain.publicClient.getLogs({
@@ -286,16 +390,24 @@ export class ChainIndexer {
           actor: args.account,
           actorName,
           actorRole,
-          summary: `Verification revoked on-chain for ${actorName || args.account}.`,
+          summary: summaryFor('VerificationRevoked', args),
           timestamp: await timestampFor(log.blockNumber),
           data: Object.fromEntries(Object.entries(args).map(([k, v]) => [k, typeof v === 'bigint' ? v.toString() : String(v)]))
         });
       }
     }
 
+    // Record block hash for head block 'to'
+    try {
+      const headBlk = await this.chain.publicClient.getBlock({ blockNumber: to });
+      if (headBlk?.hash) {
+        this.store.setBlockHash(to, headBlk.hash);
+      }
+    } catch {}
 
     this.store.addEvents(out);
     this.store.setLastIndexedBlock(to);
+    this.lastIndexedAt = new Date().toISOString();
     await this.store.save();
     return out.length;
   }

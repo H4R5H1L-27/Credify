@@ -174,5 +174,47 @@ Work package WP4 requires one unified codebase that runs seamlessly on both loca
 ### Status
 Accepted and verified in WP4.
 
+---
+
+## ADR-006: Continuous Indexer Polling, Atomic Projection Persistence, Reorg Handling, and Observability Metrics
+
+### Context
+Prior to Work Package 5:
+1. The chain indexer executed only on-demand when incoming API routes invoked `indexer.indexOnce()`, resulting in lag and stale telemetry between requests.
+2. The JSON projection store (`projection.json`) wrote directly to disk, risking partial writes or corrupted JSON if the process crashed or performed concurrent updates.
+3. Node resets (e.g. `hardhat_reset`) or chain reorgs on testnets (Sepolia) left the indexer's `lastIndexedBlock` ahead of the chain head or holding invalidated event logs.
+4. Observability was limited to a basic `/health` check without standard metrics (Prometheus format) or fine-grained sync lag monitoring (EVM head block vs. latest indexed block).
+
+### Decision
+1. **Continuous Asynchronous Polling Engine (`ChainIndexer`)**:
+   - Implemented `startPolling(intervalMs)` and `stopPolling()` with background error handling and graceful shutdown hook on server close.
+   - Configurable poll interval (`INDEXER_POLL_INTERVAL_MS`, default 2000ms) and reorg depth (`INDEXER_REORG_DEPTH`, default 200 blocks).
+2. **Atomic Disk Persistence (`ProjectionStore`)**:
+   - `save()` writes to a unique temporary file (`${filePath}.tmp.${Date.now()}.${random}`) and utilizes atomic filesystem rename (`fs.rename`), preventing corrupted JSON on partial writes.
+   - Maintains a cursor of `lastIndexedBlock` and an LRU/sliding window of recent `blockHashes` for integrity checks.
+3. **Reorg and Node Reset Recovery**:
+   - When the chain head is less than `lastIndexedBlock` (node restart/reset), the indexer detects the reset, resets its cursor to the new head, and calls `store.rewindTo(newHead)`.
+   - When block hashes mismatch at the overlap boundary, `store.rewindTo(ancestorBlockNumber)` purges invalidated events and rewinds the cursor to allow replay of the canonical fork.
+4. **Full Protocol Event Decoding (14 State-Changing Events)**:
+   - Full decoding and plain-English narrative generation for all 14 contract events:
+     - `LoanFactory`: `LoanCreated`
+     - `LoanPool`: `Funded`, `LoanActivated`, `SpendExecuted`, `RepaymentReceived`, `RepaymentClaimed`, `DefaultVoteCast`, `LoanDefaulted`, `LoanRepaid`, `FundingCancelled`, `FundingRefunded`
+     - `ReputationRegistry`: `ReputationUpdated`
+     - `KYCRegistry`: `VerificationUpdated`, `VerificationRevoked`
+5. **Observability Endpoints & Prometheus Telemetry**:
+   - `GET /api/v1/health` (and `/health`) exposes: `ok`, `status`, `network`, `chainId`, `connected`, `blockNumber`, `latestIndexedBlock`, `syncLag`, `poolCount`, `indexerRunning`, `timestamp`.
+   - `GET /api/v1/observability/metrics` provides both Prometheus text exposition (`text/plain` or `?format=prometheus`) and structured JSON telemetry:
+     - `credify_chain_head_block`
+     - `credify_indexer_last_indexed_block`
+     - `credify_indexer_sync_lag`
+     - `credify_loan_pools_total`
+     - `credify_verified_entities_total`
+     - `credify_system_health`
+6. **Technical Console Integration**:
+   - `ConsoleBackendPage.tsx` displays live EVM Head, Last Indexed Block, Sync Lag, and continuous polling worker status in both the metrics grid and the runtime telemetry panel.
+
+### Status
+Accepted and verified in WP5.
+
 
 

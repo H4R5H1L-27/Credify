@@ -257,6 +257,43 @@ Following the implementation of Work Package 4 (Per-network configuration, envir
   - `TransactionLifecycle`: Displays "View in console" on Localhost (31337) and "View on Etherscan" link to `https://sepolia.etherscan.io` on Sepolia (11155111).
   - Time-warp simulation controls guarded so they only appear on local Hardhat.
 
+---
 
+## 9. Work Package 5: Indexer Engine, Resilience & Observability
 
+Following the implementation of Work Package 5 (Continuous polling loop, reorg detection, atomic persistence, full event summaries, and Prometheus observability):
 
+### 9.1 Projection Resilience & Reorg Recovery
+- **Atomic File Persistence (`ProjectionStore`)**:
+  - Uses atomic write pattern (`${filePath}.tmp.${Date.now()}.${random}` -> `fs.rename`) preventing partial writes, corrupt JSON, or race conditions during rapid state transitions.
+  - Maintains cursor `lastIndexedBlock` and sliding block hash history.
+  - Verified in `apps/api/src/projection.test.ts` (4 unit tests passing).
+- **Reorg & Node Reset Detection (`ChainIndexer`)**:
+  - Automatic recovery when local nodes reset (`latestBlock < lastIndexedBlock`).
+  - Verifies block hash consistency across overlap window (`INDEXER_REORG_DEPTH`). On hash mismatch, purges invalidated events via `store.rewindTo(ancestor)` and resynchronizes canonical history.
+  - Verified in `apps/api/src/indexer.test.ts` (3 unit tests passing).
+
+### 9.2 Event Coverage (14 State-Changing Events)
+All 14 protocol events are decoded into standardized timeline summaries with actor identification and human-readable context:
+| Contract | Event Name | Decoded Fields & Narrative Summary |
+| :--- | :--- | :--- |
+| `LoanFactory` | `LoanCreated` | Pool address, borrower, target principal, APR bps, tenure |
+| `LoanPool` | `Funded` | Contributor address, contribution amount ETH/Wei, cumulative funded total |
+| `LoanPool` | `LoanActivated` | Activation block, maturity timestamp, final syndicate target |
+| `LoanPool` | `SpendExecuted` | Recipient merchant, spend amount, category hash, cumulative spent |
+| `LoanPool` | `RepaymentReceived` | Payer, amount received ETH, total repaid to date |
+| `LoanPool` | `RepaymentClaimed` | Lender claimer, amount claimed, remaining claimable share |
+| `LoanPool` | `DefaultVoteCast` | Voting lender, contributed weight in pool |
+| `LoanPool` | `LoanDefaulted` | Terminal default declared, timestamp, voting quorum met |
+| `LoanPool` | `LoanRepaid` | Loan fully discharged, timestamp, zero outstanding balance |
+| `LoanPool` | `FundingCancelled` | Expiry triggered, pool cancelled, refund window open |
+| `LoanPool` | `FundingRefunded` | Contributor refunded unactivated capital |
+| `ReputationRegistry` | `ReputationUpdated` | Target borrower, score delta (+8 / -20), new credit score |
+| `KYCRegistry` | `VerificationUpdated` | Subject address, role, expiry timestamp, salt digest |
+| `KYCRegistry` | `VerificationRevoked` | Subject address, role, revocation timestamp |
+
+### 9.3 Observability & Telemetry Endpoints
+- **Health Inspection**: `GET /api/v1/health` and `GET /health` provide real-time connection status (`ok`, `status`, `network`, `chainId`, `connected`, `blockNumber`, `latestIndexedBlock`, `syncLag`, `poolCount`, `indexerRunning`, `timestamp`).
+- **Prometheus Metrics**: `GET /api/v1/observability/metrics` provides standard metric gauges (`credify_chain_head_block`, `credify_indexer_last_indexed_block`, `credify_indexer_sync_lag`, `credify_loan_pools_total`, `credify_verified_entities_total`, `credify_system_health`).
+- **Diagnostics Integration**: `ConsoleBackendPage.tsx` connects live telemetry to display node connection, EVM head block, last indexed block, sync lag, and indexer polling worker state.
+- Verified in `apps/api/src/observability.test.ts` (2 unit tests passing).

@@ -63,10 +63,134 @@ export function buildServer(ctx: AppContext) {
     }
   };
 
-  app.get('/health', async () => {
-    const blockNumber = await chain.blockNumber();
-    const pools = await chain.getPools();
-    return { ok: true, network: deployment.network, chainId: deployment.chainId, blockNumber: blockNumber.toString(), poolCount: pools.length, demoMode: config.demoMode };
+  const getHealthHandler = async (_req: any, reply: any) => {
+    let blockNumber = '0';
+    let connected = false;
+    let headError: string | null = null;
+    try {
+      const bn = await chain.blockNumber();
+      blockNumber = bn.toString();
+      connected = true;
+    } catch (err: any) {
+      headError = err?.message || 'RPC connection failed';
+    }
+
+    let poolCount = 0;
+    try {
+      const pools = await chain.getPools();
+      poolCount = pools.length;
+    } catch {}
+
+    const lastIndexedBlock = store.lastIndexedBlock.toString();
+    const syncLag = connected ? Math.max(0, Number(BigInt(blockNumber) - BigInt(lastIndexedBlock))) : 0;
+    const ok = connected;
+
+    const payload = {
+      ok,
+      status: ok ? 'healthy' : 'degraded',
+      network: deployment.network,
+      chainId: deployment.chainId,
+      connected,
+      blockNumber,
+      latestIndexedBlock: lastIndexedBlock,
+      syncLag,
+      poolCount,
+      demoMode: config.demoMode,
+      indexerRunning: indexer.isPolling(),
+      timestamp: new Date().toISOString(),
+      ...(headError ? { error: headError } : {})
+    };
+
+    return reply.send(payload);
+  };
+
+  app.get('/api/v1/health', getHealthHandler);
+  app.get('/health', getHealthHandler);
+
+  app.get('/api/v1/observability/metrics', async (req, reply) => {
+    const format = (req.query as any)?.format || (req.headers.accept?.includes('text/plain') ? 'prometheus' : 'json');
+    let headBlock = 0n;
+    let connected = false;
+    try {
+      headBlock = await chain.blockNumber();
+      connected = true;
+    } catch {}
+
+    const lastIndexed = store.lastIndexedBlock;
+    const syncLag = connected ? Math.max(0, Number(headBlock - lastIndexed)) : 0;
+    let poolsCount = 0;
+    try {
+      poolsCount = (await chain.getPools()).length;
+    } catch {}
+
+    const totalEvents = store.allEvents().length;
+    const verificationsCount = verificationStore.getAll().length;
+    const uptime = Math.floor(process.uptime());
+
+    if (format === 'prometheus') {
+      const lines = [
+        '# HELP credify_chain_head_block Current head block height on connected EVM chain',
+        '# TYPE credify_chain_head_block gauge',
+        `credify_chain_head_block{network="${deployment.network}",chainId="${deployment.chainId}"} ${headBlock.toString()}`,
+        '',
+        '# HELP credify_indexer_last_indexed_block Last block height processed by Credify indexer',
+        '# TYPE credify_indexer_last_indexed_block gauge',
+        `credify_indexer_last_indexed_block{network="${deployment.network}",chainId="${deployment.chainId}"} ${lastIndexed.toString()}`,
+        '',
+        '# HELP credify_indexer_sync_lag Number of blocks the indexer is behind head',
+        '# TYPE credify_indexer_sync_lag gauge',
+        `credify_indexer_sync_lag{network="${deployment.network}",chainId="${deployment.chainId}"} ${syncLag}`,
+        '',
+        '# HELP credify_loan_pools_total Total number of loan pool contracts deployed',
+        '# TYPE credify_loan_pools_total gauge',
+        `credify_loan_pools_total{network="${deployment.network}"} ${poolsCount}`,
+        '',
+        '# HELP credify_indexed_events_total Total smart contract events indexed into projection',
+        '# TYPE credify_indexed_events_total counter',
+        `credify_indexed_events_total ${totalEvents}`,
+        '',
+        '# HELP credify_verification_requests_total Total KYC verification requests in system',
+        '# TYPE credify_verification_requests_total gauge',
+        `credify_verification_requests_total ${verificationsCount}`,
+        '',
+        '# HELP credify_system_uptime_seconds System process uptime in seconds',
+        '# TYPE credify_system_uptime_seconds gauge',
+        `credify_system_uptime_seconds ${uptime}`,
+        '',
+        '# HELP credify_chain_connected Binary indicator of RPC connectivity (1 = connected, 0 = disconnected)',
+        '# TYPE credify_chain_connected gauge',
+        `credify_chain_connected{network="${deployment.network}"} ${connected ? 1 : 0}`
+      ].join('\n');
+
+      reply.header('Content-Type', 'text/plain; version=0.0.4; charset=utf-8');
+      return reply.send(lines);
+    }
+
+    return reply.send({
+      chain: {
+        network: deployment.network,
+        chainId: deployment.chainId,
+        headBlock: headBlock.toString(),
+        connected
+      },
+      indexer: {
+        running: indexer.isPolling(),
+        lastIndexedBlock: lastIndexed.toString(),
+        syncLag,
+        totalEventsIndexed: totalEvents,
+        pollIntervalMs: config.indexerPollIntervalMs,
+        reorgDepth: config.indexerReorgDepth
+      },
+      protocol: {
+        poolsCount,
+        verificationsCount
+      },
+      system: {
+        uptimeSeconds: uptime,
+        memoryUsageMb: Math.round(process.memoryUsage().rss / 1024 / 1024)
+      },
+      timestamp: new Date().toISOString()
+    });
   });
 
   app.get('/api/v1/demo/principals', async () => principalList(chain));
@@ -854,7 +978,8 @@ async function main() {
 
   const app = buildServer({ deployment, chain, store, verificationStore, agreementStore, indexer, loans, observability });
 
-  setInterval(() => { indexer.indexOnce().catch((e) => app.log.error(e)); }, 2500).unref();
+  indexer.startPolling(config.indexerPollIntervalMs);
+  app.addHook('onClose', () => { indexer.stopPolling(); });
 
   await app.listen({ host: '0.0.0.0', port: config.port });
   app.log.info(`Credify API listening on ${config.port}`);

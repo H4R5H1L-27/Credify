@@ -66,10 +66,16 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 
 export type HealthResponse = {
   ok: boolean;
+  status?: 'ok' | 'degraded' | string;
   network: string;
   chainId: number;
+  connected?: boolean;
   blockNumber: string;
+  latestIndexedBlock?: string;
+  syncLag?: number;
   poolCount: number;
+  indexerRunning?: boolean;
+  timestamp?: string;
   demoMode: boolean;
 };
 
@@ -103,7 +109,7 @@ export type CreateLoanResponse = {
 
 export const api = {
   // System Health
-  getHealth: () => request<HealthResponse>('/health'),
+  getHealth: () => request<HealthResponse>(`${API_BASE}/health`),
 
   // Principals
   getPrincipals: () => request<DemoPrincipal[]>(`${API_BASE}/demo/principals`),

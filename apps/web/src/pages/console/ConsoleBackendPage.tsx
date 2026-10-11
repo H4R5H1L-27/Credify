@@ -13,6 +13,9 @@ export const ConsoleBackendPage: React.FC = () => {
   const resetDemo = useResetDemo();
 
   const currentBlock = health?.blockNumber ? Number(health.blockNumber) : 0;
+  const latestIndexedBlock = health?.latestIndexedBlock ? Number(health.latestIndexedBlock) : currentBlock;
+  const syncLag = health?.syncLag ?? 0;
+  const isIndexerRunning = Boolean(health?.indexerRunning ?? health?.ok);
 
   const handleResetIndexer = async () => {
     await resetDemo.mutateAsync();
@@ -78,10 +81,12 @@ export const ConsoleBackendPage: React.FC = () => {
           name="EVM Log Polling Worker"
           type="indexer"
           endpoint="lib/indexer.ts"
-          status={health?.ok ? 'SYNCED' : 'OFFLINE'}
-          statusLabel={health?.ok ? 'WORKER ACTIVE' : 'STOPPED'}
+          status={health?.ok && syncLag <= 2 ? 'SYNCED' : health?.ok ? 'ACTIVE' : 'OFFLINE'}
+          statusLabel={isIndexerRunning ? (syncLag === 0 ? 'SYNCED (0 lag)' : `ACTIVE (${syncLag} lag)`) : 'STOPPED'}
           metrics={[
-            { label: 'Indexed Head', value: `#${currentBlock}` },
+            { label: 'EVM Head', value: `#${currentBlock}` },
+            { label: 'Indexed Block', value: `#${latestIndexedBlock}` },
+            { label: 'Sync Lag', value: `${syncLag} blocks` },
             { label: 'Indexed Pools', value: health?.poolCount ?? 0 },
           ]}
         />
@@ -105,7 +110,7 @@ export const ConsoleBackendPage: React.FC = () => {
         subtitle="Internal metrics captured by health inspection endpoint."
         badge={
           <span className="font-mono text-xs px-2.5 py-0.5 rounded-md bg-yellow-100 border border-yellow-300 text-yellow-950 font-bold">
-            GET /health
+            GET /api/v1/health
           </span>
         }
       >
@@ -120,7 +125,7 @@ export const ConsoleBackendPage: React.FC = () => {
           <div className="p-4 flex items-center justify-between">
             <span className="text-slate-700 font-sans font-semibold">Node Connection:</span>
             <span className={`px-2.5 py-0.5 rounded-md font-bold text-xs ${health?.ok ? 'text-emerald-900 bg-emerald-50 border border-emerald-300' : 'text-rose-900 bg-rose-50 border border-rose-300'}`}>
-              {health?.ok ? 'CONNECTED (127.0.0.1:8545)' : 'DISCONNECTED'}
+              {health?.connected ? 'CONNECTED (JSON-RPC)' : health?.ok ? 'CONNECTED' : 'DISCONNECTED'}
             </span>
           </div>
 
@@ -135,9 +140,21 @@ export const ConsoleBackendPage: React.FC = () => {
           </div>
 
           <div className="p-4 flex items-center justify-between">
+            <span className="text-slate-700 font-sans font-semibold">Last Indexed Block:</span>
+            <span className="text-slate-950 font-bold font-mono text-sm">#{latestIndexedBlock}</span>
+          </div>
+
+          <div className="p-4 flex items-center justify-between">
+            <span className="text-slate-700 font-sans font-semibold">Indexer Sync Lag:</span>
+            <span className={`px-2.5 py-0.5 rounded-md font-bold text-xs ${syncLag === 0 ? 'text-emerald-900 bg-emerald-50 border border-emerald-300' : 'text-amber-900 bg-yellow-100 border border-yellow-300'}`}>
+              {syncLag} block{syncLag === 1 ? '' : 's'} behind
+            </span>
+          </div>
+
+          <div className="p-4 flex items-center justify-between">
             <span className="text-slate-700 font-sans font-semibold">Indexer Polling State:</span>
-            <span className={`px-2.5 py-0.5 rounded-md font-bold text-xs ${health?.ok ? 'text-emerald-900 bg-emerald-50 border border-emerald-300' : 'text-amber-900 bg-yellow-100 border border-yellow-300'}`}>
-              {health?.ok ? 'RUNNING (Synchronized with node)' : 'STOPPED'}
+            <span className={`px-2.5 py-0.5 rounded-md font-bold text-xs ${isIndexerRunning ? 'text-emerald-900 bg-emerald-50 border border-emerald-300' : 'text-rose-900 bg-rose-50 border border-rose-300'}`}>
+              {isIndexerRunning ? 'RUNNING (Continuous polling loop)' : 'STOPPED'}
             </span>
           </div>
         </div>

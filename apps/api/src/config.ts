@@ -15,7 +15,9 @@ const envSchema = z.object({
   GEMINI_API_KEY: z.string().optional().default(''),
   GEMINI_MODEL: z.string().optional().default('gemini-1.5-flash'),
   VERIFIER_SECRET: z.string().default('credify-verifier-secret-test'),
-  AUTH_SECRET: z.string().optional()
+  AUTH_SECRET: z.string().optional(),
+  INDEXER_POLL_INTERVAL_MS: z.coerce.number().int().positive().default(2000),
+  INDEXER_REORG_DEPTH: z.coerce.number().int().nonnegative().default(3)
 });
 
 const parsedEnvResult = envSchema.safeParse(process.env);
@@ -66,7 +68,9 @@ export const config = {
   termsParser: env.TERMS_PARSER,
   geminiApiKey: env.GEMINI_API_KEY,
   geminiModel: env.GEMINI_MODEL,
-  verifierSecret: env.AUTH_SECRET || env.VERIFIER_SECRET
+  verifierSecret: env.AUTH_SECRET || env.VERIFIER_SECRET,
+  indexerPollIntervalMs: env.INDEXER_POLL_INTERVAL_MS,
+  indexerReorgDepth: env.INDEXER_REORG_DEPTH
 };
 
 export function validateEnvironment(rawEnv: Record<string, unknown>) {
