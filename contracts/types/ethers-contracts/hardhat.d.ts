@@ -10,13 +10,13 @@ import * as Contracts from "./index.js";
 
 declare module "@nomicfoundation/hardhat-ethers/types" {
   interface HardhatEthersHelpers extends HardhatEthersHelpersBase {
-  getContractFactory(name: 'KYCRegistry', signerOrOptions?: ethers.Signer | FactoryOptions): Promise<Contracts.KYCRegistry__factory>
-getContractFactory(name: 'IKYCRegistry', signerOrOptions?: ethers.Signer | FactoryOptions): Promise<Contracts.IKYCRegistry__factory>
-getContractFactory(name: 'IReputationRegistryForFactory', signerOrOptions?: ethers.Signer | FactoryOptions): Promise<Contracts.IReputationRegistryForFactory__factory>
-getContractFactory(name: 'LoanFactory', signerOrOptions?: ethers.Signer | FactoryOptions): Promise<Contracts.LoanFactory__factory>
+  getContractFactory(name: 'IKYCRegistry', signerOrOptions?: ethers.Signer | FactoryOptions): Promise<Contracts.IKYCRegistry__factory>
+getContractFactory(name: 'KYCRegistry', signerOrOptions?: ethers.Signer | FactoryOptions): Promise<Contracts.KYCRegistry__factory>
 getContractFactory(name: 'IReputationRegistry', signerOrOptions?: ethers.Signer | FactoryOptions): Promise<Contracts.IReputationRegistry__factory>
 getContractFactory(name: 'LoanPool', signerOrOptions?: ethers.Signer | FactoryOptions): Promise<Contracts.LoanPool__factory>
 getContractFactory(name: 'ReputationRegistry', signerOrOptions?: ethers.Signer | FactoryOptions): Promise<Contracts.ReputationRegistry__factory>
+getContractFactory(name: 'IReputationRegistryForFactory', signerOrOptions?: ethers.Signer | FactoryOptions): Promise<Contracts.IReputationRegistryForFactory__factory>
+getContractFactory(name: 'LoanFactory', signerOrOptions?: ethers.Signer | FactoryOptions): Promise<Contracts.LoanFactory__factory>
 getContractFactory(name: 'IReputationRegistryForClone', signerOrOptions?: ethers.Signer | FactoryOptions): Promise<Contracts.IReputationRegistryForClone__factory>
 getContractFactory(name: 'LoanPoolCloneable', signerOrOptions?: ethers.Signer | FactoryOptions): Promise<Contracts.LoanPoolCloneable__factory>
 getContractFactory(name: 'IReputationRegistryForCloneFactory', signerOrOptions?: ethers.Signer | FactoryOptions): Promise<Contracts.IReputationRegistryForCloneFactory__factory>
@@ -25,16 +25,16 @@ getContractFactory(name: 'ILoanPoolLender', signerOrOptions?: ethers.Signer | Fa
 getContractFactory(name: 'ILoanPoolSpend', signerOrOptions?: ethers.Signer | FactoryOptions): Promise<Contracts.ILoanPoolSpend__factory>
 getContractFactory(name: 'MaliciousLender', signerOrOptions?: ethers.Signer | FactoryOptions): Promise<Contracts.MaliciousLender__factory>
 getContractFactory(name: 'MaliciousMerchant', signerOrOptions?: ethers.Signer | FactoryOptions): Promise<Contracts.MaliciousMerchant__factory>
-getContractFactory(name: 'WeightedReputationRegistry', signerOrOptions?: ethers.Signer | FactoryOptions): Promise<Contracts.WeightedReputationRegistry__factory>
 getContractFactory(name: 'MockUSDC', signerOrOptions?: ethers.Signer | FactoryOptions): Promise<Contracts.MockUSDC__factory>
+getContractFactory(name: 'WeightedReputationRegistry', signerOrOptions?: ethers.Signer | FactoryOptions): Promise<Contracts.WeightedReputationRegistry__factory>
 
-  getContractAt(name: 'KYCRegistry', address: string | ethers.Addressable, signer?: ethers.Signer): Promise<Contracts.KYCRegistry>
-getContractAt(name: 'IKYCRegistry', address: string | ethers.Addressable, signer?: ethers.Signer): Promise<Contracts.IKYCRegistry>
-getContractAt(name: 'IReputationRegistryForFactory', address: string | ethers.Addressable, signer?: ethers.Signer): Promise<Contracts.IReputationRegistryForFactory>
-getContractAt(name: 'LoanFactory', address: string | ethers.Addressable, signer?: ethers.Signer): Promise<Contracts.LoanFactory>
+  getContractAt(name: 'IKYCRegistry', address: string | ethers.Addressable, signer?: ethers.Signer): Promise<Contracts.IKYCRegistry>
+getContractAt(name: 'KYCRegistry', address: string | ethers.Addressable, signer?: ethers.Signer): Promise<Contracts.KYCRegistry>
 getContractAt(name: 'IReputationRegistry', address: string | ethers.Addressable, signer?: ethers.Signer): Promise<Contracts.IReputationRegistry>
 getContractAt(name: 'LoanPool', address: string | ethers.Addressable, signer?: ethers.Signer): Promise<Contracts.LoanPool>
 getContractAt(name: 'ReputationRegistry', address: string | ethers.Addressable, signer?: ethers.Signer): Promise<Contracts.ReputationRegistry>
+getContractAt(name: 'IReputationRegistryForFactory', address: string | ethers.Addressable, signer?: ethers.Signer): Promise<Contracts.IReputationRegistryForFactory>
+getContractAt(name: 'LoanFactory', address: string | ethers.Addressable, signer?: ethers.Signer): Promise<Contracts.LoanFactory>
 getContractAt(name: 'IReputationRegistryForClone', address: string | ethers.Addressable, signer?: ethers.Signer): Promise<Contracts.IReputationRegistryForClone>
 getContractAt(name: 'LoanPoolCloneable', address: string | ethers.Addressable, signer?: ethers.Signer): Promise<Contracts.LoanPoolCloneable>
 getContractAt(name: 'IReputationRegistryForCloneFactory', address: string | ethers.Addressable, signer?: ethers.Signer): Promise<Contracts.IReputationRegistryForCloneFactory>
@@ -43,16 +43,16 @@ getContractAt(name: 'ILoanPoolLender', address: string | ethers.Addressable, sig
 getContractAt(name: 'ILoanPoolSpend', address: string | ethers.Addressable, signer?: ethers.Signer): Promise<Contracts.ILoanPoolSpend>
 getContractAt(name: 'MaliciousLender', address: string | ethers.Addressable, signer?: ethers.Signer): Promise<Contracts.MaliciousLender>
 getContractAt(name: 'MaliciousMerchant', address: string | ethers.Addressable, signer?: ethers.Signer): Promise<Contracts.MaliciousMerchant>
-getContractAt(name: 'WeightedReputationRegistry', address: string | ethers.Addressable, signer?: ethers.Signer): Promise<Contracts.WeightedReputationRegistry>
 getContractAt(name: 'MockUSDC', address: string | ethers.Addressable, signer?: ethers.Signer): Promise<Contracts.MockUSDC>
+getContractAt(name: 'WeightedReputationRegistry', address: string | ethers.Addressable, signer?: ethers.Signer): Promise<Contracts.WeightedReputationRegistry>
 
-  deployContract(name: 'KYCRegistry', signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.KYCRegistry>
-deployContract(name: 'IKYCRegistry', signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.IKYCRegistry>
-deployContract(name: 'IReputationRegistryForFactory', signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.IReputationRegistryForFactory>
-deployContract(name: 'LoanFactory', signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.LoanFactory>
+  deployContract(name: 'IKYCRegistry', signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.IKYCRegistry>
+deployContract(name: 'KYCRegistry', signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.KYCRegistry>
 deployContract(name: 'IReputationRegistry', signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.IReputationRegistry>
 deployContract(name: 'LoanPool', signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.LoanPool>
 deployContract(name: 'ReputationRegistry', signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.ReputationRegistry>
+deployContract(name: 'IReputationRegistryForFactory', signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.IReputationRegistryForFactory>
+deployContract(name: 'LoanFactory', signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.LoanFactory>
 deployContract(name: 'IReputationRegistryForClone', signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.IReputationRegistryForClone>
 deployContract(name: 'LoanPoolCloneable', signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.LoanPoolCloneable>
 deployContract(name: 'IReputationRegistryForCloneFactory', signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.IReputationRegistryForCloneFactory>
@@ -61,16 +61,16 @@ deployContract(name: 'ILoanPoolLender', signerOrOptions?: ethers.Signer | Deploy
 deployContract(name: 'ILoanPoolSpend', signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.ILoanPoolSpend>
 deployContract(name: 'MaliciousLender', signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.MaliciousLender>
 deployContract(name: 'MaliciousMerchant', signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.MaliciousMerchant>
-deployContract(name: 'WeightedReputationRegistry', signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.WeightedReputationRegistry>
 deployContract(name: 'MockUSDC', signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.MockUSDC>
+deployContract(name: 'WeightedReputationRegistry', signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.WeightedReputationRegistry>
 
-  deployContract(name: 'KYCRegistry', args: any[], signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.KYCRegistry>
-deployContract(name: 'IKYCRegistry', args: any[], signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.IKYCRegistry>
-deployContract(name: 'IReputationRegistryForFactory', args: any[], signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.IReputationRegistryForFactory>
-deployContract(name: 'LoanFactory', args: any[], signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.LoanFactory>
+  deployContract(name: 'IKYCRegistry', args: any[], signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.IKYCRegistry>
+deployContract(name: 'KYCRegistry', args: any[], signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.KYCRegistry>
 deployContract(name: 'IReputationRegistry', args: any[], signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.IReputationRegistry>
 deployContract(name: 'LoanPool', args: any[], signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.LoanPool>
 deployContract(name: 'ReputationRegistry', args: any[], signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.ReputationRegistry>
+deployContract(name: 'IReputationRegistryForFactory', args: any[], signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.IReputationRegistryForFactory>
+deployContract(name: 'LoanFactory', args: any[], signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.LoanFactory>
 deployContract(name: 'IReputationRegistryForClone', args: any[], signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.IReputationRegistryForClone>
 deployContract(name: 'LoanPoolCloneable', args: any[], signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.LoanPoolCloneable>
 deployContract(name: 'IReputationRegistryForCloneFactory', args: any[], signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.IReputationRegistryForCloneFactory>
@@ -79,8 +79,8 @@ deployContract(name: 'ILoanPoolLender', args: any[], signerOrOptions?: ethers.Si
 deployContract(name: 'ILoanPoolSpend', args: any[], signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.ILoanPoolSpend>
 deployContract(name: 'MaliciousLender', args: any[], signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.MaliciousLender>
 deployContract(name: 'MaliciousMerchant', args: any[], signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.MaliciousMerchant>
-deployContract(name: 'WeightedReputationRegistry', args: any[], signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.WeightedReputationRegistry>
 deployContract(name: 'MockUSDC', args: any[], signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.MockUSDC>
+deployContract(name: 'WeightedReputationRegistry', args: any[], signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.WeightedReputationRegistry>
 
     // default types
     getContractFactory(

@@ -10,6 +10,7 @@ typechain-types/
 ignition/deployments/
 *.log
 *.zip
+*.rar
 *.tsbuildinfo
 .DS_Store
 Thumbs.db
