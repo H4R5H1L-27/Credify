@@ -21,6 +21,8 @@
     "dev:web": "npm run dev -w apps/web",
     "chain:node": "npm run node -w contracts",
     "chain:deploy": "npm run deploy:local -w contracts",
+    "chain:deploy:sepolia": "npm run deploy:sepolia -w contracts",
+    "chain:verify:sepolia": "npm run verify:sepolia -w contracts",
     "demo:reset": "npm run demo:reset -w apps/api"
   },
   "engines": {

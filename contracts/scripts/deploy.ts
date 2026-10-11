@@ -61,6 +61,23 @@ async function main() {
   await factory.waitForDeployment();
   await (await reputation.transferOwnership(await factory.getAddress())).wait();
 
+  // Grant VERIFIER_ROLE to dedicated verifier wallet if provided
+  const verifierWallet = process.env.VERIFIER_ADDRESS || deployer.address;
+  if (verifierWallet.toLowerCase() !== deployer.address.toLowerCase()) {
+    const verifierRole = await kyc.VERIFIER_ROLE();
+    await (await kyc.grantRole(verifierRole, verifierWallet)).wait();
+    console.log(`Granted VERIFIER_ROLE to ${verifierWallet}`);
+  }
+
+  // Move admin and factory ownership to intended admin wallet if specified
+  const adminWallet = process.env.ADMIN_ADDRESS;
+  if (adminWallet && adminWallet.toLowerCase() !== deployer.address.toLowerCase()) {
+    const adminRole = await kyc.DEFAULT_ADMIN_ROLE();
+    await (await kyc.grantRole(adminRole, adminWallet)).wait();
+    await (await factory.transferOwnership(adminWallet)).wait();
+    console.log(`Transferred Admin & Factory Ownership to ${adminWallet}`);
+  }
+
   const ROLE = { NONE: 0, BORROWER: 1, LENDER: 2, SUPPLIER: 3 };
   const expiresAt = Math.floor(Date.now() / 1000) + 365 * 24 * 60 * 60;
 
@@ -72,14 +89,15 @@ async function main() {
     await (await kyc.setVerified(s.address, ROLE.SUPPLIER, true, expiresAt, ethers.id(`credify-demo:supplier-${i + 1}`))).wait();
   }
 
+  // Target amounts & durations: on Sepolia use presentation-friendly 10-minute duration and 5-minute funding window
   const target = isSepolia ? ethers.parseEther('0.1') : ethers.parseEther('10');
-  const duration = 60 * 60 * 24 * 14;
-  const fundingDuration = 60 * 60 * 24 * 7;
+  const duration = isSepolia ? 600 : 60 * 60 * 24 * 14; // 10 min on Sepolia
+  const fundingDuration = isSepolia ? 300 : 60 * 60 * 24 * 7; // 5 min on Sepolia
   const aprBps = 800;
   const maxSpend = isSepolia ? ethers.parseEther('0.08') : ethers.parseEther('8');
   const quorum = 5001;
-  const gracePeriod = 60 * 60 * 24 * 3;
-  const agreementHash = ethers.id(`Credify Demo Agreement: ${isSepolia ? '0.1' : '10'} ETH, 14 days, 8% APR`);
+  const gracePeriod = isSepolia ? 300 : 60 * 60 * 24 * 3; // 5 min grace on Sepolia
+  const agreementHash = ethers.id(`Credify Demo Agreement: ${isSepolia ? '0.1' : '10'} ETH, ${isSepolia ? '10 min' : '14 days'}, 8% APR`);
   const merchantCaps = isSepolia
     ? [ethers.parseEther('0.05'), ethers.parseEther('0.03')]
     : [ethers.parseEther('5'), ethers.parseEther('3')];

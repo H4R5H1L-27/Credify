@@ -370,6 +370,57 @@ Work Package 9 requires:
 ### Status
 Accepted and verified in WP9.
 
+---
+
+## ADR-010: Sepolia Testnet Deployment Architecture, Contract Verification Protocol, and Live Demo Rehearsal Strategy
+
+### Context
+Work Package 10 governs the deployment and verification of the Credify credit protocol on the public Ethereum Sepolia testnet (`chainId: 11155111`), ensuring complete readiness for live course evaluation and academic inspection:
+1. Strict segregation of private keys and API credentials from the git codebase.
+2. Deployment of all protocol smart contracts (`KYCRegistry`, `ReputationRegistry`, `LoanFactory`, `LoanPool`) with proper on-chain access control grants (`VERIFIER_ROLE`, `DEFAULT_ADMIN_ROLE`, factory ownership).
+3. Contract source code verification on Sepolia Etherscan with publicly visible Solidity source code, ABIs, and constructor arguments.
+4. Deployment runbook detailing cloud backend provisioning (Fastify on Railway/Render), web hosting (Vercel/Netlify), and indexer polling configuration (`4000ms`).
+5. Rehearsal script with deliberate security guard failure demonstrations and a multi-tier fallback matrix.
+
+### Decision
+1. **Access Control & Role Handover Protocol (`deploy.ts`)**:
+   - `KYCRegistry` is instantiated with the deployer account as initial administrator.
+   - `ReputationRegistry` is deployed and its ownership is transferred exclusively to `LoanFactory` via `reputation.transferOwnership(factory)`.
+   - If a dedicated `VERIFIER_ADDRESS` is provided, `VERIFIER_ROLE` is granted to that address, separating identity review powers from the deployer.
+   - If an `ADMIN_ADDRESS` is specified, `DEFAULT_ADMIN_ROLE` on `KYCRegistry` and `Ownable` ownership on `LoanFactory` are transferred to it.
+2. **Sepolia Deployment Scripting & Manifest (`deploy:sepolia`)**:
+   - Calibrates initial deployment parameters for Sepolia testnet:
+     - Target: `0.1 ETH` (affordable with standard Sepolia faucet allocations).
+     - Duration: `600 seconds` (10 minutes) to permit live demonstration of maturation.
+     - Funding Window: `300 seconds` (5 minutes) to permit live demonstration of funding expiry.
+     - Spending Cap: `0.08 ETH` with per-merchant caps (`0.05 ETH`, `0.03 ETH`).
+   - Automatically writes the deployment manifest to `contracts/deployments/sepolia.json` capturing contract addresses, accounts, and block height.
+3. **Automated Etherscan Verification Pipeline (`verify:sepolia` & `verify.ts`)**:
+   - Created `contracts/scripts/verify.ts` reading `deployments/sepolia.json`.
+   - Formulates exact constructor argument encodings for all deployed contracts.
+   - Generates clickable direct Sepolia Etherscan verification URLs and CLI verification commands.
+4. **Comprehensive Runbook & Live Script (`docs/SEPOLIA_DEPLOYMENT.md`)**:
+   - Created `docs/SEPOLIA_DEPLOYMENT.md` with 9 complete operational phases:
+     - Phase 1: Accounts, Faucets & RPC configuration.
+     - Phase 2: Pre-flight quality gates (all 33 contract tests, 26 API tests, typecheck).
+     - Phase 3: Smart contract deployment (`npm run chain:deploy:sepolia`).
+     - Phase 4: Etherscan source verification (`npm run chain:verify:sepolia`).
+     - Phase 5: Backend API deployment (Fastify on Railway/Render with `NETWORK=sepolia`).
+     - Phase 6: Frontend web deployment (Vercel with `VITE_NETWORK=sepolia`).
+     - Phase 7: Live 8-minute presentation walkthrough script with step-by-step cues.
+     - Phase 8: Deliberate security reverts (unlisted supplier `MerchantNotApproved` revert, and vendor cap `MerchantSpendCapExceeded` revert).
+     - Phase 9: Multi-tiered fallback matrix (Local Hardhat chain 31337 hot standby, and offline screen recordings).
+5. **Automated Verification Test Suite (`sepolia-runbook.test.ts`)**:
+   - Added automated tests in `apps/api/src/sepolia-runbook.test.ts` verifying:
+     - `deploy.ts` Sepolia handling and role transfers.
+     - `verify.ts` and `sepolia.example.json` schema consistency.
+     - NPM scripts in root and contracts `package.json`.
+     - Completeness of `SEPOLIA_DEPLOYMENT.md`.
+
+### Status
+Accepted and verified in WP10.
+
+
 
 
 
