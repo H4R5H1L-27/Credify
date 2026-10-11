@@ -25,6 +25,7 @@ import {
 import { WalletControl } from '../wallet/WalletControl';
 import { NetworkStatus } from './NetworkStatus';
 import { Breadcrumbs } from './Breadcrumbs';
+import { GuidedModeSwitcher } from './GuidedModeSwitcher';
 
 export const AppShell: React.FC = () => {
   const { role, isBorrower, isLender, isMerchant, isOperator, isUnregistered, isConnected, address } = useIdentity();
@@ -162,8 +163,9 @@ export const AppShell: React.FC = () => {
           </div>
         </div>
 
-        {/* Right: Network Status Indicator & Wallet Identity */}
-        <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
+        {/* Right: Guided Mode Switcher, Network Status Indicator & Wallet Identity */}
+        <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
+          <GuidedModeSwitcher />
           <NetworkStatus />
           <WalletControl />
         </div>

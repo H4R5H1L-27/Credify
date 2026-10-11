@@ -318,6 +318,59 @@ Key requirements:
 ### Status
 Accepted and verified in WP7.
 
+---
+
+## ADR-009: Guided Presenter Mode, Multi-Persona Switching, Server-Signed Execution Fallback, and Presentation Seeder Calibrations
+
+### Context
+Demonstrating complete end-to-end decentralized credit lifecycles to an academic audience or course instructor involves coordinating four distinct actor roles: Borrowers, Multiple Syndicate Lenders, Allowlisted Suppliers, and Protocol Verifiers. In live presentation environments, repeated MetaMask popup approvals, manual account switching inside browser extensions, network latency, or presenting from environments without Web3 wallet extensions installed can introduce friction and disrupt presentation flow.
+
+Work Package 9 requires:
+1. A Guided Presenter Mode allowing a presenter to execute the complete borrower, lender, and supplier lifecycle without MetaMask popups or wallet configuration.
+2. Toggleable via UI switcher or enabled when `DEMO_MODE=true`. Direct MetaMask wallet mode remains the default and must work end-to-end.
+3. Client-side persona switching between 7 verified protocol demo accounts (`DEMO_ACCOUNTS`).
+4. Server-signed execution routing in `useContractAction` using existing backend principal endpoints.
+5. A subtle "Guided Demo Mode" indicator in the header.
+6. Calibrating the Scenario Seeder with presentation-safe short durations.
+
+### Decision
+1. **Guided Mode Architecture & Default Wallet Mode Preservation**:
+   - `IdentityContext.tsx` and `WalletContext.tsx` maintain dual-mode operation:
+     - **Wallet Mode (Default)**: Uses Wagmi injected connectors and prompts MetaMask signatures for every transaction as established in WP2-WP6.
+     - **Guided Demo Mode**: When toggled on via UI or `VITE_DEMO_MODE=true`, routes transactions to verified server-side demo accounts without popup friction.
+   - Preserves state across browser sessions via `localStorage` keys (`credify_guided_mode` and `credify_active_persona`).
+2. **Instant Persona Switching (`IdentityContext.tsx` & `GuidedModeSwitcher.tsx`)**:
+   - Integrated full persona switcher supporting all 7 verified demo presets:
+     - Borrower: Aarav Menon (`borrower`)
+     - Lead Syndicate Lender: Meera Capital (`lender-alpha`)
+     - Syndicate Participant Lender: Northstar Labs (`lender-beta`)
+     - Syndicate Participant Lender: Blue Oak Partners (`lender-gamma`)
+     - Allowlisted Supplier: BuildRight Supplies (`merchant-a`)
+     - Allowlisted Supplier: StudioGrid Equipment (`merchant-b`)
+     - Protocol Operator / KYC Verifier: Credify Operator (`operator`)
+   - Switching personas automatically updates effective wallet addresses, active roles, navigation links, flushes query caches, and navigates to the persona's designated dashboard.
+3. **Server-Signed Transaction Lifecycle Runner (`useContractAction.ts`)**:
+   - Implemented `runGuidedLifecycle` in `useContractAction.ts`. When `isGuidedMode` is active:
+     - Translates all 8 contract mutation actions (`createLoan`, `contribute`, `spend`, `repay`, `claim`, `cancelUnfunded`, `claimRefund`, `voteDefault`) into server-signed API calls.
+     - Maintains the authentic 5-step lifecycle animation (`preparing` &rarr; `awaiting_wallet` &rarr; `submitted` &rarr; `confirming` &rarr; `confirmed`) with real transaction hashes and block numbers mined on-chain.
+     - Clearly designates execution mode: "Executed via Guided Presenter Mode (Server-Signed Account: ...)", providing complete visual confirmation without extension popups.
+4. **Header Indicator & Persona Control**:
+   - Created `GuidedModeSwitcher.tsx` mounted in the `AppShell.tsx` header alongside network and wallet status.
+   - Renders a subtle indicator with pulsing accent dot and quick-access persona selector dropdown.
+   - Provides an instant toggle between Guided Demo Mode and MetaMask Wallet Mode.
+5. **Presentation-Safe Short Scenario Seeder Durations (`scenario-seeder.ts`)**:
+   - Calibrated `ScenarioSeeder.seedAll()` durations to short intervals meeting contract constraints (`durationSeconds >= 300`, `fundingDurationSeconds >= 300`):
+     - Completed Agreement: 600s (10 min) duration, 300s (5 min) funding window.
+     - Cancelled Agreement: 600s (10 min) duration, 300s (5 min) funding window (fast-forwarded 360s on local nodes).
+     - Defaulted Agreement: 300s (5 min) duration, 300s (5 min) funding window, 60s grace period (fast-forwarded 420s on local nodes).
+     - Active Agreement: 1800s (30 min) duration, 600s (10 min) funding window.
+     - In-Progress Funding Agreement: 1800s (30 min) duration, 900s (15 min) funding window.
+   - Ensures seeded scenarios are presentation-friendly, dynamic, and safe to execute prior to live demonstrations.
+
+### Status
+Accepted and verified in WP9.
+
+
 
 
 

@@ -94,7 +94,7 @@ export class ScenarioSeeder {
 
     // 2. Scenario 1: Completed Full Lifecycle Agreement (Repaid + Claimed + Reputation +8)
     const target1 = 10_000_000_000_000_000_000n; // 10 ETH
-    const duration1 = 14 * 86400; // 14 days
+    const duration1 = 600; // 10 minutes (short presentation duration)
     const apr1 = 800; // 8% APR
     const maxSpend1 = 8_000_000_000_000_000_000n; // 8 ETH max spend
     const quorum1 = 5001;
@@ -103,11 +103,11 @@ export class ScenarioSeeder {
       borrower: borrowerAddr,
       targetWei: target1,
       durationSeconds: duration1,
-      fundingDurationSeconds: 7 * 86400,
+      fundingDurationSeconds: 300, // 5 min funding window
       aprBps: apr1,
       maxSpendWei: maxSpend1,
       defaultQuorumBps: quorum1,
-      gracePeriodSeconds: 3 * 86400,
+      gracePeriodSeconds: 300,
       agreementHash: '0x1111111111111111111111111111111111111111111111111111111111111111',
       merchants,
       merchantCapsWei: [5_000_000_000_000_000_000n, 3_000_000_000_000_000_000n]
@@ -145,17 +145,17 @@ export class ScenarioSeeder {
     let pool5: Address | undefined;
 
     try {
-      // 4 ETH target, short 1-day funding window
+      // 4 ETH target, short 5-minute funding window
       const target4 = 4_000_000_000_000_000_000n;
       await this.chain.createLoan('borrower', {
         borrower: borrowerAddr,
         targetWei: target4,
-        durationSeconds: 14 * 86400,
-        fundingDurationSeconds: 1 * 86400, // 1 day funding window
+        durationSeconds: 600, // 10 min
+        fundingDurationSeconds: 300, // 5 min funding window
         aprBps: 800,
         maxSpendWei: 3_000_000_000_000_000_000n,
         defaultQuorumBps: 5001,
-        gracePeriodSeconds: 3 * 86400,
+        gracePeriodSeconds: 300,
         agreementHash: '0x4444444444444444444444444444444444444444444444444444444444444444',
         merchants,
         merchantCapsWei: [2_000_000_000_000_000_000n, 1_000_000_000_000_000_000n]
@@ -167,24 +167,24 @@ export class ScenarioSeeder {
       // Lender Beta deposits 1.5 ETH into this facility
       await this.chain.contribute('lender-beta', pool4, 1_500_000_000_000_000_000n);
 
-      // Fast forward past 1-day funding deadline
-      await this.chain.increaseTime(2 * 86400);
+      // Fast forward past 5-minute funding deadline (360 seconds)
+      await this.chain.increaseTime(360);
 
       // Anyone triggers cancelUnfunded -> transitions to CANCELLED
       await this.chain.cancelUnfunded('operator', pool4);
 
       // 4. Scenario 3: Defaulted Agreement (-20 Reputation Penalty, Unspent Claimable)
-      // 6 ETH target, short 3-day tenure + 1-day grace period
+      // 6 ETH target, short 5-minute tenure + 1-minute grace period
       const target5 = 6_000_000_000_000_000_000n;
       await this.chain.createLoan('borrower', {
         borrower: borrowerAddr,
         targetWei: target5,
-        durationSeconds: 3 * 86400, // 3 day duration
-        fundingDurationSeconds: 2 * 86400,
+        durationSeconds: 300, // 5 min duration
+        fundingDurationSeconds: 300, // 5 min funding window
         aprBps: 900,
         maxSpendWei: 5_000_000_000_000_000_000n,
         defaultQuorumBps: 5001,
-        gracePeriodSeconds: 1 * 86400, // 1 day grace
+        gracePeriodSeconds: 60, // 1 min grace
         agreementHash: '0x5555555555555555555555555555555555555555555555555555555555555555',
         merchants,
         merchantCapsWei: [3_500_000_000_000_000_000n, 1_500_000_000_000_000_000n]
@@ -206,8 +206,8 @@ export class ScenarioSeeder {
         'Advanced Specialized Sensor Array'
       );
 
-      // Fast forward past maturity + grace period (3d + 1d + 1d = 5 days)
-      await this.chain.increaseTime(5 * 86400);
+      // Fast forward past maturity + grace period (300s + 60s + 60s = 420s)
+      await this.chain.increaseTime(420);
 
       // Lender Alpha (66.7% weight > 50.01% quorum) votes default -> transitions to DEFAULTED
       await this.chain.voteDefault('lender-alpha', pool5);
@@ -217,7 +217,7 @@ export class ScenarioSeeder {
 
     // 5. Scenario 4: Active Agreement with In-Progress Spending
     const target2 = 5_000_000_000_000_000_000n; // 5 ETH
-    const duration2 = 30 * 86400; // 30 days
+    const duration2 = 1800; // 30 minutes
     const apr2 = 1000; // 10% APR
     const maxSpend2 = 4_000_000_000_000_000_000n; // 4 ETH max spend
 
@@ -225,11 +225,11 @@ export class ScenarioSeeder {
       borrower: borrowerAddr,
       targetWei: target2,
       durationSeconds: duration2,
-      fundingDurationSeconds: 7 * 86400,
+      fundingDurationSeconds: 600, // 10 min
       aprBps: apr2,
       maxSpendWei: maxSpend2,
       defaultQuorumBps: 5001,
-      gracePeriodSeconds: 3 * 86400,
+      gracePeriodSeconds: 300,
       agreementHash: '0x2222222222222222222222222222222222222222222222222222222222222222',
       merchants,
       merchantCapsWei: [2_500_000_000_000_000_000n, 2_000_000_000_000_000_000n]
@@ -252,7 +252,7 @@ export class ScenarioSeeder {
 
     // 6. Scenario 5: In-Progress Funding Agreement
     const target3 = 8_000_000_000_000_000_000n; // 8 ETH
-    const duration3 = 21 * 86400; // 21 days
+    const duration3 = 1800; // 30 minutes
     const apr3 = 750; // 7.5% APR
     const maxSpend3 = 6_000_000_000_000_000_000n;
 
@@ -260,11 +260,11 @@ export class ScenarioSeeder {
       borrower: borrowerAddr,
       targetWei: target3,
       durationSeconds: duration3,
-      fundingDurationSeconds: 7 * 86400,
+      fundingDurationSeconds: 900, // 15 min funding window
       aprBps: apr3,
       maxSpendWei: maxSpend3,
       defaultQuorumBps: 5001,
-      gracePeriodSeconds: 3 * 86400,
+      gracePeriodSeconds: 300,
       agreementHash: '0x3333333333333333333333333333333333333333333333333333333333333333',
       merchants,
       merchantCapsWei: [3_000_000_000_000_000_000n, 3_000_000_000_000_000_000n]

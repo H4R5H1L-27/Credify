@@ -38,6 +38,8 @@ export const WalletControl: React.FC = () => {
     verificationStatus,
     isVerified,
     isUnregistered,
+    isGuidedMode,
+    setGuidedMode,
   } = useIdentity();
 
   const [isOpen, setIsOpen] = useState(false);
@@ -244,19 +246,49 @@ export const WalletControl: React.FC = () => {
               </div>
             )}
 
-            {/* Disconnect Button */}
-            <div className="pt-1 border-t border-slate-200">
-              <button
-                type="button"
-                onClick={() => {
-                  setIsOpen(false);
-                  disconnectWallet();
-                }}
-                className="w-full flex items-center gap-2 text-[11px] text-rose-600 hover:text-rose-700 py-1 font-bold cursor-pointer transition-colors"
-              >
-                <LogOut className="w-3.5 h-3.5" />
-                <span>Disconnect Wallet</span>
-              </button>
+            {/* Mode Switch & Disconnect Buttons */}
+            <div className="pt-2 border-t border-slate-200 space-y-1.5">
+              {isGuidedMode ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsOpen(false);
+                    setGuidedMode(false);
+                  }}
+                  className="w-full flex items-center justify-between text-[11px] text-slate-700 hover:text-black py-1 font-bold cursor-pointer transition-colors"
+                >
+                  <span className="flex items-center gap-1.5">
+                    <LogOut className="w-3.5 h-3.5 text-slate-500" />
+                    <span>Exit Guided Demo Mode</span>
+                  </span>
+                  <span className="text-[10px] text-slate-400 font-mono">Use MetaMask</span>
+                </button>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsOpen(false);
+                      setGuidedMode(true);
+                    }}
+                    className="w-full flex items-center justify-between text-[11px] text-amber-900 hover:text-amber-950 py-1 font-bold cursor-pointer transition-colors"
+                  >
+                    <span>Switch to Guided Demo Mode</span>
+                    <span className="text-[10px] bg-amber-100 text-amber-900 px-1.5 py-0.2 rounded font-mono">No Popups</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsOpen(false);
+                      disconnectWallet();
+                    }}
+                    className="w-full flex items-center gap-2 text-[11px] text-rose-600 hover:text-rose-700 py-1 font-bold cursor-pointer transition-colors"
+                  >
+                    <LogOut className="w-3.5 h-3.5" />
+                    <span>Disconnect Wallet</span>
+                  </button>
+                </>
+              )}
             </div>
           </div>
         </div>

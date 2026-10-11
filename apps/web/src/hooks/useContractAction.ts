@@ -4,12 +4,14 @@ import { useQueryClient } from '@tanstack/react-query';
 import { type Address, stringToHex, pad, decodeEventLog } from 'viem';
 import { factoryAbi, poolAbi, type TermSheet } from '@credify/shared';
 import { useWallet } from '../context/WalletContext';
+import { useIdentity } from '../context/IdentityContext';
 import { api } from '../lib/api';
 import { queryKeys, useEvaluatorContracts } from './useCredify';
 import type { TxState, TxLifecycleStep, TxErrorCategory } from '../components/ui/TransactionLifecycle';
 
 export function useContractAction() {
   const { isConnected, isCorrectNetwork, address, targetNetworkName, targetChainId } = useWallet();
+  const { isGuidedMode, activePersona, activePersonaId } = useIdentity();
   const queryClient = useQueryClient();
   const { writeContractAsync } = useWriteContract();
   const publicClient = usePublicClient();
@@ -18,7 +20,7 @@ export function useContractAction() {
   const [txState, setTxState] = useState<TxState | null>(null);
   const [isExecuting, setIsExecuting] = useState(false);
 
-  const isMetaMaskMode = Boolean(isConnected && isCorrectNetwork && address);
+  const isMetaMaskMode = !isGuidedMode && Boolean(isConnected && isCorrectNetwork && address);
 
   const resetTxState = () => {
     setTxState(null);
@@ -249,7 +251,75 @@ export function useContractAction() {
     };
   };
 
-  // Reusable 5-step lifecycle runner
+  // Guided Mode lifecycle runner (server-signed presentation without MetaMask)
+  const runGuidedLifecycle = async <T>(
+    operationName: string,
+    action: () => Promise<{ txHash: `0x${string}`; receiptBlock?: string; result?: T }>,
+    poolAddress?: string
+  ): Promise<{ txHash: string; blockNumber?: string; result?: T }> => {
+    setIsExecuting(true);
+    try {
+      setTxState({
+        step: 'preparing',
+        title: `Preparing ${operationName}`,
+        description: `Validating parameters for ${activePersona.displayName}...`,
+        isMetaMask: false,
+      });
+
+      await new Promise((resolve) => setTimeout(resolve, 80));
+
+      setTxState({
+        step: 'awaiting_wallet',
+        title: 'Executing Guided Action',
+        description: `Server-signing transaction via demo key: ${activePersona.displayName}...`,
+        isMetaMask: false,
+      });
+
+      const outcome = await action();
+
+      setTxState({
+        step: 'confirming',
+        title: 'Confirming On-Chain',
+        description: 'Transaction broadcast to network. Mining into next block...',
+        txHash: outcome.txHash,
+        blockNumber: outcome.receiptBlock,
+        isMetaMask: false,
+      });
+
+      await api.reindex().catch(() => {});
+      await invalidateData(poolAddress);
+
+      setTxState({
+        step: 'confirmed',
+        title: `${operationName} Confirmed On-Chain`,
+        description: `Successfully included in block #${outcome.receiptBlock || 'latest'}. Executed via Guided Presenter Mode.`,
+        txHash: outcome.txHash,
+        blockNumber: outcome.receiptBlock,
+        isMetaMask: false,
+      });
+
+      return {
+        txHash: outcome.txHash,
+        blockNumber: outcome.receiptBlock,
+        result: outcome.result,
+      };
+    } catch (err) {
+      const { error, code, category } = classifyError(err);
+      setTxState({
+        step: 'failed',
+        title: `${operationName} Failed`,
+        error,
+        errorCode: code,
+        errorCategory: category,
+        isMetaMask: false,
+      });
+      throw err;
+    } finally {
+      setIsExecuting(false);
+    }
+  };
+
+  // Reusable 5-step lifecycle runner for MetaMask Wallet Mode
   const runLifecycle = async <T>(
     operationName: string,
     action: () => Promise<`0x${string}`>,
@@ -359,6 +429,27 @@ export function useContractAction() {
     naturalLanguageText: string;
     terms: TermSheet;
   }): Promise<{ loanId: string; poolAddress: string; txHash: string }> => {
+    if (isGuidedMode) {
+      const outcome = await runGuidedLifecycle('Loan Deployment', async () => {
+        const res = await api.createLoan({
+          borrowerId: activePersonaId,
+          naturalLanguageAgreement: args.naturalLanguageText,
+          parsedTerms: args.terms,
+        });
+        return {
+          txHash: res.transactionHash as `0x${string}`,
+          receiptBlock: '',
+          result: { poolAddress: res.loanId },
+        };
+      });
+      const identifiedPool = outcome.result?.poolAddress || outcome.txHash;
+      return {
+        loanId: identifiedPool,
+        poolAddress: identifiedPool,
+        txHash: outcome.txHash,
+      };
+    }
+
     const factoryAddress = evaluatorContracts?.contracts?.loanFactory as Address;
     if (!factoryAddress) {
       throw new Error(
@@ -424,6 +515,21 @@ export function useContractAction() {
 
   // 2. Contribute to Pool
   const executeContribute = async (poolAddress: string, amountWei: string) => {
+    if (isGuidedMode) {
+      const outcome = await runGuidedLifecycle(
+        'Syndicate Contribution',
+        async () => {
+          const res = await api.contribute(poolAddress, activePersonaId, amountWei);
+          return {
+            txHash: res.hash as `0x${string}`,
+            receiptBlock: res.receiptBlock,
+          };
+        },
+        poolAddress
+      );
+      return { hash: outcome.txHash, receiptBlock: outcome.blockNumber || '' };
+    }
+
     const outcome = await runLifecycle(
       'Syndicate Contribution',
       async () => {
@@ -450,6 +556,21 @@ export function useContractAction() {
     amountWei: string,
     category: string
   ) => {
+    if (isGuidedMode) {
+      const outcome = await runGuidedLifecycle(
+        'Policy-Restricted Spend',
+        async () => {
+          const res = await api.spend(poolAddress, activePersonaId, merchantAddress, amountWei, category);
+          return {
+            txHash: res.hash as `0x${string}`,
+            receiptBlock: res.receiptBlock,
+          };
+        },
+        poolAddress
+      );
+      return { hash: outcome.txHash, receiptBlock: outcome.blockNumber || '' };
+    }
+
     const outcome = await runLifecycle(
       'Policy-Restricted Spend',
       async () => {
@@ -472,6 +593,21 @@ export function useContractAction() {
 
   // 4. Repay
   const executeRepay = async (poolAddress: string, amountWei: string) => {
+    if (isGuidedMode) {
+      const outcome = await runGuidedLifecycle(
+        'Loan Repayment',
+        async () => {
+          const res = await api.repay(poolAddress, activePersonaId, amountWei);
+          return {
+            txHash: res.hash as `0x${string}`,
+            receiptBlock: res.receiptBlock,
+          };
+        },
+        poolAddress
+      );
+      return { hash: outcome.txHash, receiptBlock: outcome.blockNumber || '' };
+    }
+
     const outcome = await runLifecycle(
       'Loan Repayment',
       async () => {
@@ -493,6 +629,21 @@ export function useContractAction() {
 
   // 5. Claim Repayment
   const executeClaim = async (poolAddress: string) => {
+    if (isGuidedMode) {
+      const outcome = await runGuidedLifecycle(
+        'Repayment Pull Claim',
+        async () => {
+          const res = await api.claimRepayment(poolAddress, activePersonaId);
+          return {
+            txHash: res.hash as `0x${string}`,
+            receiptBlock: res.receiptBlock,
+          };
+        },
+        poolAddress
+      );
+      return { hash: outcome.txHash, receiptBlock: outcome.blockNumber || '' };
+    }
+
     const outcome = await runLifecycle(
       'Repayment Pull Claim',
       async () => {
@@ -514,6 +665,21 @@ export function useContractAction() {
 
   // 6. Claim Refund on Cancelled Pool
   const executeClaimRefund = async (poolAddress: string) => {
+    if (isGuidedMode) {
+      const outcome = await runGuidedLifecycle(
+        'Lender Refund Claim',
+        async () => {
+          const res = await api.claimRefund(poolAddress, activePersonaId);
+          return {
+            txHash: res.hash as `0x${string}`,
+            receiptBlock: res.receiptBlock,
+          };
+        },
+        poolAddress
+      );
+      return { hash: outcome.txHash, receiptBlock: outcome.blockNumber || '' };
+    }
+
     const outcome = await runLifecycle(
       'Lender Refund Claim',
       async () => {
@@ -535,6 +701,21 @@ export function useContractAction() {
 
   // 7. Vote Default
   const executeVoteDefault = async (poolAddress: string) => {
+    if (isGuidedMode) {
+      const outcome = await runGuidedLifecycle(
+        'Default Consensus Vote',
+        async () => {
+          const res = await api.voteDefault(poolAddress, activePersonaId);
+          return {
+            txHash: res.hash as `0x${string}`,
+            receiptBlock: res.receiptBlock,
+          };
+        },
+        poolAddress
+      );
+      return { hash: outcome.txHash, receiptBlock: outcome.blockNumber || '' };
+    }
+
     const outcome = await runLifecycle(
       'Default Consensus Vote',
       async () => {
@@ -556,6 +737,21 @@ export function useContractAction() {
 
   // 8. Cancel Unfunded Pool
   const executeCancelUnfunded = async (poolAddress: string) => {
+    if (isGuidedMode) {
+      const outcome = await runGuidedLifecycle(
+        'Pool Cancellation',
+        async () => {
+          const res = await api.cancelUnfunded(poolAddress, activePersonaId || 'operator');
+          return {
+            txHash: res.hash as `0x${string}`,
+            receiptBlock: res.receiptBlock,
+          };
+        },
+        poolAddress
+      );
+      return { hash: outcome.txHash, receiptBlock: outcome.blockNumber || '' };
+    }
+
     const outcome = await runLifecycle(
       'Pool Cancellation',
       async () => {
@@ -577,6 +773,7 @@ export function useContractAction() {
 
   return {
     isMetaMaskMode,
+    isGuidedMode,
     isExecuting,
     txState,
     resetTxState,

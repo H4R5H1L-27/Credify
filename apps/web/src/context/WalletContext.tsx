@@ -9,6 +9,7 @@ import {
   SEPOLIA_FAUCET_URL,
   SEPOLIA_EXPLORER_URL
 } from '../lib/wagmi';
+import { useIdentity } from './IdentityContext';
 
 export interface WalletContextType {
   isConnected: boolean;
@@ -22,6 +23,7 @@ export interface WalletContextType {
   balanceFormatted?: string;
   faucetUrl?: string;
   isImportModalOpen: boolean;
+  isGuidedMode: boolean;
   openImportModal: () => void;
   closeImportModal: () => void;
   connectWallet: () => Promise<void>;
@@ -42,25 +44,31 @@ export interface WalletContextType {
 const WalletContext = createContext<WalletContextType | undefined>(undefined);
 
 export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { address, isConnected } = useAccount();
+  const { isGuidedMode, activePersona, identity } = useIdentity();
+  const { address: wagmiAddress, isConnected: wagmiIsConnected } = useAccount();
   const { connectAsync, connectors } = useConnect();
   const { disconnect } = useDisconnect();
   const chainId = useChainId();
   const { switchChainAsync } = useSwitchChain();
-  const { data: balanceData } = useBalance({ address });
+  const { data: balanceData } = useBalance({ address: isGuidedMode ? (activePersona.address as `0x${string}`) : wagmiAddress });
 
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
 
   const targetNetworkName = targetNetwork === 'sepolia' ? 'Sepolia Testnet' : 'Hardhat Localhost';
   const faucetUrl = targetNetwork === 'sepolia' ? SEPOLIA_FAUCET_URL : undefined;
-  const isCorrectNetwork = !isConnected || chainId === targetChainId;
 
-  // Find if the connected address matches a known account
+  // Effective connection & address considering Guided Mode
+  const isConnected = isGuidedMode ? true : wagmiIsConnected;
+  const address = isGuidedMode ? (activePersona.address as `0x${string}`) : wagmiAddress;
+  const isCorrectNetwork = isGuidedMode ? true : (!isConnected || chainId === targetChainId);
+
+  // Find if the address matches a known account preset
   const detectedPreset = React.useMemo(() => {
+    if (isGuidedMode) return activePersona;
     if (!address) return null;
     const lower = address.toLowerCase();
     return DEMO_ACCOUNTS.find((a) => a.address.toLowerCase() === lower) || null;
-  }, [address]);
+  }, [isGuidedMode, activePersona, address]);
 
   const connectWallet = async () => {
     const connector = connectors[0];
@@ -127,7 +135,6 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       return { isMismatch: false, requiredRole };
     }
 
-    // If specific address is required (e.g. loan borrower), check exact match
     if (requiredAddress && address.toLowerCase() !== requiredAddress.toLowerCase()) {
       return {
         isMismatch: true,
@@ -138,7 +145,6 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       };
     }
 
-    // If a generic role is required (e.g. LENDER), check role
     if (detectedPreset && detectedPreset.role !== requiredRole && requiredRole !== 'DEMO_OPERATOR') {
       return {
         isMismatch: true,
@@ -152,7 +158,9 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     return { isMismatch: false, requiredRole };
   };
 
-  const balanceFormatted = balanceData ? `${parseFloat(balanceData.formatted).toFixed(2)} ${balanceData.symbol}` : undefined;
+  const balanceFormatted = isGuidedMode
+    ? (identity?.balanceWei ? `${(Number(BigInt(identity.balanceWei)) / 1e18).toFixed(2)} ETH` : (balanceData ? `${parseFloat(balanceData.formatted).toFixed(2)} ${balanceData.symbol}` : '100.00 ETH'))
+    : (balanceData ? `${parseFloat(balanceData.formatted).toFixed(2)} ${balanceData.symbol}` : undefined);
 
   return (
     <WalletContext.Provider
@@ -168,6 +176,7 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         balanceFormatted,
         faucetUrl,
         isImportModalOpen,
+        isGuidedMode,
         openImportModal: () => setIsImportModalOpen(true),
         closeImportModal: () => setIsImportModalOpen(false),
         connectWallet,

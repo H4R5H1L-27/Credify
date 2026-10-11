@@ -375,3 +375,56 @@ Following the implementation of Work Package 7 (Transaction Explainer, Loan Stat
 - **Typecheck**: 0 TypeScript errors across all 4 monorepo packages (`npm run typecheck`).
 - **Production Build**: Clean Vite production build (`npm run build -w apps/web`) with zero bundle or compilation errors.
 
+---
+
+## 12. Work Package 9: Guided Presenter Mode, Persona Switcher & Presentation Calibrations
+
+Following the implementation of Work Package 9 (Guided presenter mode, client-side persona switching, server-signed execution fallback, and presentation scenario seeder calibrations):
+
+### 12.1 Guided Presenter Mode & Dual-Network Architecture
+| Operational Mode | Trigger / Default | Key Signing Mechanism | Target Use Case |
+| :--- | :--- | :--- | :--- |
+| **MetaMask Wallet Mode** | **Default** | Direct Wagmi/Injected Connector prompts user approval in MetaMask | Standard decentralized user experience for evaluator verification, grading, and testing. |
+| **Guided Demo Mode** | UI Switcher or `VITE_DEMO_MODE=true` | Server-signed via mnemonic-derived demo keys on API backend | Rapid presentation walkthrough without wallet extension installations, popup delays, or account switching. |
+
+### 12.2 Verified Presentation Personas Matrix
+The Guided Mode persona switcher in `IdentityContext.tsx` and `GuidedModeSwitcher.tsx` supports all 7 verified protocol demo presets:
+
+| Persona ID | Display Name | Role | Address | Demo Functionality |
+| :--- | :--- | :--- | :--- | :--- |
+| `borrower` | **Aarav Menon** | `BORROWER` | `0x70997...79C8` | Drafts agreements from text, executes allowlisted supplier spends, repays debt |
+| `lender-alpha` | **Meera Capital** | `LENDER` | `0x3C44C...93BC` | Lead syndicate lender (60% pool allocation), casts default consensus votes |
+| `lender-beta` | **Northstar Labs** | `LENDER` | `0x90F79...b906` | Syndicate participant lender (40% pool allocation), claims pro-rata refunds |
+| `lender-gamma` | **Blue Oak Partners** | `LENDER` | `0x15d34...6A65` | Alternative syndicate lender for governance voting demonstrations |
+| `merchant-a` | **BuildRight Supplies** | `MERCHANT` | `0x99655...A4dc` | Approved supplier for raw laboratory materials and hardware |
+| `merchant-b` | **StudioGrid Equipment** | `MERCHANT` | `0x976EA...0aa9` | Approved supplier for precision computing gear and sensors |
+| `operator` | **Credify Operator** | `DEMO_OPERATOR` | `0xf39Fd...2266` | Protocol deployer, KYC identity verifier, and system operator |
+
+### 12.3 Server-Signed Contract Mutation Dispatching
+All 8 contract mutations in `useContractAction.ts` seamlessly detect `isGuidedMode`:
+- `executeCreateLoan`: Routes to `POST /api/v1/loans` with `borrowerId`.
+- `executeContribute`: Routes to `POST /api/v1/loans/:pool/contribute` with `lenderId`.
+- `executeSpend`: Routes to `POST /api/v1/loans/:pool/spend` with `borrowerId`.
+- `executeRepay`: Routes to `POST /api/v1/loans/:pool/repay` with `borrowerId`.
+- `executeClaim`: Routes to `POST /api/v1/loans/:pool/claim` with `lenderId`.
+- `executeClaimRefund`: Routes to `POST /api/v1/loans/:pool/refund` with `lenderId`.
+- `executeVoteDefault`: Routes to `POST /api/v1/loans/:pool/default-vote` with `lenderId`.
+- `executeCancelUnfunded`: Routes to `POST /api/v1/loans/:pool/cancel` with `operatorId`.
+
+The 5-step transaction lifecycle animation (`preparing` &rarr; `awaiting_wallet` &rarr; `submitted` &rarr; `confirming` &rarr; `confirmed`) executes with authentic block confirmation feedback and real on-chain transaction hashes.
+
+### 12.4 Presentation Seeder Calibrations (`scenario-seeder.ts`)
+Seeded agreement durations calibrated to short intervals meeting contract bounds (`>= 300` seconds):
+- **Scenario 1 (Completed)**: 10-minute duration (600s), 5-minute funding window (300s).
+- **Scenario 2 (Cancelled)**: 10-minute duration (600s), 5-minute funding window (300s), fast-forwarded 360s.
+- **Scenario 3 (Defaulted)**: 5-minute duration (300s), 5-minute funding window (300s), 60s grace period, fast-forwarded 420s.
+- **Scenario 4 (Active)**: 30-minute duration (1800s), 10-minute funding window (600s).
+- **Scenario 5 (Funding)**: 30-minute duration (1800s), 15-minute funding window (900s).
+
+### 12.5 Verification & Quality Gates
+- **Contract Tests**: 33 passing Mocha/Ethers tests (`npm test -w @credify/contracts`).
+- **API & Guided Mode Tests**: 26 test suites passing/skipping cleanly (`npm test -w @credify/api`), including `guided-mode.test.ts` and `console-boundary.test.ts`.
+- **Typecheck**: 0 TypeScript errors across all 4 monorepo packages (`npm run typecheck`).
+- **Production Build**: Clean Vite production build (`npm run build -w apps/web`) with zero bundle or compilation errors.
+
+

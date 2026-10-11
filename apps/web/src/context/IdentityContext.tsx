@@ -1,7 +1,14 @@
-import React, { createContext, useContext, useEffect, useRef } from 'react';
+import React, { createContext, useContext, useEffect, useRef, useState, useMemo } from 'react';
 import { useAccount } from 'wagmi';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import type { WalletIdentity, Role, VerificationStatus, RegisterIdentityInput } from '@credify/shared';
+import {
+  type WalletIdentity,
+  type Role,
+  type VerificationStatus,
+  type RegisterIdentityInput,
+  type DemoAccountPreset,
+  DEMO_ACCOUNTS,
+} from '@credify/shared';
 import { api } from '../lib/api';
 
 export interface IdentityContextType {
@@ -19,17 +26,72 @@ export interface IdentityContextType {
   isLoading: boolean;
   refetchIdentity: () => Promise<void>;
   registerIdentity: (data: Omit<RegisterIdentityInput, 'walletAddress'>) => Promise<WalletIdentity>;
+
+  // WP9 Guided Presenter Mode additions
+  isGuidedMode: boolean;
+  setGuidedMode: (enabled: boolean) => void;
+  toggleGuidedMode: () => void;
+  activePersona: DemoAccountPreset;
+  activePersonaId: string;
+  switchPersona: (personaId: string) => void;
+  availablePersonas: DemoAccountPreset[];
 }
 
 const IdentityContext = createContext<IdentityContextType | undefined>(undefined);
 
 export const IdentityProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { address, isConnected } = useAccount();
+  const { address: wagmiAddress, isConnected: wagmiIsConnected } = useAccount();
   const queryClient = useQueryClient();
   const prevAddressRef = useRef<`0x${string}` | undefined>(undefined);
 
+  // Guided Demo Mode state (persisted to localStorage, enabled if DEMO_MODE env is true)
+  const [isGuidedMode, setIsGuidedModeState] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    const stored = localStorage.getItem('credify_guided_mode');
+    if (stored !== null) return stored === 'true';
+    return (import.meta as any).env?.VITE_DEMO_MODE === 'true';
+  });
+
+  // Active persona in Guided Mode (defaults to borrower: Aarav Menon)
+  const [activePersonaId, setActivePersonaIdState] = useState<string>(() => {
+    if (typeof window === 'undefined') return 'borrower';
+    return localStorage.getItem('credify_active_persona') || 'borrower';
+  });
+
+  const activePersona = useMemo(() => {
+    return DEMO_ACCOUNTS.find((p) => p.id === activePersonaId) || DEMO_ACCOUNTS[1];
+  }, [activePersonaId]);
+
+  const setGuidedMode = (enabled: boolean) => {
+    setIsGuidedModeState(enabled);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('credify_guided_mode', String(enabled));
+    }
+    // Flush queries when toggling mode
+    queryClient.invalidateQueries();
+  };
+
+  const toggleGuidedMode = () => {
+    setGuidedMode(!isGuidedMode);
+  };
+
+  const switchPersona = (personaId: string) => {
+    const found = DEMO_ACCOUNTS.find((p) => p.id === personaId);
+    if (!found) return;
+    setActivePersonaIdState(personaId);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('credify_active_persona', personaId);
+    }
+    // Invalidate all queries so the newly selected persona's view refreshes instantly
+    queryClient.invalidateQueries();
+  };
+
+  // Determine effective connection & address
+  const isConnected = isGuidedMode ? true : wagmiIsConnected;
+  const address = isGuidedMode ? (activePersona.address as `0x${string}`) : wagmiAddress;
+
   const {
-    data: identity,
+    data: queriedIdentity,
     isLoading,
     refetch,
   } = useQuery({
@@ -39,9 +101,24 @@ export const IdentityProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     staleTime: 3000,
   });
 
-  // Whenever account changes in MetaMask:
-  // 1. Detect new address
-  // 2. Invalidate all cached queries to flush prior actor's data
+  // Fallback synthetic identity for demo accounts in Guided Mode
+  const identity: WalletIdentity | null = useMemo(() => {
+    if (queriedIdentity) return queriedIdentity;
+    if (isGuidedMode && activePersona) {
+      return {
+        address: activePersona.address,
+        displayName: activePersona.displayName,
+        role: activePersona.role,
+        verificationStatus: 'VERIFIED',
+        isVerified: true,
+        balanceWei: '100000000000000000000', // 100 ETH default for presentation
+      };
+    }
+    return null;
+  }, [queriedIdentity, isGuidedMode, activePersona]);
+
+  // Whenever effective address changes:
+  // Invalidate all cached queries to flush prior actor's data
   useEffect(() => {
     if (address && prevAddressRef.current !== address) {
       queryClient.invalidateQueries({ queryKey: ['identity'] });
@@ -73,9 +150,9 @@ export const IdentityProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     return result;
   };
 
-  const role: Role | 'UNREGISTERED' = identity?.role || 'UNREGISTERED';
-  const isVerified: boolean = identity?.isVerified || false;
-  const verificationStatus: VerificationStatus = identity?.verificationStatus || 'NOT_STARTED';
+  const role: Role | 'UNREGISTERED' = isGuidedMode ? activePersona.role : (identity?.role || 'UNREGISTERED');
+  const isVerified: boolean = isGuidedMode ? true : (identity?.isVerified || false);
+  const verificationStatus: VerificationStatus = isGuidedMode ? 'VERIFIED' : (identity?.verificationStatus || 'NOT_STARTED');
 
   const isBorrower = role === 'BORROWER';
   const isLender = role === 'LENDER';
@@ -100,6 +177,13 @@ export const IdentityProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         isLoading,
         refetchIdentity,
         registerIdentity,
+        isGuidedMode,
+        setGuidedMode,
+        toggleGuidedMode,
+        activePersona,
+        activePersonaId,
+        switchPersona,
+        availablePersonas: DEMO_ACCOUNTS,
       }}
     >
       {children}
