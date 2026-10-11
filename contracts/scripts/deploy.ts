@@ -11,9 +11,42 @@ const DEMO = {
 async function main() {
   const { ethers } = await network.create();
   const signers = await ethers.getSigners();
-  if (signers.length < 7) throw new Error('Expected Hardhat local accounts');
+  const net = await ethers.provider.getNetwork();
+  const chainId = Number(net.chainId);
+  const isSepolia = chainId === 11155111;
+  const networkName = isSepolia ? 'sepolia' : 'localhost';
 
-  const [deployer, borrower, lenderA, lenderB, lenderC, merchantA, merchantB] = signers;
+  let deployer = signers[0];
+  let borrower: any;
+  let lenderA: any;
+  let lenderB: any;
+  let lenderC: any;
+  let merchantA: any;
+  let merchantB: any;
+
+  if (signers.length >= 7) {
+    [deployer, borrower, lenderA, lenderB, lenderC, merchantA, merchantB] = signers;
+  } else {
+    // Derive deterministic demo accounts from standard mnemonic for non-local networks
+    const demoMnemonic = process.env.DEMO_MNEMONIC ?? 'test test test test test test test test test test test junk';
+    const hd = ethers.HDNodeWallet.fromPhrase(demoMnemonic);
+    borrower = hd.deriveChild(1).connect(ethers.provider);
+    lenderA = hd.deriveChild(2).connect(ethers.provider);
+    lenderB = hd.deriveChild(3).connect(ethers.provider);
+    lenderC = hd.deriveChild(4).connect(ethers.provider);
+    merchantA = hd.deriveChild(5).connect(ethers.provider);
+    merchantB = hd.deriveChild(6).connect(ethers.provider);
+
+    // Ensure borrower has enough ETH for createLoan transaction gas
+    const borrowerBalance = await ethers.provider.getBalance(borrower.address);
+    if (borrowerBalance < ethers.parseEther('0.005')) {
+      const fundTx = await deployer.sendTransaction({
+        to: borrower.address,
+        value: ethers.parseEther('0.005')
+      });
+      await fundTx.wait();
+    }
+  }
 
   const KYC = await ethers.getContractFactory('KYCRegistry');
   const kyc = await KYC.deploy(deployer.address, deployer.address);
@@ -39,15 +72,17 @@ async function main() {
     await (await kyc.setVerified(s.address, ROLE.SUPPLIER, true, expiresAt, ethers.id(`credify-demo:supplier-${i + 1}`))).wait();
   }
 
-  const target = ethers.parseEther('10');
+  const target = isSepolia ? ethers.parseEther('0.1') : ethers.parseEther('10');
   const duration = 60 * 60 * 24 * 14;
   const fundingDuration = 60 * 60 * 24 * 7;
   const aprBps = 800;
-  const maxSpend = ethers.parseEther('8');
+  const maxSpend = isSepolia ? ethers.parseEther('0.08') : ethers.parseEther('8');
   const quorum = 5001;
   const gracePeriod = 60 * 60 * 24 * 3;
-  const agreementHash = ethers.id('Credify Demo Agreement: 10 ETH, 14 days, 8% APR');
-  const merchantCaps = [ethers.parseEther('5'), ethers.parseEther('3')];
+  const agreementHash = ethers.id(`Credify Demo Agreement: ${isSepolia ? '0.1' : '10'} ETH, 14 days, 8% APR`);
+  const merchantCaps = isSepolia
+    ? [ethers.parseEther('0.05'), ethers.parseEther('0.03')]
+    : [ethers.parseEther('5'), ethers.parseEther('3')];
 
   const terms = {
     borrower: borrower.address,
@@ -68,10 +103,12 @@ async function main() {
 
   const pools = await factory.getPools();
   const pool = pools[0];
+  const currentBlock = await ethers.provider.getBlockNumber();
 
   const deployment = {
-    network: 'localhost',
-    chainId: 31337,
+    network: networkName,
+    chainId,
+    deploymentBlock: currentBlock.toString(),
     deployedAt: new Date().toISOString(),
     contracts: {
       kycRegistry: await kyc.getAddress(),
@@ -88,9 +125,11 @@ async function main() {
     demo: DEMO
   };
 
-  const path = resolve(process.cwd(), 'deployments/local.json');
+  const fileName = isSepolia ? 'sepolia.json' : 'local.json';
+  const path = resolve(process.cwd(), `deployments/${fileName}`);
   await mkdir(resolve(process.cwd(), 'deployments'), { recursive: true });
   await writeFile(path, JSON.stringify(deployment, null, 2));
+  console.log(`Saved deployment to ${path}`);
   console.log(JSON.stringify(deployment, null, 2));
 }
 

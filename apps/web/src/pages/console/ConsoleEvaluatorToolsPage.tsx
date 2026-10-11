@@ -258,7 +258,7 @@ export const ConsoleEvaluatorToolsPage: React.FC = () => {
         type={milestonePreview.type}
         amountEth="15.00"
         reputationDelta={8}
-        contractAddress="0x5FbDB2315678afecb367f032d93F642f64180aa3"
+        contractAddress={evaluatorData?.contracts.kycRegistry || ''}
         blockNumber={42}
         txHash="0x4a8f9c1b2e3d4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a"
       />

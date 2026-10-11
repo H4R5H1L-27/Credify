@@ -25,6 +25,14 @@ export default defineConfig({
       ethers: {
         waitForTransactionReceipt: true
       }
+    },
+    sepolia: {
+      type: 'http',
+      url: process.env.SEPOLIA_RPC_URL ?? 'https://ethereum-sepolia-rpc.publicnode.com',
+      chainId: 11155111,
+      accounts: process.env.SEPOLIA_PRIVATE_KEY
+        ? [process.env.SEPOLIA_PRIVATE_KEY]
+        : { mnemonic: demoMnemonic }
     }
   },
   test: {

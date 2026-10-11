@@ -743,13 +743,21 @@ export function buildServer(ctx: AppContext) {
     };
   }, reply));
 
-  app.get('/api/v1/evaluator/contracts', async () => ({
+  const getConfigPayload = () => ({
     network: deployment.network,
     chainId: deployment.chainId,
+    deploymentBlock: (deployment as any).deploymentBlock || '1',
+    deployedAt: (deployment as any).deployedAt,
     contracts: deployment.contracts,
     demoAccounts: deployment.accounts,
-    warning: 'All addresses and assets are for local academic demonstration only.'
-  }));
+    rpcUrl: config.rpcUrl,
+    warning: deployment.network === 'sepolia'
+      ? 'Connected to Ethereum Sepolia testnet. Test ETH has no real-world value.'
+      : 'All addresses and assets are for local academic demonstration only.'
+  });
+
+  app.get('/api/v1/config', async () => getConfigPayload());
+  app.get('/api/v1/evaluator/contracts', async () => getConfigPayload());
 
   app.get('/api/v1/evaluator/events', async () => { await indexer.indexOnce(); return store.allEvents(); });
 

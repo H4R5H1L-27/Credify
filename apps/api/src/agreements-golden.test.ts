@@ -30,7 +30,12 @@ interface GoldenFixture {
 }
 
 test('Golden Set Agreement Parser Evaluation (32 Fixtures)', async () => {
-  const filePath = resolve(process.cwd(), 'packages/shared/src/fixtures/agreements-golden.json');
+  let filePath = resolve(process.cwd(), 'packages/shared/src/fixtures/agreements-golden.json');
+  try {
+    await readFile(filePath, 'utf8');
+  } catch {
+    filePath = resolve(process.cwd(), '../../packages/shared/src/fixtures/agreements-golden.json');
+  }
   const raw = await readFile(filePath, 'utf8');
   const fixtures = JSON.parse(raw) as GoldenFixture[];
 

@@ -1,9 +1,10 @@
 import React, { useEffect, useRef } from 'react';
-import { cn } from '../../lib/utils';
+import { cn, getExplorerTxUrl } from '../../lib/utils';
 import { AddressBadge } from './AddressBadge';
 import { triggerConfetti } from './Confetti';
 import { AnimatedCheckmark } from './MicroInteractions';
-import { Clock, AlertCircle, Loader2, Key, XCircle, ShieldAlert, WifiOff } from 'lucide-react';
+import { Clock, AlertCircle, Loader2, Key, XCircle, ShieldAlert, WifiOff, ExternalLink } from 'lucide-react';
+import { useWallet } from '../../context/WalletContext';
 
 export type TxLifecycleStep =
   | 'preparing'
@@ -36,6 +37,7 @@ export const TransactionLifecycle: React.FC<{
   state: TxState;
   className?: string;
 }> = ({ state, className }) => {
+  const { chainId } = useWallet();
   const prevStepRef = useRef<TxLifecycleStep | null>(null);
 
   // Trigger confetti burst on confirmed milestone
@@ -193,6 +195,16 @@ export const TransactionLifecycle: React.FC<{
             <div className="flex items-center gap-1.5">
               <span className="text-slate-500">Tx:</span>
               <AddressBadge address={state.txHash} digits={6} />
+              <a
+                href={getExplorerTxUrl(state.txHash, chainId)}
+                target={chainId === 11155111 ? '_blank' : undefined}
+                rel="noopener noreferrer"
+                className="text-xs text-yellow-800 hover:text-black hover:underline flex items-center gap-0.5 ml-1 font-sans font-bold transition-colors"
+                title={chainId === 11155111 ? 'View transaction on Sepolia Etherscan' : 'View transaction in Console'}
+              >
+                <span>{chainId === 11155111 ? 'View on Etherscan' : 'View in console'}</span>
+                <ExternalLink className="w-3 h-3" />
+              </a>
             </div>
           )}
         </div>

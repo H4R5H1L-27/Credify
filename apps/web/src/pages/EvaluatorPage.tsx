@@ -28,7 +28,10 @@ export const EvaluatorPage: React.FC = () => {
   const { data: evaluatorData } = useEvaluatorContracts();
   const {
     address: currentWalletAddress,
-    addHardhatNetwork,
+    addNetwork,
+    targetNetworkName,
+    targetChainId,
+    targetNetwork,
   } = useWallet();
 
   const resetDemoMutation = useResetDemo();
@@ -88,7 +91,7 @@ export const EvaluatorPage: React.FC = () => {
   };
 
   const handleAddNetwork = async () => {
-    await addHardhatNetwork();
+    await addNetwork();
     setNetworkAdded(true);
     setTimeout(() => setNetworkAdded(false), 3000);
   };
@@ -145,9 +148,9 @@ export const EvaluatorPage: React.FC = () => {
             </div>
           </div>
           <div className="text-base font-black text-slate-950 mt-1">
-            {healthLoading ? <Skeleton className="h-5 w-20" /> : (health?.ok ? 'Local Node Active' : 'Disconnected')}
+            {healthLoading ? <Skeleton className="h-5 w-20" /> : (health?.ok ? `${targetNetworkName} Active` : 'Disconnected')}
           </div>
-          <span className="text-xs text-slate-500 font-mono truncate block font-medium">{HARDHAT_RPC_URL}</span>
+          <span className="text-xs text-slate-500 font-mono truncate block font-medium">Chain ID: {targetChainId}</span>
         </Card>
 
         <Card className="p-4 bg-white border-slate-200 shadow-sm">
@@ -557,15 +560,17 @@ export const EvaluatorPage: React.FC = () => {
               <CardContent className="space-y-3 text-xs">
                 <div className="flex justify-between py-1.5 border-b border-slate-200">
                   <span className="text-slate-600 font-medium">Network Name:</span>
-                  <span className="font-mono font-bold text-slate-950">Hardhat Localhost</span>
+                  <span className="font-mono font-bold text-slate-950">{targetNetworkName}</span>
                 </div>
                 <div className="flex justify-between py-1.5 border-b border-slate-200">
                   <span className="text-slate-600 font-medium">RPC Endpoint:</span>
-                  <span className="font-mono font-bold text-slate-950">{HARDHAT_RPC_URL}</span>
+                  <span className="font-mono font-bold text-slate-950">
+                    {targetNetwork === 'sepolia' ? 'https://rpc.sepolia.org' : HARDHAT_RPC_URL}
+                  </span>
                 </div>
                 <div className="flex justify-between py-1.5 border-b border-slate-200">
                   <span className="text-slate-600 font-medium">Chain ID:</span>
-                  <span className="font-mono font-bold text-slate-950">{HARDHAT_CHAIN_ID}</span>
+                  <span className="font-mono font-bold text-slate-950">{targetChainId}</span>
                 </div>
                 <div className="flex justify-between py-1.5 border-b border-slate-200">
                   <span className="text-slate-600 font-medium">Currency Symbol:</span>

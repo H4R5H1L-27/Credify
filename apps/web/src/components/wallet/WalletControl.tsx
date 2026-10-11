@@ -16,14 +16,18 @@ import {
   Clock,
   Terminal,
 } from 'lucide-react';
-import { formatEtherNum } from '../../lib/utils';
+import { formatEtherNum, cn } from '../../lib/utils';
 
 export const WalletControl: React.FC = () => {
   const {
     isConnected,
     address,
+    chainId,
     isCorrectNetwork,
-    switchChainToHardhat,
+    targetNetworkName,
+    faucetUrl,
+    switchNetwork,
+    addNetwork,
     disconnectWallet,
     connectWallet,
   } = useWallet();
@@ -73,15 +77,26 @@ export const WalletControl: React.FC = () => {
 
   if (!isCorrectNetwork) {
     return (
-      <Button
-        size="sm"
-        variant="danger"
-        onClick={switchChainToHardhat}
-        className="h-8 text-xs font-bold animate-pulse flex items-center gap-1.5 shadow-xs"
-        icon={<AlertCircle className="h-3.5 w-3.5" />}
-      >
-        Switch to Local Network
-      </Button>
+      <div className="flex items-center gap-1.5">
+        <Button
+          size="sm"
+          variant="danger"
+          onClick={switchNetwork}
+          className="h-8 text-xs font-bold animate-pulse flex items-center gap-1.5 shadow-xs"
+          icon={<AlertCircle className="h-3.5 w-3.5" />}
+        >
+          Switch to {targetNetworkName}
+        </Button>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={addNetwork}
+          className="h-8 text-xs font-bold bg-white text-slate-700 hover:bg-slate-50"
+          title={`Add ${targetNetworkName} to wallet`}
+        >
+          Add
+        </Button>
+      </div>
     );
   }
 
@@ -168,8 +183,8 @@ export const WalletControl: React.FC = () => {
               <div className="flex justify-between items-center">
                 <span className="text-slate-500">Network:</span>
                 <span className="font-bold text-slate-950 flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                  Local EVM Network
+                  <span className={cn('w-1.5 h-1.5 rounded-full', isCorrectNetwork ? 'bg-emerald-500' : 'bg-rose-500')} />
+                  {targetNetworkName} {chainId ? `(#${chainId})` : ''}
                 </span>
               </div>
               <div className="flex justify-between items-center">
@@ -178,6 +193,19 @@ export const WalletControl: React.FC = () => {
                   {identity?.balanceWei ? `${formatEtherNum(identity.balanceWei).toFixed(4)} ETH` : '— ETH'}
                 </span>
               </div>
+              {faucetUrl && (
+                <div className="pt-1">
+                  <a
+                    href={faucetUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-between w-full p-2 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-[11px] font-bold hover:bg-amber-100 transition-colors"
+                  >
+                    <span>Get Sepolia Test ETH</span>
+                    <ExternalLink className="w-3 h-3" />
+                  </a>
+                </div>
+              )}
             </div>
 
             {/* Verification Navigation Link if unverified */}

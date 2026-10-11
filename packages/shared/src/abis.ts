@@ -186,6 +186,11 @@ export const poolAbi = [
 export const HARDHAT_CHAIN_ID = 31337;
 export const HARDHAT_RPC_URL = 'http://127.0.0.1:8545';
 
+export const SEPOLIA_CHAIN_ID = 11155111;
+export const SEPOLIA_DEFAULT_RPC_URL = 'https://rpc.sepolia.org';
+export const SEPOLIA_FAUCET_URL = 'https://sepoliafaucet.com';
+export const SEPOLIA_EXPLORER_URL = 'https://sepolia.etherscan.io';
+
 export type DemoAccountPreset = {
   id: string;
   displayName: string;

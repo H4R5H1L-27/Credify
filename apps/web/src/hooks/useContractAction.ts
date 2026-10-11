@@ -9,7 +9,7 @@ import { queryKeys, useEvaluatorContracts } from './useCredify';
 import type { TxState, TxLifecycleStep, TxErrorCategory } from '../components/ui/TransactionLifecycle';
 
 export function useContractAction() {
-  const { isConnected, isCorrectNetwork, address } = useWallet();
+  const { isConnected, isCorrectNetwork, address, targetNetworkName, targetChainId } = useWallet();
   const queryClient = useQueryClient();
   const { writeContractAsync } = useWriteContract();
   const publicClient = usePublicClient();
@@ -66,7 +66,7 @@ export function useContractAction() {
     }
 
     if (!isCorrectNetwork) {
-      const errorMsg = 'Incorrect network. Please switch to Hardhat Localhost (Chain ID 31337) in your wallet to sign transactions.';
+      const errorMsg = `Incorrect network. Please switch to ${targetNetworkName} (Chain ID ${targetChainId}) in your wallet to sign transactions.`;
       setTxState({
         step: 'failed',
         title: 'Wrong Network',
@@ -126,8 +126,8 @@ export function useContractAction() {
         error: message.includes('WALLET_NOT_CONNECTED')
           ? 'Wallet not connected. Please connect MetaMask to continue.'
           : message.includes('WRONG_NETWORK')
-          ? 'Incorrect network. Please switch to Hardhat Localhost (Chain ID 31337).'
-          : 'Unable to communicate with EVM node. Ensure local blockchain is running.',
+          ? `Incorrect network. Please switch to ${targetNetworkName} (Chain ID ${targetChainId}).`
+          : `Unable to communicate with EVM node. Ensure ${targetNetworkName} node or RPC is reachable.`,
         code: 'NETWORK_ERROR',
         category: 'network_error',
       };
@@ -341,8 +341,12 @@ export function useContractAction() {
     naturalLanguageText: string;
     terms: TermSheet;
   }): Promise<{ loanId: string; poolAddress: string; txHash: string }> => {
-    const factoryAddress = (evaluatorContracts?.contracts.loanFactory ||
-      '0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0') as Address;
+    const factoryAddress = evaluatorContracts?.contracts?.loanFactory as Address;
+    if (!factoryAddress) {
+      throw new Error(
+        'LoanFactory contract address is not configured. Please ensure the backend is running and contracts are deployed.'
+      );
+    }
 
     const outcome = await runLifecycle(
       'Loan Deployment',

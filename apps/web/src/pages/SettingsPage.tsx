@@ -2,12 +2,14 @@ import React from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { useIdentity } from '../context/IdentityContext';
+import { useWallet } from '../context/WalletContext';
 import { AddressBadge } from '../components/ui/AddressBadge';
 import { HARDHAT_CHAIN_ID, HARDHAT_RPC_URL } from '@credify/shared';
 import { ShieldCheck, Server, RefreshCw } from 'lucide-react';
 
 export const SettingsPage: React.FC = () => {
   const { identity, address, role } = useIdentity();
+  const { targetNetworkName, targetChainId, targetNetwork } = useWallet();
 
   const handleClearStorage = () => {
     localStorage.clear();
@@ -62,20 +64,20 @@ export const SettingsPage: React.FC = () => {
             </div>
 
             <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200">
-              <span className="text-[11px] text-slate-500 font-semibold uppercase tracking-wider block">Hardhat EVM RPC</span>
-              <span className="font-mono font-bold text-slate-950 mt-1 block">{HARDHAT_RPC_URL}</span>
+              <span className="text-[11px] text-slate-500 font-semibold uppercase tracking-wider block">Target Network</span>
+              <span className="font-mono font-bold text-slate-950 mt-1 block">{targetNetworkName}</span>
             </div>
 
             <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200">
-              <span className="text-[11px] text-slate-500 font-semibold uppercase tracking-wider block">Local Chain ID</span>
-              <span className="font-mono font-bold text-slate-950 mt-1 block">{HARDHAT_CHAIN_ID}</span>
+              <span className="text-[11px] text-slate-500 font-semibold uppercase tracking-wider block">Target Chain ID</span>
+              <span className="font-mono font-bold text-slate-950 mt-1 block">{targetChainId}</span>
             </div>
 
             <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200">
-              <span className="text-[11px] text-slate-500 font-semibold uppercase tracking-wider block">Security Mode</span>
+              <span className="text-[11px] text-slate-500 font-semibold uppercase tracking-wider block">Environment Mode</span>
               <span className="font-bold text-emerald-700 mt-1 flex items-center gap-1.5">
                 <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                Local Test Network
+                {targetNetwork === 'sepolia' ? 'Sepolia Public Testnet' : 'Local Deterministic Node'}
               </span>
             </div>
           </div>

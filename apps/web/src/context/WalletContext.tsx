@@ -1,19 +1,33 @@
 import React, { createContext, useContext, useState } from 'react';
 import { useAccount, useConnect, useDisconnect, useChainId, useSwitchChain, useBalance } from 'wagmi';
-import { DEMO_ACCOUNTS, type DemoAccountPreset, HARDHAT_CHAIN_ID } from '@credify/shared';
+import { DEMO_ACCOUNTS, type DemoAccountPreset } from '@credify/shared';
+import {
+  targetNetwork,
+  targetChainId,
+  HARDHAT_CHAIN_ID,
+  SEPOLIA_CHAIN_ID,
+  SEPOLIA_FAUCET_URL,
+  SEPOLIA_EXPLORER_URL
+} from '../lib/wagmi';
 
 export interface WalletContextType {
   isConnected: boolean;
   address?: `0x${string}`;
   chainId?: number;
+  targetNetwork: 'localhost' | 'sepolia';
+  targetChainId: number;
+  targetNetworkName: string;
   isCorrectNetwork: boolean;
   detectedPreset: DemoAccountPreset | null;
   balanceFormatted?: string;
+  faucetUrl?: string;
   isImportModalOpen: boolean;
   openImportModal: () => void;
   closeImportModal: () => void;
   connectWallet: () => Promise<void>;
   disconnectWallet: () => void;
+  addNetwork: () => Promise<void>;
+  switchNetwork: () => Promise<void>;
   addHardhatNetwork: () => Promise<void>;
   switchChainToHardhat: () => Promise<void>;
   checkRoleMismatch: (requiredRole: string, requiredAddress?: string) => {
@@ -37,7 +51,9 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
 
-  const isCorrectNetwork = !isConnected || chainId === HARDHAT_CHAIN_ID;
+  const targetNetworkName = targetNetwork === 'sepolia' ? 'Sepolia Testnet' : 'Hardhat Localhost';
+  const faucetUrl = targetNetwork === 'sepolia' ? SEPOLIA_FAUCET_URL : undefined;
+  const isCorrectNetwork = !isConnected || chainId === targetChainId;
 
   // Find if the connected address matches a known account
   const detectedPreset = React.useMemo(() => {
@@ -57,35 +73,54 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     disconnect();
   };
 
-  const addHardhatNetwork = async () => {
+  const addNetwork = async () => {
     if (typeof window !== 'undefined' && (window as unknown as { ethereum?: { request: (args: unknown) => Promise<unknown> } }).ethereum) {
       try {
-        await (window as unknown as { ethereum: { request: (args: unknown) => Promise<unknown> } }).ethereum.request({
-          method: 'wallet_addEthereumChain',
-          params: [
-            {
-              chainId: '0x7a69', // 31337
-              chainName: 'Hardhat Localhost (Credify)',
-              nativeCurrency: { name: 'Demo Ether', symbol: 'ETH', decimals: 18 },
-              rpcUrls: ['http://127.0.0.1:8545']
-            }
-          ]
-        });
+        const ethereum = (window as unknown as { ethereum: { request: (args: unknown) => Promise<unknown> } }).ethereum;
+        if (targetNetwork === 'sepolia') {
+          await ethereum.request({
+            method: 'wallet_addEthereumChain',
+            params: [
+              {
+                chainId: '0xaa36a7', // 11155111
+                chainName: 'Sepolia Testnet',
+                nativeCurrency: { name: 'Sepolia Ether', symbol: 'ETH', decimals: 18 },
+                rpcUrls: ['https://rpc.sepolia.org'],
+                blockExplorerUrls: [SEPOLIA_EXPLORER_URL]
+              }
+            ]
+          });
+        } else {
+          await ethereum.request({
+            method: 'wallet_addEthereumChain',
+            params: [
+              {
+                chainId: '0x7a69', // 31337
+                chainName: 'Hardhat Localhost (Credify)',
+                nativeCurrency: { name: 'Demo Ether', symbol: 'ETH', decimals: 18 },
+                rpcUrls: ['http://127.0.0.1:8545']
+              }
+            ]
+          });
+        }
       } catch (err) {
-        console.error('Failed to add Hardhat network to MetaMask:', err);
+        console.error(`Failed to add ${targetNetworkName} to wallet:`, err);
       }
     }
   };
 
-  const switchChainToHardhat = async () => {
+  const switchNetwork = async () => {
     try {
       if (switchChainAsync) {
-        await switchChainAsync({ chainId: HARDHAT_CHAIN_ID });
+        await switchChainAsync({ chainId: targetChainId });
       }
     } catch {
-      await addHardhatNetwork();
+      await addNetwork();
     }
   };
+
+  const addHardhatNetwork = addNetwork;
+  const switchChainToHardhat = switchNetwork;
 
   const checkRoleMismatch = (requiredRole: string, requiredAddress?: string) => {
     if (!isConnected || !address) {
@@ -125,14 +160,20 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         isConnected,
         address: address as `0x${string}` | undefined,
         chainId,
+        targetNetwork,
+        targetChainId,
+        targetNetworkName,
         isCorrectNetwork,
         detectedPreset,
         balanceFormatted,
+        faucetUrl,
         isImportModalOpen,
         openImportModal: () => setIsImportModalOpen(true),
         closeImportModal: () => setIsImportModalOpen(false),
         connectWallet,
         disconnectWallet,
+        addNetwork,
+        switchNetwork,
         addHardhatNetwork,
         switchChainToHardhat,
         checkRoleMismatch

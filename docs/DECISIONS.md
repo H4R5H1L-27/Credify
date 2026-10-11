@@ -134,4 +134,45 @@ Work package WP3 requires turning written natural language credit agreements int
 ### Status
 Accepted and verified in WP3 with 32 golden fixtures (100% accuracy, 100% prompt injection defense).
 
+---
+
+## ADR-005: Multi-Network Configuration, Chain Abstraction, and Sepolia Testnet Support (WP4)
+
+### Context
+Work package WP4 requires one unified codebase that runs seamlessly on both local Hardhat (chain 31337) and Sepolia testnet (chain 11155111). Hardhat local node must remain fully functional as the primary presentation fallback with zero dependencies on external services. The system must eliminate hardcoded fallback addresses from client applications, validate environment variables at startup, abstract EVM client connectivity, provide clear wrong-network states, and link transactions appropriately (Etherscan on Sepolia, local console on Localhost).
+
+### Decisions
+1. **Per-Network Deployment Files & Security**:
+   - Contract addresses, deployment block numbers, and chain IDs are stored in `contracts/deployments/<network>.json` (`local.json`, `sepolia.json`).
+   - `local.json` is untracked from Git and excluded via `.gitignore` (`contracts/deployments/*.json` with `!contracts/deployments/sepolia.example.json`).
+   - `contracts/deployments/sepolia.example.json` is committed as a sanitised schema template containing zero secrets or private keys.
+2. **Startup Environment Validation & Fail-Fast Mechanics**:
+   - `apps/api/src/config.ts` validates environment variables at boot using Zod (`envSchema`).
+   - Validates `NETWORK` (`'localhost' | 'local' | 'hardhat' | 'sepolia'`), URLs (`CHAIN_RPC_URL`, `SEPOLIA_RPC_URL`), port, mnemonic, and deployment path.
+   - Throws immediate fatal startup errors if environment variables are malformed, preventing silent misconfigurations.
+3. **Single Source of Truth for Contract Addresses**:
+   - The backend exposes `GET /api/v1/config` and `GET /api/v1/evaluator/contracts` reading directly from the active network deployment file.
+   - All hardcoded fallback addresses (such as `0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0`) are removed from web client code (`useContractAction.ts`, `ConsoleEvaluatorToolsPage.tsx`). If contract addresses are unconfigured or unindexed, transactions fail fast with clear actionable error messages.
+4. **Wagmi Dual-Chain Configuration & Target Network Selection**:
+   - `apps/web/src/lib/wagmi.ts` configures both `hardhatChain` (id: 31337) and `sepoliaChain` (id: 11155111).
+   - Target network is selected via `VITE_NETWORK` (`'localhost'` vs `'sepolia'`).
+   - Transports route to local node (`http://127.0.0.1:8545`) or configured Sepolia RPC.
+5. **Network Switching, Adding, and Faucet UX**:
+   - `WalletContext` computes `isCorrectNetwork = !isConnected || chainId === targetChainId`.
+   - Provides `switchNetwork()` (triggering `wallet_switchEthereumChain` with fallback to `wallet_addEthereumChain`) and `addNetwork()` with full network params for MetaMask.
+   - Renders animated wrong-network alert badges and quick-action "Switch Network" and "Add Network" buttons in `NetworkStatus` and `WalletControl`.
+   - Exposes Sepolia faucet link (`https://sepoliafaucet.com`) in the header and wallet popover when target network is Sepolia.
+6. **Block Explorer Links**:
+   - `getExplorerTxUrl(hash, chainId)` and `getExplorerAddressUrl(address, chainId)` resolve to Sepolia Etherscan (`https://sepolia.etherscan.io`) when on Sepolia (11155111) and internal console routes (`/console/transactions`, `/console/blockchain`) when on Localhost (31337).
+   - `TransactionLifecycle` shows "View on Etherscan" or "View in console" based on active chain ID.
+7. **Deployment Script Adaptability (`scripts/deploy.ts`)**:
+   - Automatically detects current network and chain ID via `ethers.provider.getNetwork()`.
+   - On Sepolia or single-signer configurations, derives deterministic demo personas using standard test mnemonic and funds borrower for transaction gas.
+   - Scales demo loan parameters for Sepolia (0.1 ETH target instead of 10 ETH) to respect faucet limits while preserving protocol behavior.
+   - Outputs deployment manifest to `deployments/sepolia.json` or `deployments/local.json`.
+
+### Status
+Accepted and verified in WP4.
+
+
 

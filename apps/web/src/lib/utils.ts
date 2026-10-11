@@ -97,3 +97,20 @@ export function decodeBytes32String(hex?: string): string {
     return hex;
   }
 }
+
+export function getExplorerTxUrl(hash: string, chainId = 31337): string {
+  if (!hash) return '#';
+  if (chainId === 11155111) {
+    return `https://sepolia.etherscan.io/tx/${hash}`;
+  }
+  return `/console/transactions?tx=${hash}`;
+}
+
+export function getExplorerAddressUrl(address: string, chainId = 31337): string {
+  if (!address) return '#';
+  if (chainId === 11155111) {
+    return `https://sepolia.etherscan.io/address/${address}`;
+  }
+  return `/console/blockchain?address=${address}`;
+}
+

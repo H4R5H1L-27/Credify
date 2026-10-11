@@ -53,7 +53,7 @@ import {
 export const LoanDetailPage: React.FC = () => {
   const { loanId } = useParams<{ loanId: string }>();
   const { isVerified, address: currentAddress, isLender, isBorrower } = useIdentity();
-  const { isConnected } = useWallet();
+  const { isConnected, targetNetwork } = useWallet();
 
   const { data: loan, isLoading: loanLoading, error: loanError, refetch: refetchLoan } = useLoan(loanId);
   const { data: activity = [], isLoading: activityLoading, refetch: refetchActivity } = useLoanActivity(loanId);
@@ -1647,8 +1647,8 @@ export const LoanDetailPage: React.FC = () => {
             )}
           </div>
 
-          {/* Evaluator Fast-Forward Time Helper */}
-          {!isPastMaturity && isActive && (
+          {/* Evaluator Fast-Forward Time Helper (Local Hardhat Only) */}
+          {!isPastMaturity && isActive && targetNetwork === 'localhost' && (
             <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
               <div className="space-y-0.5">
                 <div className="font-bold text-amber-900 flex items-center gap-1.5">

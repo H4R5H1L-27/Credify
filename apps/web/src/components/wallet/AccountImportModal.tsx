@@ -8,7 +8,15 @@ import { useWallet } from '../../context/WalletContext';
 import { Copy, Check, Key, ShieldAlert, PlusCircle } from 'lucide-react';
 
 export const AccountImportModal: React.FC = () => {
-  const { isImportModalOpen, closeImportModal, addHardhatNetwork, address } = useWallet();
+  const {
+    isImportModalOpen,
+    closeImportModal,
+    addNetwork,
+    targetNetworkName,
+    targetChainId,
+    targetNetwork,
+    address,
+  } = useWallet();
   const [copiedKeyIndex, setCopiedKeyIndex] = useState<number | null>(null);
   const [networkAdded, setNetworkAdded] = useState(false);
 
@@ -19,7 +27,7 @@ export const AccountImportModal: React.FC = () => {
   };
 
   const handleAddNetwork = async () => {
-    await addHardhatNetwork();
+    await addNetwork();
     setNetworkAdded(true);
     setTimeout(() => setNetworkAdded(false), 3000);
   };
@@ -29,7 +37,7 @@ export const AccountImportModal: React.FC = () => {
       open={isImportModalOpen}
       onClose={closeImportModal}
       title="Evaluator Wallet Assistant"
-      description="Connect MetaMask to the local Hardhat node and import test accounts to sign transactions directly."
+      description={`Connect MetaMask to ${targetNetworkName} and import test accounts to sign transactions directly.`}
       className="max-w-3xl"
     >
       <div className="space-y-6 text-sm">
@@ -52,10 +60,10 @@ export const AccountImportModal: React.FC = () => {
             <div>
               <div className="font-bold text-slate-950 flex items-center gap-2">
                 <span className="flex h-5 w-5 items-center justify-center rounded-full bg-blue-100 text-xs font-bold text-blue-700">1</span>
-                Add Localhost EVM to MetaMask
+                Add {targetNetworkName} to MetaMask
               </div>
               <p className="mt-1 text-xs text-slate-500 font-medium">
-                RPC: <span className="font-mono text-slate-900 font-bold">{HARDHAT_RPC_URL}</span> · Chain ID: <span className="font-mono text-slate-900 font-bold">{HARDHAT_CHAIN_ID}</span> · Currency: <span className="text-slate-900 font-bold">ETH</span>
+                RPC: <span className="font-mono text-slate-900 font-bold">{targetNetwork === 'sepolia' ? 'https://rpc.sepolia.org' : HARDHAT_RPC_URL}</span> · Chain ID: <span className="font-mono text-slate-900 font-bold">{targetChainId}</span> · Currency: <span className="text-slate-900 font-bold">ETH</span>
               </p>
             </div>
             <Button

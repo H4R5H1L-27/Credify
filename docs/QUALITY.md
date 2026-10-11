@@ -230,5 +230,33 @@ A comprehensive golden test suite (`apps/api/src/agreements-golden.test.ts`) eva
 - **`CreateLoanPage`**: Replaced client-side regex heuristics with server-side `/parse` pipeline. Displays side-by-side original text vs reverse-rendered summary, field quotes, source badges (`[From Text]` vs `[Default]`), unsupported clause warnings, and cryptographic hash binding.
 - **`LoanDetailPage`**: Integrated `useAgreementByHash` to fetch stored agreement text and verify that `keccak256(canonicalText)` matches on-chain `LoanPool.agreementHash`.
 
+---
+
+## 8. Work Package 4: Configuration, Networks & Chain Abstraction
+
+Following the implementation of Work Package 4 (Per-network configuration, environment validation, chain abstraction, and Sepolia testnet support):
+
+### 8.1 Environment & Network Verification
+- **Zod Environment Validation**: `apps/api/src/config.test.ts` (5 tests passing, 0 failing) validates:
+  - Default fallback to localhost configuration (`NETWORK='localhost'`, port 4100).
+  - Accurate parsing and coercion of Sepolia testnet parameters (`NETWORK='sepolia'`, RPC URL validation).
+  - Immediate fail-fast rejection for unsupported networks (`mainnet`) or malformed RPC URLs.
+  - Multi-candidate deployment file path resolution (`contracts/deployments/local.json` vs `contracts/deployments/sepolia.json`).
+- **Contract Deployments**:
+  - `contracts/deployments/local.json`: Untracked from Git and excluded via `.gitignore`.
+  - `contracts/deployments/sepolia.example.json`: Sanitized template committed with zero secrets or private keys.
+  - Hardhat deploy script (`contracts/scripts/deploy.ts`) verified locally on chain 31337 with output manifest containing contract addresses, deployer and demo accounts, deployment block number, and chain ID.
+  - Sepolia single-signer fallback mechanism in `scripts/deploy.ts` derives demo accounts and funds gas from deployer.
+
+### 8.2 Client-Side Chain Abstraction & UX
+- **Removed Hardcoded Addresses**: Single source of truth is `GET /api/v1/config` and `GET /api/v1/evaluator/contracts`. Hardcoded fallback address `0x9fE4...` eliminated from `useContractAction.ts`.
+- **Wagmi Dual-Chain Support**: Configured both `Hardhat Localhost` (31337) and `Sepolia Testnet` (11155111) in `apps/web/src/lib/wagmi.ts` selectable via `VITE_NETWORK`.
+- **Network UI Controls**:
+  - `NetworkStatus`: Renders target network badge, wrong-network warning, "Switch Network" button, "Add Network" button, and Sepolia Faucet link.
+  - `WalletControl`: Displays target network state, chain ID, and Sepolia test ETH faucet link in account popover.
+  - `TransactionLifecycle`: Displays "View in console" on Localhost (31337) and "View on Etherscan" link to `https://sepolia.etherscan.io` on Sepolia (11155111).
+  - Time-warp simulation controls guarded so they only appear on local Hardhat.
+
+
 
 

@@ -1,6 +1,6 @@
 import { createPublicClient, createWalletClient, http, type Address, type Hash, type PublicClient, type WalletClient } from 'viem';
 import { mnemonicToAccount } from 'viem/accounts';
-import { foundry } from 'viem/chains';
+import { foundry, sepolia } from 'viem/chains';
 import { readFile } from 'node:fs/promises';
 import { config } from '../config.js';
 import { factoryAbi, kycAbi, poolAbi, reputationAbi } from './abis.js';
@@ -8,6 +8,8 @@ import { factoryAbi, kycAbi, poolAbi, reputationAbi } from './abis.js';
 export type Deployment = {
   network: string;
   chainId: number;
+  deploymentBlock?: string;
+  deployedAt?: string;
   contracts: { kycRegistry: Address; reputationRegistry: Address; loanFactory: Address; sampleLoanPool: Address };
   accounts: { deployer: Address; borrower: Address; lenders: Address[]; merchants: Address[] };
 };
@@ -20,7 +22,12 @@ export class ChainClient {
   constructor(deployment: Deployment) {
     this.deployment = deployment;
     this.mnemonic = config.demoMnemonic;
-    this.publicClient = createPublicClient({ chain: foundry, transport: http(config.rpcUrl), pollingInterval: 100 });
+    const chain = this.deployment.chainId === 11155111 ? sepolia : foundry;
+    this.publicClient = createPublicClient({
+      chain,
+      transport: http(config.rpcUrl),
+      pollingInterval: this.deployment.chainId === 11155111 ? 4000 : 100
+    });
   }
 
   accountForPrincipalId(id: string) {
@@ -30,7 +37,8 @@ export class ChainClient {
 
   walletForPrincipalId(id: string): WalletClient {
     const account = this.accountForPrincipalId(id);
-    return createWalletClient({ account, chain: foundry, transport: http(config.rpcUrl) });
+    const chain = this.deployment.chainId === 11155111 ? sepolia : foundry;
+    return createWalletClient({ account, chain, transport: http(config.rpcUrl) });
   }
 
   async blockNumber() { return this.publicClient.getBlockNumber({ cacheTime: 0 }); }

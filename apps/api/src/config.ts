@@ -1,12 +1,46 @@
 import { resolve } from 'node:path';
 import { existsSync } from 'node:fs';
+import { z } from 'zod';
 
-function resolveDeploymentFile(): string {
-  if (process.env.DEPLOYMENT_FILE) return resolve(process.cwd(), process.env.DEPLOYMENT_FILE);
+const envSchema = z.object({
+  NETWORK: z.enum(['localhost', 'local', 'hardhat', 'sepolia']).default('localhost'),
+  CHAIN_RPC_URL: z.string().url().optional(),
+  SEPOLIA_RPC_URL: z.string().url().optional(),
+  API_PORT: z.coerce.number().int().positive().default(4100),
+  CORS_ORIGIN: z.string().default('http://localhost:5173'),
+  DEMO_MODE: z.string().default('true'),
+  DEPLOYMENT_FILE: z.string().optional(),
+  DEMO_MNEMONIC: z.string().default('test test test test test test test test test test test junk'),
+  TERMS_PARSER: z.enum(['demo', 'gemini']).default('demo'),
+  GEMINI_API_KEY: z.string().optional().default(''),
+  GEMINI_MODEL: z.string().optional().default('gemini-1.5-flash'),
+  VERIFIER_SECRET: z.string().default('credify-verifier-secret-test'),
+  AUTH_SECRET: z.string().optional()
+});
+
+const parsedEnvResult = envSchema.safeParse(process.env);
+if (!parsedEnvResult.success) {
+  console.error('\n====================================================');
+  console.error('FATAL: Environment Configuration Validation Error');
+  console.error('====================================================');
+  for (const issue of parsedEnvResult.error.issues) {
+    console.error(`- [${issue.path.join('.')}] ${issue.message}`);
+  }
+  console.error('====================================================\n');
+  process.exit(1);
+}
+
+const env = parsedEnvResult.data;
+const network = env.NETWORK === 'sepolia' ? 'sepolia' : 'localhost';
+
+function resolveDeploymentFile(net: string, specified?: string): string {
+  if (specified) return resolve(process.cwd(), specified);
+  const targetFile = net === 'sepolia' ? 'sepolia.json' : 'local.json';
   const candidates = [
-    resolve(process.cwd(), 'contracts/deployments/local.json'),
-    resolve(process.cwd(), '../contracts/deployments/local.json'),
-    resolve(process.cwd(), '../../contracts/deployments/local.json')
+    resolve(process.cwd(), `contracts/deployments/${targetFile}`),
+    resolve(process.cwd(), `../contracts/deployments/${targetFile}`),
+    resolve(process.cwd(), `../../contracts/deployments/${targetFile}`),
+    resolve(process.cwd(), `deployments/${targetFile}`)
   ];
   for (const p of candidates) {
     if (existsSync(p)) return p;
@@ -14,16 +48,29 @@ function resolveDeploymentFile(): string {
   return candidates[0];
 }
 
+const deploymentFile = resolveDeploymentFile(network, env.DEPLOYMENT_FILE);
+
 export const config = {
-  rpcUrl: process.env.CHAIN_RPC_URL ?? 'http://127.0.0.1:8545',
-  port: Number(process.env.API_PORT ?? 4100),
-  corsOrigin: process.env.CORS_ORIGIN ?? 'http://localhost:5173',
-  demoMode: (process.env.DEMO_MODE ?? 'true') === 'true',
-  deploymentFile: resolveDeploymentFile(),
+  network,
+  rpcUrl:
+    env.CHAIN_RPC_URL ||
+    (network === 'sepolia'
+      ? env.SEPOLIA_RPC_URL || 'https://ethereum-sepolia-rpc.publicnode.com'
+      : 'http://127.0.0.1:8545'),
+  port: env.API_PORT,
+  corsOrigin: env.CORS_ORIGIN,
+  demoMode: env.DEMO_MODE === 'true',
+  deploymentFile,
   dataDir: resolve(process.cwd(), 'data'),
-  demoMnemonic: process.env.DEMO_MNEMONIC ?? 'test test test test test test test test test test test junk',
-  termsParser: process.env.TERMS_PARSER ?? 'demo',
-  geminiApiKey: process.env.GEMINI_API_KEY ?? '',
-  geminiModel: process.env.GEMINI_MODEL ?? '',
-  verifierSecret: process.env.VERIFIER_SECRET || process.env.AUTH_SECRET || 'credify-verifier-secret-test'
+  demoMnemonic: env.DEMO_MNEMONIC,
+  termsParser: env.TERMS_PARSER,
+  geminiApiKey: env.GEMINI_API_KEY,
+  geminiModel: env.GEMINI_MODEL,
+  verifierSecret: env.AUTH_SECRET || env.VERIFIER_SECRET
 };
+
+export function validateEnvironment(rawEnv: Record<string, unknown>) {
+  return envSchema.safeParse(rawEnv);
+}
+
+export { envSchema, resolveDeploymentFile };
