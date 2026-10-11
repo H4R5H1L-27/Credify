@@ -264,5 +264,60 @@ Critical edge cases must also be strictly enforced and surfaced with clear error
 ### Status
 Accepted and verified in WP6.
 
+---
+
+## ADR-008: Console Teaching Features, Architectural Pedagogy, Trust & Threat Model, and Strict UI Boundary Enforcement
+
+### Context
+Work Package 7 establishes the Credify Technical Console (`/console`) as a comprehensive pedagogical showcase for blockchain students and evaluators, while preserving the user-facing product workspace (`/app`) as a clean, institutional interface.
+Key requirements:
+1. "Explain this transaction" interactive breakdown for on-chain transactions.
+2. An on-chain loan state inspector (`/console/inspector`) auditing storage slots, lifecycle state transitions, vault balance breakdowns, and protocol invariants.
+3. A Core Concepts teaching module (`/console/concepts`) with an interactive pro-rata waterfall simulator sandbox.
+4. A Trust Model and Threat Model section (`/console/trust-model`) stating trust boundaries, verifier responsibilities, and formal attack vector mitigations with strict plain-language academic disclaimers.
+5. Strict UI boundary enforcement: Product pages must contain zero chain-internals widgets and zero imports from `components/console` or `pages/console`.
+6. Administrative controls (time-warp, reset, scenario seeding) must run only when `NETWORK=local` / `localhost` and otherwise be disabled and guarded with 403 responses. All simulation tools previously located on product pages must be moved to the Console.
+
+### Decision
+1. **Interactive Transaction Explainer Drawer (`TransactionExplainerDrawer.tsx`)**:
+   - Integrated into `TransactionDetailModal.tsx` and accessible via "Explain & Inspect" in `ConsoleTransactionsPage.tsx`.
+   - Breaks down transactions into 5 pedagogical sections:
+     - Operation Intent & Summary (e.g. Syndicate Contribution, Controlled Disbursement, Repayment Settlement, Default Consensus).
+     - State Machine Lifecycle Impact & EVM storage slot modifications.
+     - Invariants & Security Guards Enforced (Reentrancy locks, KYC attestations, timestamp boundaries, merchant caps).
+     - Gas Economics & EVM Footprint (SSTORE storage cost breakdown vs memory, effective gas price in Gwei, fee in ETH).
+     - Decoded Event Log Interpretations with indexer ingestion rationale.
+2. **On-Chain Loan State Inspector (`ConsoleLoanInspectorPage.tsx` at `/console/inspector`)**:
+   - Includes real-time pool selector and custom contract address input.
+   - Inspects enum state machine transitions (Funding, Active, Repaid, Defaulted, Cancelled) and transition blockers.
+   - Displays vault escrow balance decomposition and `distributable()` waterfall math (ADR-001).
+   - Audits syndicate lender positions (share %, claimable dividends, default voting status) and allowlisted supplier spend caps.
+   - Executes real-time automated verification of 5 mathematical protocol invariants: Vault Solvency, Spend Discipline, Zero Direct Borrower Custody, Pull-Payment Reentrancy Defense, and Deterministic Reputation Provenance.
+3. **Core Concepts Educational Suite & Interactive Sandbox (`ConsoleConceptsPage.tsx` at `/console/concepts`)**:
+   - Concept 1: Multi-lender coordination without central custody (escrow vs custodial P2P, all-or-nothing funding deadlines, pull-payment safety).
+   - Concept 2: Controlled disbursements via allowlisted suppliers (anti-diversion mechanics, zero raw borrower custody, on-chain vendor caps).
+   - Concept 3: Non-locking pro-rata waterfall mathematics and integer division safety.
+   - Interactive Live Sandbox: Allows students to manipulate target ETH, supplier spending, APR, repayment, terminal status, and lender shares to calculate real-time distributable balances, unspent refunds, and net yields.
+4. **Trust Model & Formal Threat Analysis (`ConsoleTrustModelPage.tsx` at `/console/trust-model`)**:
+   - Participant Trust Matrix: Detailed breakdown of what Syndicate Lenders, Borrowers, and Suppliers trust in the protocol.
+   - Semi-Trusted Attestation Role: Specification of the authorized verifier's responsibility issuing salted credential hashes (`keccak256(role, applicant, expiry, salt)`).
+   - Authoritative Plain-Language Academic Disclaimer: Plain wording that this is an academic demonstration on Sepolia testnet with test ETH, not a government ID check or regulated KYC, with no audit warranty or real-money utility.
+   - 6-Vector Threat Analysis: Formal attack scenarios and contract mitigations for Sybil Borrowers, Supplier Collusion, Malicious Reentrancy, Premature Default Griefing, Locked Unspent Principal, and Underfunded Deadlines.
+5. **Administrative Controls Guarding**:
+   - `apps/api/src/server.ts`: Restricted `/demo/reset`, `/evaluator/seed-scenario`, and `/evaluator/time-warp` to `config.network === 'localhost'`. Requests from non-local networks return `403 Forbidden`.
+   - `ConsoleEvaluatorToolsPage.tsx`: Detects network status and renders an informative alert disabling time-warp, scenario seeding, and reset on remote networks, while providing quick-expiry presets (+8d, +15d, +18d) on local nodes.
+6. **Product Page Sanitization**:
+   - Removed inline EVM time-warp helper buttons from `LoanDetailPage.tsx` and `LenderGovernancePage.tsx`. Product pages now display clean informational links to the Technical Console Evaluator Tools when running on local nodes.
+   - Added minimal product footer in `AppShell.tsx` linking to the Trust & Threat Model and the Technical Console.
+7. **Automated Console Boundary Test (`console-boundary.test.ts`)**:
+   - Added automated Node.js test in `apps/api/src/console-boundary.test.ts` scanning the entire web frontend source tree.
+   - Asserts that zero product files import from `components/console` or `pages/console`.
+   - Asserts that zero product pages contain internal console widgets (`SystemTopologyCanvas`, `TopologyNodeInspector`, `ActionTraceEngine`, `IsometricBlockStream`, `CryptoBlock3D`, `ReplayController`).
+   - Integrated into `npm test`, guaranteeing immediate build failure upon any architectural leakage.
+
+### Status
+Accepted and verified in WP7.
+
+
 
 

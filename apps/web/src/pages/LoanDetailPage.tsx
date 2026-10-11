@@ -86,7 +86,6 @@ export const LoanDetailPage: React.FC = () => {
   const [spendEth, setSpendEth] = useState('1');
   const [spendCategory, setSpendCategory] = useState('Hardware & Lab Equipment');
   const [repayEth, setRepayEth] = useState('2');
-  const [isWarpingTime, setIsWarpingTime] = useState(false);
 
   if (loanLoading) {
     return (
@@ -289,28 +288,6 @@ export const LoanDetailPage: React.FC = () => {
       await refetchActivity();
     } catch {
       // Surfaced in txState
-    }
-  };
-
-  const handleFastForwardMaturity = async () => {
-    setIsWarpingTime(true);
-    try {
-      await api.timeWarp(15 * 86400); // Fast forward 15 days past 14-day duration
-      await refetchLoan();
-      await refetchActivity();
-    } finally {
-      setIsWarpingTime(false);
-    }
-  };
-
-  const handleFastForwardFunding = async () => {
-    setIsWarpingTime(true);
-    try {
-      await api.timeWarp(8 * 86400); // Fast forward 8 days past 7-day funding duration
-      await refetchLoan();
-      await refetchActivity();
-    } finally {
-      setIsWarpingTime(false);
     }
   };
 
@@ -953,17 +930,13 @@ export const LoanDetailPage: React.FC = () => {
               {/* Local Simulation Helper: Expire Funding Window */}
               {targetNetwork === 'localhost' && !isPastFundingDeadline && (
                 <div className="pt-2 border-t border-slate-200/80 flex items-center justify-between text-xs">
-                  <span className="text-slate-600 font-medium">Testing time-based expiry:</span>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={handleFastForwardFunding}
-                    loading={isWarpingTime}
-                    icon={<FastForward className="w-3.5 h-3.5 text-amber-600" />}
-                    className="text-[11px] font-sans border-amber-300 text-amber-900 bg-amber-50 hover:bg-amber-100"
+                  <span className="text-slate-500 font-medium">Testing time-based expiry on local node?</span>
+                  <Link
+                    to="/console/evaluator-tools"
+                    className="text-[11px] font-sans text-yellow-800 hover:text-yellow-950 font-semibold hover:underline"
                   >
-                    Simulate Funding Expiry (+8 Days)
-                  </Button>
+                    Open Console Time Simulator &rarr;
+                  </Link>
                 </div>
               )}
             </div>
@@ -1777,25 +1750,22 @@ export const LoanDetailPage: React.FC = () => {
 
           {/* Evaluator Fast-Forward Time Helper (Local Hardhat Only) */}
           {!isPastMaturity && isActive && targetNetwork === 'localhost' && (
-            <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+            <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
               <div className="space-y-0.5">
-                <div className="font-bold text-amber-900 flex items-center gap-1.5">
-                  <FlaskConical className="w-4 h-4 text-amber-600" />
-                  <span>Evaluator Testbed: Fast-Forward Time Past Maturity</span>
+                <div className="font-bold text-slate-800 flex items-center gap-1.5">
+                  <FlaskConical className="w-4 h-4 text-slate-600" />
+                  <span>Maturity Verification Pending</span>
                 </div>
-                <div className="text-xs text-amber-800 leading-snug font-medium">
-                  Smart contract strictly checks <code>block.timestamp &gt;= maturity</code>. Advance local EVM node clock by 15 days to test real default voting without administrator shortcuts.
+                <div className="text-xs text-slate-600 leading-snug font-medium">
+                  Smart contract requires <code>block.timestamp &gt;= maturity</code> before default voting is enabled. On local nodes, time can be advanced via the Console.
                 </div>
               </div>
-              <Button
-                size="sm"
-                variant="outline"
-                loading={isWarpingTime}
-                onClick={handleFastForwardMaturity}
-                className="text-xs shrink-0 border border-amber-300 bg-white hover:bg-amber-100 text-amber-900 font-semibold"
+              <Link
+                to="/console/evaluator-tools"
+                className="text-xs text-yellow-800 hover:text-yellow-950 font-bold hover:underline shrink-0"
               >
-                Fast-Forward +15 Days
-              </Button>
+                Open Time Simulator &rarr;
+              </Link>
             </div>
           )}
 

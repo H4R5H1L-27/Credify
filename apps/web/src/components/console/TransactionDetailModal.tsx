@@ -13,7 +13,10 @@ import {
   ChevronRight,
   RotateCcw,
   Zap,
+  BookOpen,
+  FileText,
 } from 'lucide-react';
+import { TransactionExplainerDrawer } from './TransactionExplainerDrawer';
 
 export interface TransactionDetailModalProps {
   txHash: string | null;
@@ -29,6 +32,7 @@ export const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
   onSelectBlock,
 }) => {
   const navigate = useNavigate();
+  const [mode, setMode] = useState<'explain' | 'receipt'>('explain');
   const [showRawJson, setShowRawJson] = useState(false);
   const [showFullCalldata, setShowFullCalldata] = useState(false);
 
@@ -142,13 +146,45 @@ export const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
             </div>
           </div>
 
-          {/* Value & Gas Accounting Strip */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
-              <span className="text-[10px] text-slate-500 font-bold uppercase">ETH Value</span>
-              <div className="text-sm font-black text-slate-950">{valueEth} ETH</div>
-              <div className="text-[10px] text-slate-600 font-medium">{tx.valueWei} wei</div>
-            </div>
+          {/* View Mode Segmented Switcher */}
+          <div className="flex rounded-xl bg-slate-100 p-1 border border-slate-200">
+            <button
+              type="button"
+              onClick={() => setMode('explain')}
+              className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-bold font-sans flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                mode === 'explain'
+                  ? 'bg-[#ffe600] text-black border border-yellow-400 shadow-xs'
+                  : 'text-slate-600 hover:text-slate-950'
+              }`}
+            >
+              <BookOpen className="w-3.5 h-3.5" />
+              <span>Explain This Transaction</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setMode('receipt')}
+              className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-bold font-sans flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                mode === 'receipt'
+                  ? 'bg-[#ffe600] text-black border border-yellow-400 shadow-xs'
+                  : 'text-slate-600 hover:text-slate-950'
+              }`}
+            >
+              <FileText className="w-3.5 h-3.5" />
+              <span>Technical EVM Receipt</span>
+            </button>
+          </div>
+
+          {mode === 'explain' ? (
+            <TransactionExplainerDrawer tx={tx} />
+          ) : (
+            <>
+              {/* Value & Gas Accounting Strip */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
+                  <span className="text-[10px] text-slate-500 font-bold uppercase">ETH Value</span>
+                  <div className="text-sm font-black text-slate-950">{valueEth} ETH</div>
+                  <div className="text-[10px] text-slate-600 font-medium">{tx.valueWei} wei</div>
+                </div>
 
             <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
               <span className="text-[10px] text-slate-500 font-bold uppercase">Gas Used</span>
@@ -280,6 +316,8 @@ export const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
               </pre>
             )}
           </div>
+            </>
+          )}
         </div>
       )}
     </Modal>

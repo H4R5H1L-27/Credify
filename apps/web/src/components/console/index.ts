@@ -21,3 +21,4 @@ export * from './TraceConnection';
 export * from './TracePlayback';
 export * from './ReplayStageCard';
 export * from './ReplayController';
+export * from './TransactionExplainerDrawer';

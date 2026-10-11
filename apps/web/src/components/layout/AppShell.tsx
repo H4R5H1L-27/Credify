@@ -308,6 +308,33 @@ export const AppShell: React.FC = () => {
           <Outlet />
         </main>
       </div>
+
+      {/* Product Footer with Trust Model Reference */}
+      <footer className="border-t border-slate-200 bg-white py-3.5 px-4 sm:px-6 text-xs text-slate-500">
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2.5">
+          <div className="flex items-center gap-2">
+            <span className="font-bold text-slate-900">Credify</span>
+            <span>·</span>
+            <span>Multi-Lender Credit Protocol</span>
+          </div>
+
+          <div className="flex items-center gap-3 text-[11px] font-medium">
+            <Link
+              to="/console/trust-model"
+              className="text-slate-600 hover:text-black hover:underline"
+            >
+              Trust &amp; Threat Model
+            </Link>
+            <span className="text-slate-300">·</span>
+            <Link
+              to="/console/overview"
+              className="text-slate-600 hover:text-black hover:underline"
+            >
+              Technical Console
+            </Link>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 };

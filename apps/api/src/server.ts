@@ -196,6 +196,11 @@ export function buildServer(ctx: AppContext) {
   app.get('/api/v1/demo/principals', async () => principalList(chain));
 
   app.post('/api/v1/demo/reset', async (_req, reply) => {
+    if (config.network !== 'localhost') {
+      return reply.status(403).send({
+        error: 'Admin operations (state reset, time-warp, scenario seeding) are disabled on non-local networks.'
+      });
+    }
     await store.reset();
     await verificationStore.reset();
     await indexer.indexOnce();
@@ -308,9 +313,14 @@ export function buildServer(ctx: AppContext) {
   // Evaluator Simulation & Time-Warp Controls
   const seeder = new ScenarioSeeder(chain, loans, store, verificationStore, indexer);
 
-  app.post('/api/v1/evaluator/seed-scenario', async (_req, reply) => result(async () => {
-    return seeder.seedAll();
-  }, reply));
+  app.post('/api/v1/evaluator/seed-scenario', async (_req, reply) => {
+    if (config.network !== 'localhost') {
+      return reply.status(403).send({
+        error: 'Scenario seeding is disabled on non-local networks.'
+      });
+    }
+    return result(async () => seeder.seedAll(), reply);
+  });
 
   app.get('/api/v1/evaluator/wallets', async (_req, reply) => result(async () => {
     const wallets = await Promise.all(DEMO_ACCOUNTS.map(async (acc) => {
@@ -355,13 +365,20 @@ export function buildServer(ctx: AppContext) {
     return wallets;
   }, reply));
 
-  app.post('/api/v1/evaluator/time-warp', async (req, reply) => result(async () => {
-    const body = req.body as { seconds?: number };
-    const seconds = Number(body?.seconds) || 15 * 24 * 60 * 60;
-    const res = await chain.increaseTime(seconds);
-    await indexer.indexOnce();
-    return { success: true, warpedSeconds: seconds, currentTimestamp: res.currentTimestamp };
-  }, reply));
+  app.post('/api/v1/evaluator/time-warp', async (req, reply) => {
+    if (config.network !== 'localhost') {
+      return reply.status(403).send({
+        error: 'EVM time-warp manipulation is disabled on non-local networks.'
+      });
+    }
+    return result(async () => {
+      const body = req.body as { seconds?: number };
+      const seconds = Number(body?.seconds) || 15 * 24 * 60 * 60;
+      const res = await chain.increaseTime(seconds);
+      await indexer.indexOnce();
+      return { success: true, warpedSeconds: seconds, currentTimestamp: res.currentTimestamp };
+    }, reply);
+  });
 
   app.get('/api/v1/evaluator/time', async (req, reply) => result(async () => {
     const block = await chain.publicClient.getBlock();

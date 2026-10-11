@@ -16,6 +16,8 @@ import {
   ArrowLeft,
   Terminal,
   GraduationCap,
+  SearchCode,
+  BookOpen,
 } from 'lucide-react';
 import { AnimatedSyncPulse } from '../ui/MicroInteractions';
 
@@ -33,6 +35,14 @@ export const CONSOLE_NAV_ITEMS = [
       { path: '/console/transactions', label: 'Transactions', icon: ArrowLeftRight },
       { path: '/console/contracts', label: 'Contracts', icon: FileCode2 },
       { path: '/console/events', label: 'Events', icon: Layers },
+    ],
+  },
+  {
+    category: 'Pedagogy & Architecture',
+    items: [
+      { path: '/console/inspector', label: 'Loan Inspector', icon: SearchCode },
+      { path: '/console/concepts', label: 'Core Concepts', icon: BookOpen },
+      { path: '/console/trust-model', label: 'Trust & Threat Model', icon: ShieldCheck },
     ],
   },
   {

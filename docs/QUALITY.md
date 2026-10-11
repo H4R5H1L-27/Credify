@@ -333,3 +333,45 @@ The contract test suite (`contracts/test/Credify.test.ts`) tests all boundary ed
 - **`ScenarioSeeder`**:
   - Seeds all 5 protocol lifecycle states on local EVM (`Repaid`, `Cancelled`, `Defaulted`, `Active`, `Funding`).
   - Borrower credit history demonstrates verifiable ledger trajectory (Initial: 50 -> Repaid: 58 -> Defaulted: 38).
+
+---
+
+## 11. Work Package 7: Technical Console Teaching Features & UI Boundary Separation
+
+Following the implementation of Work Package 7 (Transaction Explainer, Loan State Inspector, Concepts with Interactive Sandbox, Trust Model & Threat Analysis, Admin Tool Guarding, and Automated Console Boundary Enforcement):
+
+### 11.1 Pedagogical Features in Technical Console (`/console`)
+| Feature | Route / Component | Pedagogical Content & Interactive Capabilities | Status |
+| :--- | :--- | :--- | :--- |
+| **Explain This Transaction** | `TransactionExplainerDrawer.tsx` in `TransactionDetailModal.tsx` & `ConsoleTransactionsPage.tsx` | Interactive breakdown: (1) Operation intent narrative, (2) State machine impact & EVM storage slots mutated, (3) Invariants & security guards enforced, (4) Gas economics & EVM storage cost analysis, (5) Decoded event logs with indexer ingestion rationale. | **VERIFIED** |
+| **Loan State Inspector** | `ConsoleLoanInspectorPage.tsx` at `/console/inspector` | Pool selector dropdown & custom address input; enum state machine diagnostics & transition blockers; vault balance breakdown; `distributable()` waterfall math; syndicate lender positions; supplier allowlist caps; 5-item real-time automated invariant verification checklist. | **VERIFIED** |
+| **Core Concepts & Sandbox** | `ConsoleConceptsPage.tsx` at `/console/concepts` | Comprehensive walkthrough of: (1) Multi-lender coordination without central custody (escrow vs custodial P2P, pull payment pattern, refund guarantees), (2) Controlled disbursement via allowlisted suppliers (anti-diversion, zero direct borrower custody), (3) Pro-rata waterfall & unspent principal distribution with an **Interactive Live Simulator Sandbox** allowing students to manipulate parameters and verify exact payouts and net yields. | **VERIFIED** |
+| **Trust & Threat Model** | `ConsoleTrustModelPage.tsx` at `/console/trust-model` | Participant trust matrix (Lenders, Borrowers, Suppliers); semi-trusted role of the authorized verifier issuing salted credential hashes; mandatory academic disclaimer (not regulated KYC, testnet test ETH only, no audit warranty, zero real-money utility); formal 6-vector threat analysis (Sybil borrowers, supplier collusion, reentrancy, premature default griefing, locked capital, underfunded deadlines). | **VERIFIED** |
+
+### 11.2 Strict UI Separation & Automated Console Boundary Invariant Test
+- **Architectural Boundary Invariant**:
+  - `/app` is strictly dedicated to clean institutional product workflows (borrower, lender, and supplier portals; verification; agreement details; activity). Contains zero chain-internals widgets (no block streams, 3D block visuals, topology canvas, trace or replay, hash dumps, state-root or gas tables).
+  - All pedagogical features and diagnostic tools reside exclusively in `/console`.
+- **Automated Console Boundary Test (`apps/api/src/console-boundary.test.ts`)**:
+  - Recursively scans all `.ts` and `.tsx` source files in `apps/web/src`.
+  - Asserts that zero product files import from `components/console` or `pages/console` (only `App.tsx` router and files within `console/` are permitted).
+  - Asserts that zero product pages contain prohibited chain internal widgets (`SystemTopologyCanvas`, `TopologyNodeInspector`, `ActionTraceEngine`, `IsometricBlockStream`, `CryptoBlock3D`, `ReplayController`).
+  - Integrated into `npm test` and verified with 100% pass rate.
+- **Product Page Sanitization**:
+  - Removed inline EVM time-warp helper buttons from `LoanDetailPage.tsx` and `LenderGovernancePage.tsx`, replacing them with non-intrusive references to the Technical Console Evaluator Tools.
+  - Added clean product footer in `AppShell.tsx` linking to the Trust & Threat Model and Technical Console.
+
+### 11.3 Admin Controls Guarding & Network Isolation
+- **Backend API Guarding (`apps/api/src/server.ts`)**:
+  - Endpoints `/api/v1/demo/reset`, `/api/v1/evaluator/seed-scenario`, and `/api/v1/evaluator/time-warp` are strictly guarded by `config.network === 'localhost'`.
+  - Invocations from remote networks (such as Sepolia) immediately return `403 Forbidden` with a descriptive error.
+- **Frontend Diagnostics Guarding (`ConsoleEvaluatorToolsPage.tsx`)**:
+  - Detects network connection status. On non-local networks, displays an informative security banner and disables EVM block time manipulation, scenario seeding, and state resetting.
+  - On local Hardhat nodes, provides quick-expiry presets (+8d funding window, +15d maturity, +18d grace period) and full protocol scenario seeding.
+
+### 11.4 Verification & Quality Gates
+- **Contract Tests**: 33 passing Mocha/Ethers tests (`npm test -w @credify/contracts`).
+- **API & Boundary Tests**: 23 test suites passing/skipping cleanly (`npm test -w @credify/api`), including `console-boundary.test.ts`.
+- **Typecheck**: 0 TypeScript errors across all 4 monorepo packages (`npm run typecheck`).
+- **Production Build**: Clean Vite production build (`npm run build -w apps/web`) with zero bundle or compilation errors.
+

@@ -18,7 +18,7 @@ import {
 } from '../../components/ui';
 import { api } from '../../lib/api';
 import { DEMO_ACCOUNTS } from '@credify/shared';
-import { Wrench, Clock, RotateCcw, PartyPopper, Sparkles } from 'lucide-react';
+import { Wrench, Clock, RotateCcw, PartyPopper, Sparkles, Database, PlayCircle, AlertCircle, ShieldAlert } from 'lucide-react';
 
 export const ConsoleEvaluatorToolsPage: React.FC = () => {
   const { data: evaluatorData, refetch: refetchContracts } = useEvaluatorContracts();
@@ -28,15 +28,18 @@ export const ConsoleEvaluatorToolsPage: React.FC = () => {
   const [warpDays, setWarpDays] = useState('15');
   const [isWarping, setIsWarping] = useState(false);
   const [warpFeedback, setWarpFeedback] = useState<string | null>(null);
+  const [isSeeding, setIsSeeding] = useState(false);
+  const [seedFeedback, setSeedFeedback] = useState<string | null>(null);
   const [milestonePreview, setMilestonePreview] = useState<{ open: boolean; type: MilestoneType }>({
     open: false,
     type: 'IDENTITY_VERIFIED',
   });
   const [testCounter, setTestCounter] = useState(25.75);
 
-  const handleTimeWarp = async () => {
-    const days = Number(warpDays);
-    if (isNaN(days) || days <= 0) return;
+  const isLocal = health?.network === 'local' || health?.network === 'localhost' || health?.chainId === 31337;
+
+  const handleTimeWarpWithDays = async (days: number) => {
+    if (isNaN(days) || days <= 0 || !isLocal) return;
     setIsWarping(true);
     setWarpFeedback(null);
     try {
@@ -50,7 +53,26 @@ export const ConsoleEvaluatorToolsPage: React.FC = () => {
     }
   };
 
+  const handleTimeWarp = () => handleTimeWarpWithDays(Number(warpDays));
+
+  const handleSeedScenarios = async () => {
+    if (!isLocal) return;
+    setIsSeeding(true);
+    setSeedFeedback(null);
+    try {
+      await api.seedScenario();
+      setSeedFeedback('Successfully seeded all 5 lifecycle agreement pools (Repaid, Cancelled, Defaulted, Active, Funding) and verified demo accounts.');
+      await refetchContracts();
+      await refetchHealth();
+    } catch (err: any) {
+      setSeedFeedback(`Failed to seed scenarios: ${err.message}`);
+    } finally {
+      setIsSeeding(false);
+    }
+  };
+
   const handleReset = async () => {
+    if (!isLocal) return;
     await resetDemo.mutateAsync();
     await refetchContracts();
     await refetchHealth();
@@ -58,17 +80,40 @@ export const ConsoleEvaluatorToolsPage: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-xl font-bold font-sans tracking-tight text-slate-950 uppercase flex items-center gap-2">
-          <Wrench className="w-5 h-5 text-yellow-700" />
-          Academic &amp; Evaluator Diagnostics Suite
-        </h1>
-        <p className="text-xs text-slate-600 mt-0.5 font-medium">
-          Deterministic local environment controls, EVM block time manipulation, and academic testing accounts.
-        </p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <h1 className="text-xl font-bold font-sans tracking-tight text-slate-950 uppercase flex items-center gap-2">
+            <Wrench className="w-5 h-5 text-yellow-700" />
+            Academic &amp; Evaluator Diagnostics Suite
+          </h1>
+          <p className="text-xs text-slate-600 mt-0.5 font-medium">
+            Deterministic local environment controls, EVM block time manipulation, and academic testing accounts.
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <span className={`px-2.5 py-1 rounded-full text-xs font-mono font-bold border flex items-center gap-1.5 ${
+            isLocal ? 'bg-emerald-50 text-emerald-800 border-emerald-300' : 'bg-amber-50 text-amber-800 border-amber-300'
+          }`}>
+            <span className={`w-2 h-2 rounded-full ${isLocal ? 'bg-emerald-500' : 'bg-amber-500'}`} />
+            {isLocal ? 'LOCAL TESTBED ACTIVE' : `NETWORK: ${health?.network?.toUpperCase() || 'REMOTE'}`}
+          </span>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {!isLocal && (
+        <div className="p-4 rounded-xl bg-amber-50 border border-amber-300 flex items-start gap-3 text-xs text-amber-950">
+          <ShieldAlert className="w-5 h-5 text-amber-700 shrink-0 mt-0.5" />
+          <div className="space-y-1">
+            <div className="font-bold">EVM Admin Controls Disabled on Remote Testnet</div>
+            <div className="leading-relaxed">
+              You are connected to <strong>{health?.network}</strong> (Chain ID {health?.chainId}). EVM block time manipulation (<code>evm_increaseTime</code>), scenario seeding, and state resetting are administrative controls restricted to local Hardhat nodes (Chain 31337). On remote networks, block timestamps and state transitions are dictated by external consensus miners.
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* EVM Time-Warp Simulation */}
         <TechnicalPanel
           title="EVM Block Time Simulator"
@@ -85,20 +130,56 @@ export const ConsoleEvaluatorToolsPage: React.FC = () => {
                   type="number"
                   min="1"
                   max="365"
+                  disabled={!isLocal || isWarping}
                   value={warpDays}
                   onChange={(e) => setWarpDays(e.target.value)}
-                  className="w-32 px-3 py-1.5 rounded-lg bg-white border border-slate-300 font-mono text-xs text-slate-950 font-bold focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                  className="w-24 px-3 py-1.5 rounded-lg bg-white border border-slate-300 font-mono text-xs text-slate-950 font-bold focus:outline-none focus:ring-2 focus:ring-yellow-400 disabled:opacity-50"
                 />
                 <Button
                   size="sm"
                   variant="primary"
                   onClick={handleTimeWarp}
                   loading={isWarping}
+                  disabled={!isLocal}
                   icon={<Clock className="w-3.5 h-3.5" />}
                   className="text-xs font-bold"
                 >
                   Advance Time
                 </Button>
+              </div>
+            </div>
+
+            {/* Quick Presets */}
+            <div className="space-y-1.5">
+              <span className="text-[11px] font-bold text-slate-700 uppercase tracking-wider block">Quick Expiration Presets</span>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  disabled={!isLocal || isWarping}
+                  onClick={() => handleTimeWarpWithDays(8)}
+                  className="px-2.5 py-1 rounded-lg text-xs font-mono font-bold bg-white border border-slate-200 hover:border-yellow-400 text-slate-800 hover:text-black transition-colors disabled:opacity-40"
+                  title="Advances clock past 7-day funding window"
+                >
+                  +8d (Expire Funding)
+                </button>
+                <button
+                  type="button"
+                  disabled={!isLocal || isWarping}
+                  onClick={() => handleTimeWarpWithDays(15)}
+                  className="px-2.5 py-1 rounded-lg text-xs font-mono font-bold bg-white border border-slate-200 hover:border-yellow-400 text-slate-800 hover:text-black transition-colors disabled:opacity-40"
+                  title="Advances clock past 14-day duration"
+                >
+                  +15d (Expire Maturity)
+                </button>
+                <button
+                  type="button"
+                  disabled={!isLocal || isWarping}
+                  onClick={() => handleTimeWarpWithDays(18)}
+                  className="px-2.5 py-1 rounded-lg text-xs font-mono font-bold bg-white border border-slate-200 hover:border-yellow-400 text-slate-800 hover:text-black transition-colors disabled:opacity-40"
+                  title="Advances clock past maturity and 3-day grace period"
+                >
+                  +18d (Grace Period End)
+                </button>
               </div>
             </div>
 
@@ -109,14 +190,45 @@ export const ConsoleEvaluatorToolsPage: React.FC = () => {
             )}
 
             <div className="text-xs text-slate-600 font-medium leading-relaxed">
-              Advancing time allows testing loan maturity expiration without waiting days. Once maturity expires on an active loan with outstanding debt, syndicate lenders can cast capital-weighted default votes.
+              Advancing time allows testing loan maturity expiration without waiting days. Once maturity and grace period expire on an active loan with unpaid debt, syndicate lenders can cast capital-weighted default votes.
             </div>
+          </div>
+        </TechnicalPanel>
+
+        {/* Protocol Scenario Seeder */}
+        <TechnicalPanel
+          title="Protocol Scenario Seeder"
+          subtitle="Deploy and populate all 5 lifecycle agreement states in a single deterministic execution."
+          badge={<span className="font-mono text-xs font-bold text-indigo-800 bg-indigo-50 border border-indigo-300 px-2 py-0.5 rounded">LIFECYCLE SEEDER</span>}
+        >
+          <div className="space-y-4 font-sans text-xs">
+            <p className="text-xs text-slate-700 font-medium leading-relaxed">
+              Deploys authoritative contracts for all 5 protocol states: <strong>Repaid</strong> (+8 reputation), <strong>Cancelled</strong> (unfunded refund), <strong>Defaulted</strong> (-20 reputation penalty), <strong>Active</strong> (spending and repayment ready), and <strong>Funding</strong> (syndicate commitments).
+            </p>
+
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={handleSeedScenarios}
+              loading={isSeeding}
+              disabled={!isLocal}
+              icon={<PlayCircle className="w-3.5 h-3.5 text-yellow-700" />}
+              className="text-xs font-bold w-full justify-center"
+            >
+              Seed Full Protocol Scenarios
+            </Button>
+
+            {seedFeedback && (
+              <div className="p-3 rounded-lg bg-emerald-50 border border-emerald-300 font-mono text-xs font-bold text-emerald-900">
+                {seedFeedback}
+              </div>
+            )}
           </div>
         </TechnicalPanel>
 
         {/* State Reset & Reindex */}
         <TechnicalPanel
-          title="Database &amp; Read-Model Reset"
+          title="Projection Store Reset"
           subtitle="Re-index events from Genesis (Block #0) through the current node head."
           badge={<TechnicalStatus status="ACTIVE" size="sm" />}
         >
@@ -130,8 +242,9 @@ export const ConsoleEvaluatorToolsPage: React.FC = () => {
               variant="danger"
               onClick={handleReset}
               loading={resetDemo.isPending}
+              disabled={!isLocal}
               icon={<RotateCcw className="w-3.5 h-3.5" />}
-              className="text-xs font-bold"
+              className="text-xs font-bold w-full justify-center"
             >
               Reset Projection Store
             </Button>

@@ -40,6 +40,8 @@ export function useLoan(poolAddress?: string) {
   });
 }
 
+export const useLoanDetail = useLoan;
+
 export function useLoanActivity(poolAddress?: string) {
   return useQuery({
     queryKey: poolAddress ? queryKeys.loanActivity(poolAddress) : ['loans', 'null', 'activity'],

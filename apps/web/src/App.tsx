@@ -53,6 +53,9 @@ import {
   ConsoleReplayPage,
   ConsoleEvaluatorToolsPage,
   ConsoleEvaluatorPage,
+  ConsoleLoanInspectorPage,
+  ConsoleConceptsPage,
+  ConsoleTrustModelPage,
 } from './pages/console';
 
 const queryClient = new QueryClient({
@@ -164,6 +167,9 @@ export const App: React.FC = () => {
                   <Route path="trace" element={<ConsoleTracePage />} />
                   <Route path="replay" element={<ConsoleReplayPage />} />
                   <Route path="evaluator-tools" element={<ConsoleEvaluatorToolsPage />} />
+                  <Route path="inspector" element={<ConsoleLoanInspectorPage />} />
+                  <Route path="concepts" element={<ConsoleConceptsPage />} />
+                  <Route path="trust-model" element={<ConsoleTrustModelPage />} />
                 </Route>
 
                 {/* Catch-all */}

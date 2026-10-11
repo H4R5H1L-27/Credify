@@ -18,7 +18,6 @@ import {
   MilestoneCelebration,
 } from '../../components/ui';
 import { formatEther, formatEtherNum, formatDate } from '../../lib/utils';
-import { api } from '../../lib/api';
 import {
   Vote,
   ArrowLeft,
@@ -31,7 +30,6 @@ import {
 export const LenderGovernancePage: React.FC = () => {
   const { address } = useIdentity();
   const { data: loans, isLoading, refetch: refetchLoans } = useLoans();
-  const [isWarpingTime, setIsWarpingTime] = React.useState(false);
   const [showMilestone, setShowMilestone] = React.useState(false);
   const [votedPoolAddress, setVotedPoolAddress] = React.useState<string>('');
 
@@ -60,16 +58,6 @@ export const LenderGovernancePage: React.FC = () => {
       setShowMilestone(true);
     } catch {
       // Handled inside txState
-    }
-  };
-
-  const handleFastForwardMaturity = async () => {
-    setIsWarpingTime(true);
-    try {
-      await api.timeWarp(15 * 86400);
-      await refetchLoans();
-    } finally {
-      setIsWarpingTime(false);
     }
   };
 
@@ -324,22 +312,19 @@ export const LenderGovernancePage: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Evaluator Fast-Forward Helper */}
+                  {/* Evaluator Helper Reference */}
                   {!isPastMaturity && isActive && (
-                    <div className="p-3.5 rounded-xl bg-yellow-50 border border-yellow-300 flex items-center justify-between text-xs">
-                      <div className="text-[11px] text-yellow-950 flex items-center gap-1.5 font-mono font-bold">
-                        <FlaskConical className="w-4 h-4 text-yellow-700 shrink-0" />
-                        <span>Maturity timestamp not yet reached. Fast-forward local EVM clock to test contract consensus.</span>
+                    <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between text-xs">
+                      <div className="text-[11px] text-slate-700 flex items-center gap-1.5 font-medium">
+                        <FlaskConical className="w-4 h-4 text-slate-500 shrink-0" />
+                        <span>Maturity timestamp not yet reached. Governance default voting unlocks after maturity + grace period.</span>
                       </div>
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        loading={isWarpingTime}
-                        onClick={handleFastForwardMaturity}
-                        className="text-xs font-bold shrink-0 border-yellow-400"
+                      <Link
+                        to="/console/evaluator-tools"
+                        className="text-xs text-yellow-800 hover:text-yellow-950 font-bold hover:underline shrink-0"
                       >
-                        Fast-Forward +15 Days
-                      </Button>
+                        Console Time Simulator &rarr;
+                      </Link>
                     </div>
                   )}
 

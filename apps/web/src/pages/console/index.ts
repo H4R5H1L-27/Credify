@@ -10,3 +10,6 @@ export * from './ConsoleTracePage';
 export * from './ConsoleReplayPage';
 export * from './ConsoleEvaluatorToolsPage';
 export * from './ConsoleEvaluatorPage';
+export * from './ConsoleLoanInspectorPage';
+export * from './ConsoleConceptsPage';
+export * from './ConsoleTrustModelPage';

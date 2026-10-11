@@ -24,6 +24,7 @@ import {
   FileCode2,
   RotateCcw,
   Zap,
+  Sparkles,
 } from 'lucide-react';
 
 export const ConsoleTransactionsPage: React.FC = () => {
@@ -243,8 +244,10 @@ export const ConsoleTransactionsPage: React.FC = () => {
                       type="button"
                       onClick={() => setSelectedTx(tx.hash)}
                       className="px-3 py-1 rounded-lg bg-[#ffe600] text-black hover:bg-yellow-400 border border-yellow-400 font-bold inline-flex items-center gap-1 transition-colors cursor-pointer shadow-xs ml-1"
+                      title="Explain transaction operation & inspect on-chain receipt"
                     >
-                      <span>Inspect Receipt</span>
+                      <Sparkles className="w-3 h-3 text-yellow-950" />
+                      <span>Explain &amp; Inspect</span>
                       <ArrowRight className="w-3 h-3" />
                     </button>
                   </div>
