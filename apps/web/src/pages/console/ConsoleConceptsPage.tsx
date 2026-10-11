@@ -14,6 +14,8 @@ import {
   RotateCcw,
   AlertTriangle,
   Lightbulb,
+  Zap,
+  BarChart3,
 } from 'lucide-react';
 
 export const ConsoleConceptsPage: React.FC = () => {
@@ -367,6 +369,68 @@ export const ConsoleConceptsPage: React.FC = () => {
           </div>
         </div>
       </TechnicalPanel>
+
+      {/* ═══════════════════════════════════════════════════════════════
+          CONCEPT 4: ACADEMIC STRETCH ARCHITECTURE (EIP-1167 & SYBIL DEFENSE)
+          ═══════════════════════════════════════════════════════════════ */}
+      <TechnicalPanel
+        title="4. Academic Stretch Architecture: EIP-1167 Proxies & Sybil-Resistant Scoring"
+        subtitle="Advanced EVM engineering paradigms: minimal bytecode proxy cloning and volume-weighted counterparty diversity."
+        badge={<span className="font-mono text-xs font-bold text-indigo-950 bg-indigo-100 border border-indigo-300 px-2 py-0.5 rounded">EIP-1167 &amp; SYBIL DEFENSE</span>}
+      >
+        <div className="space-y-4 font-sans text-xs">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="p-4 rounded-xl bg-white border border-slate-200 space-y-3">
+              <div className="flex items-center gap-2">
+                <Zap className="w-4 h-4 text-amber-600" />
+                <span className="font-bold text-slate-950 text-sm">EIP-1167 Minimal Proxy Clones</span>
+              </div>
+              <p className="text-slate-600 leading-relaxed font-medium">
+                Standard contract deployment via <code>new LoanPool(...)</code> writes ~11.2 KB of runtime bytecode to state per loan, consuming <strong>2,787,646 gas</strong>. By deploying an immutable master implementation and cloning 45-byte minimal proxies via <code>Clones.clone()</code>, pool creation costs drop to <strong>580,339 gas</strong> — achieving a <strong>79.18% gas reduction (saving &gt;2.2M gas per pool)</strong>.
+              </p>
+              <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-200 font-mono text-[11px] text-slate-800 space-y-1">
+                <div className="flex justify-between">
+                  <span>Standard new LoanPool:</span>
+                  <span className="font-bold text-rose-700">2,787,646 gas</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>EIP-1167 Cloned Pool:</span>
+                  <span className="font-bold text-emerald-700">580,339 gas</span>
+                </div>
+                <div className="flex justify-between border-t border-slate-200 pt-1 font-bold">
+                  <span>Net Gas Reduction:</span>
+                  <span className="text-indigo-700">-79.18% (&gt;2.2M gas saved)</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-4 rounded-xl bg-white border border-slate-200 space-y-3">
+              <div className="flex items-center gap-2">
+                <BarChart3 className="w-4 h-4 text-emerald-600" />
+                <span className="font-bold text-slate-950 text-sm">Sybil-Resistant Weighted Reputation</span>
+              </div>
+              <p className="text-slate-600 leading-relaxed font-medium">
+                Flat linear reputation (+8 / -20) is vulnerable to wash-loan attacks where a borrower cycles 7 self-funded 0.001 ETH loans to reach a 100 score before defaulting on a large loan. Credify&apos;s <code>WeightedReputationRegistry</code> scales points by principal volume tier and hard-caps scores based on counterparty diversity:
+              </p>
+              <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-200 font-mono text-[11px] text-slate-800 space-y-1">
+                <div className="flex justify-between">
+                  <span>Single-Lender Wash Attack (&lt;2 lenders):</span>
+                  <span className="font-bold text-rose-700">Hard-Capped at 65</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Partial Diversity (&lt;4 lenders):</span>
+                  <span className="font-bold text-amber-700">Hard-Capped at 80</span>
+                </div>
+                <div className="flex justify-between border-t border-slate-200 pt-1 font-bold">
+                  <span>Diverse Syndicate (&ge;4 lenders + vol):</span>
+                  <span className="text-emerald-700">Unlocks Tier-1 (80-100)</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </TechnicalPanel>
     </div>
   );
 };
+

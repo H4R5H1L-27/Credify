@@ -3,7 +3,10 @@
 /* eslint-disable */
 export * as loanFactorySol from './LoanFactory.sol/index.js';
 export * as loanPoolSol from './LoanPool.sol/index.js';
+export * as clones from './clones/index.js';
+export * as reputation from './reputation/index.js';
 export * as test from './test/index.js';
+export * as token from './token/index.js';
 export { IKYCRegistry__factory } from './IKYCRegistry__factory.js';
 export { KYCRegistry__factory } from './KYCRegistry__factory.js';
 export { ReputationRegistry__factory } from './ReputationRegistry__factory.js';

@@ -420,8 +420,35 @@ Work Package 10 governs the deployment and verification of the Credify credit pr
 ### Status
 Accepted and verified in WP10.
 
+---
 
+## ADR-011: Academic Stretch Architecture — EIP-1167 Minimal Proxy Clones, Sybil-Resistant Reputation, and Mock Stablecoin Integration (WP11)
 
+### Context
+Work Package 11 specifies stretch engineering goals for academic grading and technical demonstration:
+1. An EIP-1167 minimal proxy clone variant of `LoanPool` with automated gas benchmarking against standard instantiation.
+2. Reputation weighted by loan volume and counterparty diversity to resist Sybil wash-loan farming.
+3. A mock ERC-20 stablecoin (`MockUSDC`) for multi-currency credit pool demonstrations.
 
+### Decisions
+1. **EIP-1167 Minimal Proxy Clone Architecture (`LoanPoolCloneable.sol` & `LoanPoolCloneFactory.sol`)**:
+   - Master implementation contract (`LoanPoolCloneable`) inherits OpenZeppelin `Initializable` and `ReentrancyGuard`.
+   - Implementation constructor invokes `_disableInitializers()` to permanently lock master contract initialization.
+   - `LoanPoolCloneFactory` leverages OpenZeppelin `Clones.clone(implementation)` to deploy 45-byte runtime proxies per loan, followed by storage initialization via `initialize(...)`.
+   - Protocol invariants and lifecycle states operate identically to standard `LoanPool`.
+2. **Empirical Gas Benchmarking (`GasComparison.test.ts` & `docs/EIP1167_GAS_ANALYSIS.md`)**:
+   - Standard `new LoanPool` creation: **2,787,646 gas**.
+   - Cloned `LoanPoolCloneable` creation: **580,339 gas**.
+   - Net deployment gas reduction: **79.18% (over 2.2 million gas saved per loan pool)**.
+   - Published comprehensive analysis in `docs/EIP1167_GAS_ANALYSIS.md`.
+3. **Sybil-Resistant Weighted Reputation Scoring (`WeightedReputationRegistry.sol`)**:
+   - Implemented `recordOutcomeWeighted(borrower, successful, loanVolumeWei, lenders)`.
+   - Tiered volume bonus: `< 0.1 ETH` (+1 pt), `0.1 - 1 ETH` (+3 pts), `1 - 5 ETH` (+6 pts), `≥ 5 ETH` (+8 pts).
+   - Counterparty diversity caps: A borrower with $< 2$ unique lenders cannot exceed a score of 65; $< 4$ unique lenders cannot exceed 80.
+   - Prevents self-funded wash-loan farming attacks while rewarding genuine multi-lender credit history.
+   - Fully backward compatible with standard `recordOutcome(borrower, successful)`.
+4. **Mock ERC-20 Stablecoin (`MockUSDC.sol`)**:
+   - Deploys 6-decimal standard ERC-20 token with testnet minting faucet (`mint(to, amount)`) for simulated stablecoin syndicated debt facilities.
 
-
+### Status
+Accepted and verified in WP11 with 11 passing stretch tests (44 total contract tests).
