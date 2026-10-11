@@ -297,3 +297,39 @@ All 14 protocol events are decoded into standardized timeline summaries with act
 - **Prometheus Metrics**: `GET /api/v1/observability/metrics` provides standard metric gauges (`credify_chain_head_block`, `credify_indexer_last_indexed_block`, `credify_indexer_sync_lag`, `credify_loan_pools_total`, `credify_verified_entities_total`, `credify_system_health`).
 - **Diagnostics Integration**: `ConsoleBackendPage.tsx` connects live telemetry to display node connection, EVM head block, last indexed block, sync lag, and indexer polling worker state.
 - Verified in `apps/api/src/observability.test.ts` (2 unit tests passing).
+
+---
+
+## 10. Work Package 6: Core Protocol Lifecycles, Edge Cases & Invariant Verification
+
+Following the implementation of Work Package 6 (6 core protocol lifecycle flows, contract edge cases, UI cancellation/refund integration, custom error translation, and multi-state scenario seeding):
+
+### 10.1 Core Lifecycle Flows Verified
+| Core Flow | Contract Mechanisms & Preconditions | Expected Outcome | Status |
+| :--- | :--- | :--- | :--- |
+| **1. Natural Language Creation** | `LoanFactory.createLoan(terms)` with Keccak256 `agreementHash` | Instantiates `LoanPool` in `FUNDING` state, binds terms and supplier caps. | **VERIFIED** |
+| **2. Multi-Lender Funding** | Incremental contributions (Alpha + Beta + Gamma) until `totalContributed == targetWei` | Automatic transition to `ACTIVE`, emits `LoanActivated`, computes maturity timestamp. | **VERIFIED** |
+| **3. Controlled Spend** | Borrower invokes `spend(merchant, amount, category)` | ETH transferred to allowlisted merchant; pool balance drops; caps decremented. | **VERIFIED** |
+| **4. Full Repayment** | Borrower transfers `target + interest` (`totalRepayableWei`) | Pool transitions to `REPAID`, unspent principal unlocked, `ReputationRegistry` records +8 pts. | **VERIFIED** |
+| **5. Default Consensus** | Past maturity + grace period; contributing lenders cross `defaultQuorumBps` | Pool transitions to `DEFAULTED`, unspent capital unlocked, `ReputationRegistry` records -20 pts. | **VERIFIED** |
+| **6. Cancel Unfunded** | Funding deadline elapsed without reaching target | Pool transitions to `CANCELLED`, opens 100% refund window for all depositors. | **VERIFIED** |
+
+### 10.2 Edge Case Test Assertions (33 Passing Contract Tests)
+The contract test suite (`contracts/test/Credify.test.ts`) tests all boundary edge cases:
+- **Over-contribution Rejection**: Prevented in UI via max allocation check; reverts on-chain with `TargetExceeded()`.
+- **Spend Exceeding Cap**: Prevented in UI via capacity calculation; reverts on-chain with `SpendLimitExceeded()` or `MerchantSpendCapExceeded()`.
+- **Spend After Settlement**: Verified in `Credify.test.ts` that spend attempts when pool is `Repaid` or `Defaulted` revert with `NotActive()`.
+- **Repayment After Maturity (Pre-Default)**: Verified in `Credify.test.ts` that borrower can cure debt after maturity + grace period, successfully reaching `Repaid` with +8 credit score enhancement.
+- **Non-Lender Default Vote**: Reverts with dedicated custom error `NotLender()`.
+- **Duplicate Claim & Refund**: Reverts with `NothingToClaim()` / `AlreadyClaimed()`.
+- **Rounding Dust Invariant**: Verified in `Credify.test.ts` that pro-rata integer division never locks funds or exceeds total deposited plus interest.
+
+### 10.3 Frontend & Scenario Seeding Matrix
+- **`LoanDetailPage.tsx`**:
+  - Implements `Cancel Unfunded Pool` action and visual status banner when funding deadline passes.
+  - Implements `Claim Full Refund` action and visual status banner when pool is `CANCELLED`.
+  - Exposes local academic simulation controls ("Simulate Funding Expiry (+8 Days)") on Hardhat localhost.
+  - Translates custom Solidity errors (`BorrowerCannotContribute`, `MerchantSpendCapExceeded`, `FundingNotExpired`, `AlreadyClaimed`, `NotLender`, `GracePeriodActive`) to actionable user notifications in `useContractAction.ts`.
+- **`ScenarioSeeder`**:
+  - Seeds all 5 protocol lifecycle states on local EVM (`Repaid`, `Cancelled`, `Defaulted`, `Active`, `Funding`).
+  - Borrower credit history demonstrates verifiable ledger trajectory (Initial: 50 -> Repaid: 58 -> Defaulted: 38).

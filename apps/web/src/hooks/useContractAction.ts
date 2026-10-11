@@ -214,8 +214,26 @@ export function useContractAction() {
     if (message.includes('AlreadyVoted') || message.includes('0x7c9a1cf9')) {
       return { error: 'Vote rejected: this lender has already cast a default vote for this pool.', code: 'ALREADY_VOTED', category: 'contract_reverted' };
     }
+    if (message.includes('BorrowerCannotContribute')) {
+      return { error: 'Contribution rejected: the borrower cannot contribute to their own credit agreement.', code: 'BORROWER_CANNOT_CONTRIBUTE', category: 'contract_reverted' };
+    }
+    if (message.includes('MerchantSpendCapExceeded')) {
+      return { error: 'Spend rejected: requested amount exceeds the spending cap allocated for this specific supplier.', code: 'MERCHANT_SPEND_CAP_EXCEEDED', category: 'contract_reverted' };
+    }
+    if (message.includes('FundingNotExpired')) {
+      return { error: 'Cancellation rejected: funding deadline has not yet passed.', code: 'FUNDING_NOT_EXPIRED', category: 'contract_reverted' };
+    }
+    if (message.includes('AlreadyClaimed')) {
+      return { error: 'Claim rejected: entitlement has already been fully claimed.', code: 'ALREADY_CLAIMED', category: 'contract_reverted' };
+    }
+    if (message.includes('NotLender') || message.includes('NonLender')) {
+      return { error: 'Default vote rejected: only verified contributing lenders in this pool can cast default votes.', code: 'NOT_LENDER', category: 'contract_reverted' };
+    }
+    if (message.includes('GracePeriodActive')) {
+      return { error: 'Default vote rejected: post-maturity grace period is currently active.', code: 'GRACE_PERIOD_ACTIVE', category: 'contract_reverted' };
+    }
     if (message.includes('MaturityNotReached') || message.includes('0x7fb65b4a') || message.includes('NotAtMaturity')) {
-      return { error: 'Default vote rejected: loan pool has not reached maturity date.', code: 'NOT_AT_MATURITY', category: 'contract_reverted' };
+      return { error: 'Default vote rejected: loan pool has not reached maturity date and grace period.', code: 'NOT_AT_MATURITY', category: 'contract_reverted' };
     }
     if (message.includes('invalid block tag') || message.includes('-32000')) {
       return { error: 'MetaMask block cache desynced from local node. Please clear activity data in MetaMask.', code: 'METAMASK_BLOCK_CACHE', category: 'network_error' };

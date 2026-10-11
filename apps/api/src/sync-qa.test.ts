@@ -35,7 +35,26 @@ async function setupTestApp() {
   return { app, deployment, chain, store, verificationStore, indexer, loans, observability };
 }
 
+async function isNodeRunning(): Promise<boolean> {
+  try {
+    const res = await fetch('http://127.0.0.1:8545', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'eth_blockNumber', params: [] }),
+      signal: AbortSignal.timeout(600),
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
 test('Phase 31 — End-to-End System Synchronization QA Lifecycle', async (t) => {
+  if (!(await isNodeRunning())) {
+    t.skip('Local EVM JSON-RPC node is not running at http://127.0.0.1:8545. Start via npm run chain:node to execute live sync QA.');
+    return;
+  }
+
   const ctx = await setupTestApp();
   const { app, deployment, chain, store, indexer } = ctx;
 

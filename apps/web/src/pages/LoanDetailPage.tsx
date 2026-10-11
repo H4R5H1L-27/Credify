@@ -48,6 +48,8 @@ import {
   History,
   Terminal,
   Binary,
+  RotateCcw,
+  FastForward,
 } from 'lucide-react';
 
 export const LoanDetailPage: React.FC = () => {
@@ -69,7 +71,9 @@ export const LoanDetailPage: React.FC = () => {
     executeSpend,
     executeRepay,
     executeClaim,
+    executeClaimRefund,
     executeVoteDefault,
+    executeCancelUnfunded,
   } = useContractAction();
 
   const [expandedEventId, setExpandedEventId] = useState<string | null>(null);
@@ -181,6 +185,10 @@ export const LoanDetailPage: React.FC = () => {
   const isActive = loan.status === 'ACTIVE';
   const isRepaid = loan.status === 'REPAID';
   const isDefaulted = loan.status === 'DEFAULTED';
+  const isCancelled = loan.status === 'CANCELLED';
+
+  const fundingDeadlineTime = loan.fundingDeadline ? new Date(loan.fundingDeadline).getTime() : 0;
+  const isPastFundingDeadline = fundingDeadlineTime > 0 && Date.now() > fundingDeadlineTime;
 
   // Governance Derived Metrics (7 Mandatory Metrics)
   const maturityDateFormatted = formatDate(loan.maturity);
@@ -251,6 +259,28 @@ export const LoanDetailPage: React.FC = () => {
     }
   };
 
+  const handleClaimRefund = async () => {
+    if (!loanId) return;
+    try {
+      await executeClaimRefund(loanId);
+      await refetchLoan();
+      await refetchActivity();
+    } catch {
+      // Surfaced in txState
+    }
+  };
+
+  const handleCancelUnfunded = async () => {
+    if (!loanId) return;
+    try {
+      await executeCancelUnfunded(loanId);
+      await refetchLoan();
+      await refetchActivity();
+    } catch {
+      // Surfaced in txState
+    }
+  };
+
   const handleVoteDefault = async () => {
     if (!loanId) return;
     try {
@@ -266,6 +296,17 @@ export const LoanDetailPage: React.FC = () => {
     setIsWarpingTime(true);
     try {
       await api.timeWarp(15 * 86400); // Fast forward 15 days past 14-day duration
+      await refetchLoan();
+      await refetchActivity();
+    } finally {
+      setIsWarpingTime(false);
+    }
+  };
+
+  const handleFastForwardFunding = async () => {
+    setIsWarpingTime(true);
+    try {
+      await api.timeWarp(8 * 86400); // Fast forward 8 days past 7-day funding duration
       await refetchLoan();
       await refetchActivity();
     } finally {
@@ -336,6 +377,72 @@ export const LoanDetailPage: React.FC = () => {
                 ? ' You may now disburse capital to allowlisted suppliers.'
                 : ' Capital is secured in the pool; disbursements to approved merchants can be inspected below.'}
             </p>
+          </div>
+        </div>
+      )}
+
+      {/* Cancelled Agreement Banner */}
+      {isCancelled && (
+        <div className="p-4 rounded-xl bg-amber-50 border border-amber-300 shadow-sm flex items-start gap-3">
+          <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+          <div className="space-y-2 flex-1">
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold text-amber-950 uppercase tracking-wider">
+                Funding Window Expired (Cancelled)
+              </span>
+              <span className="text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-300 px-2 py-0.5 rounded font-mono">
+                Refunds Open
+              </span>
+            </div>
+            <p className="text-xs text-amber-900 leading-relaxed font-medium">
+              This pool did not achieve the required funding target before the deadline. The pool is in <code className="font-mono bg-white px-1.5 py-0.5 rounded border border-amber-200 text-slate-900 font-semibold">CANCELLED</code> status. All contributing lenders can withdraw 100% of their deposited capital with no penalty.
+            </p>
+            {activeLenderPosition && BigInt(activeLenderPosition.contributedWei) > 0n && (
+              <div className="pt-1">
+                <Button
+                  size="sm"
+                  variant="primary"
+                  onClick={handleClaimRefund}
+                  loading={isExecuting}
+                  icon={<RotateCcw className="w-3.5 h-3.5" />}
+                  className="text-xs font-bold"
+                >
+                  Claim Full Refund ({formatEther(activeLenderPosition.contributedWei)} ETH)
+                </Button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Expired Unfunded Milestone Banner */}
+      {isFunding && isPastFundingDeadline && (
+        <div className="p-4 rounded-xl bg-rose-50 border border-rose-300 shadow-sm flex items-start gap-3">
+          <Clock className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
+          <div className="space-y-2 flex-1">
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold text-rose-950 uppercase tracking-wider">
+                Funding Window Expired
+              </span>
+              <span className="text-[10px] font-bold bg-rose-100 text-rose-800 border border-rose-300 px-2 py-0.5 rounded font-mono">
+                Ready for Cancellation
+              </span>
+            </div>
+            <p className="text-xs text-rose-900 leading-relaxed font-medium">
+              The funding window for this loan has expired without reaching the target. Any participant or observer can trigger <code className="font-mono bg-white px-1.5 py-0.5 rounded border border-rose-200 text-slate-900 font-semibold">cancelUnfunded()</code> to transition the pool to <code className="font-mono bg-rose-100 px-1.5 py-0.5 rounded border border-rose-300 text-rose-900 font-bold">CANCELLED</code> and unlock full contributor refunds.
+            </p>
+            <div className="pt-1">
+              <Button
+                size="sm"
+                variant="danger"
+                onClick={handleCancelUnfunded}
+                loading={isExecuting}
+                icon={<RotateCcw className="w-3.5 h-3.5" />}
+                className="text-xs font-bold"
+              >
+                Cancel Unfunded Pool &amp; Unlock Refunds
+              </Button>
+            </div>
           </div>
         </div>
       )}
@@ -475,6 +582,8 @@ export const LoanDetailPage: React.FC = () => {
                   ? 'bg-emerald-50 border-emerald-300 text-emerald-950'
                   : isDefaulted
                   ? 'bg-rose-50 border-rose-300 text-rose-950'
+                  : isCancelled
+                  ? 'bg-amber-50 border-amber-300 text-amber-950'
                   : 'bg-slate-50/40 border-slate-200/60 opacity-60'
               }`}
             >
@@ -483,13 +592,15 @@ export const LoanDetailPage: React.FC = () => {
                   <CheckCircle2 className="w-4 h-4 text-emerald-600" />
                 ) : isDefaulted ? (
                   <AlertTriangle className="w-4 h-4 text-rose-600" />
+                ) : isCancelled ? (
+                  <RotateCcw className="w-4 h-4 text-amber-600" />
                 ) : (
                   <Clock className="w-4 h-4 text-slate-400" />
                 )}
                 <span>Settlement</span>
               </div>
               <div className="text-xs text-slate-600 mt-1 font-medium">
-                {isRepaid ? '100% Repaid' : isDefaulted ? 'Defaulted' : 'Due ' + formatDate(loan.maturity)}
+                {isRepaid ? '100% Repaid' : isDefaulted ? 'Defaulted' : isCancelled ? 'Refunds Claimable' : 'Due ' + formatDate(loan.maturity)}
               </div>
             </div>
           </div>
@@ -836,6 +947,23 @@ export const LoanDetailPage: React.FC = () => {
                       )}
                     </span>
                   </div>
+                </div>
+              )}
+
+              {/* Local Simulation Helper: Expire Funding Window */}
+              {targetNetwork === 'localhost' && !isPastFundingDeadline && (
+                <div className="pt-2 border-t border-slate-200/80 flex items-center justify-between text-xs">
+                  <span className="text-slate-600 font-medium">Testing time-based expiry:</span>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={handleFastForwardFunding}
+                    loading={isWarpingTime}
+                    icon={<FastForward className="w-3.5 h-3.5 text-amber-600" />}
+                    className="text-[11px] font-sans border-amber-300 text-amber-900 bg-amber-50 hover:bg-amber-100"
+                  >
+                    Simulate Funding Expiry (+8 Days)
+                  </Button>
                 </div>
               )}
             </div>

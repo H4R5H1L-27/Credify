@@ -33,166 +33,187 @@ async function setupTestApp() {
   return { app, deployment, chain, store, verificationStore, indexer, loans };
 }
 
-test('GET /api/v1/console/network returns authoritative node data', async () => {
-  const { app, deployment } = await setupTestApp();
+async function isNodeRunning(): Promise<boolean> {
+  try {
+    const res = await fetch('http://127.0.0.1:8545', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'eth_blockNumber', params: [] }),
+      signal: AbortSignal.timeout(600),
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
 
-  const res = await app.inject({
-    method: 'GET',
-    url: '/api/v1/console/network',
+test('Console Endpoints Integration Suite', async (t) => {
+  if (!(await isNodeRunning())) {
+    t.skip('Local EVM JSON-RPC node is not running at http://127.0.0.1:8545. Start via npm run chain:node to execute live console tests.');
+    return;
+  }
+
+  await t.test('GET /api/v1/console/network returns authoritative node data', async () => {
+    const { app, deployment } = await setupTestApp();
+
+    const res = await app.inject({
+      method: 'GET',
+      url: '/api/v1/console/network',
+    });
+
+    assert.equal(res.statusCode, 200);
+    const body = JSON.parse(res.body);
+
+    assert.equal(body.chainId, deployment.chainId);
+    assert.equal(body.network, deployment.network);
+    assert.ok(typeof body.latestBlockNumber === 'string');
+    assert.ok(body.gasLimit);
+    assert.equal(body.provenance.origin, 'BLOCKCHAIN');
+    assert.equal(body.provenance.chain.chainId, deployment.chainId);
   });
 
-  assert.equal(res.statusCode, 200);
-  const body = JSON.parse(res.body);
+  await t.test('GET /api/v1/console/blocks returns block headers with valid provenance', async () => {
+    const { app } = await setupTestApp();
 
-  assert.equal(body.chainId, deployment.chainId);
-  assert.equal(body.network, deployment.network);
-  assert.ok(typeof body.latestBlockNumber === 'string');
-  assert.ok(body.gasLimit);
-  assert.equal(body.provenance.origin, 'BLOCKCHAIN');
-  assert.equal(body.provenance.chain.chainId, deployment.chainId);
-});
+    const res = await app.inject({
+      method: 'GET',
+      url: '/api/v1/console/blocks?limit=3',
+    });
 
-test('GET /api/v1/console/blocks returns block headers with valid provenance', async () => {
-  const { app } = await setupTestApp();
+    assert.equal(res.statusCode, 200);
+    const blocks = JSON.parse(res.body);
+    assert.ok(Array.isArray(blocks));
+    assert.ok(blocks.length > 0);
 
-  const res = await app.inject({
-    method: 'GET',
-    url: '/api/v1/console/blocks?limit=3',
+    const first = blocks[0];
+    assert.ok(typeof first.number === 'string');
+    assert.ok(first.hash.startsWith('0x'));
+    assert.ok(first.parentHash.startsWith('0x'));
+    assert.ok(first.timestamp);
+    assert.equal(first.provenance.origin, 'BLOCKCHAIN');
   });
 
-  assert.equal(res.statusCode, 200);
-  const blocks = JSON.parse(res.body);
-  assert.ok(Array.isArray(blocks));
-  assert.ok(blocks.length > 0);
+  await t.test('GET /api/v1/console/blocks/:number returns block or 404', async () => {
+    const { app } = await setupTestApp();
 
-  const first = blocks[0];
-  assert.ok(typeof first.number === 'string');
-  assert.ok(first.hash.startsWith('0x'));
-  assert.ok(first.parentHash.startsWith('0x'));
-  assert.ok(first.timestamp);
-  assert.equal(first.provenance.origin, 'BLOCKCHAIN');
-});
+    // Block 0 exists on every EVM chain
+    const res0 = await app.inject({
+      method: 'GET',
+      url: '/api/v1/console/blocks/0',
+    });
+    assert.equal(res0.statusCode, 200);
+    const blk0 = JSON.parse(res0.body);
+    assert.equal(blk0.number, '0');
 
-test('GET /api/v1/console/blocks/:number returns block or 404', async () => {
-  const { app } = await setupTestApp();
-
-  // Block 0 exists on every EVM chain
-  const res0 = await app.inject({
-    method: 'GET',
-    url: '/api/v1/console/blocks/0',
-  });
-  assert.equal(res0.statusCode, 200);
-  const blk0 = JSON.parse(res0.body);
-  assert.equal(blk0.number, '0');
-
-  // Huge non-existent block should 404
-  const resNotFound = await app.inject({
-    method: 'GET',
-    url: '/api/v1/console/blocks/999999999',
-  });
-  assert.equal(resNotFound.statusCode, 404);
-});
-
-test('GET /api/v1/console/contracts lists deployment contracts and pools', async () => {
-  const { app, deployment } = await setupTestApp();
-
-  const res = await app.inject({
-    method: 'GET',
-    url: '/api/v1/console/contracts',
+    // Huge non-existent block should 404
+    const resNotFound = await app.inject({
+      method: 'GET',
+      url: '/api/v1/console/blocks/999999999',
+    });
+    assert.equal(resNotFound.statusCode, 404);
   });
 
-  assert.equal(res.statusCode, 200);
-  const contracts = JSON.parse(res.body);
-  assert.ok(Array.isArray(contracts));
-  assert.ok(contracts.length >= 3);
+  await t.test('GET /api/v1/console/contracts lists deployment contracts and pools', async () => {
+    const { app, deployment } = await setupTestApp();
 
-  const factory = contracts.find((c: any) => c.name === 'LoanFactory');
-  assert.ok(factory);
-  assert.equal(factory.address.toLowerCase(), deployment.contracts.loanFactory.toLowerCase());
-  assert.equal(factory.hasBytecode, true);
-  assert.equal(factory.type, 'FACTORY');
-  assert.equal(factory.provenance.origin, 'BLOCKCHAIN');
-});
+    const res = await app.inject({
+      method: 'GET',
+      url: '/api/v1/console/contracts',
+    });
 
-test('GET /api/v1/console/contracts/:address inspects specific contract detail', async () => {
-  const { app, deployment } = await setupTestApp();
+    assert.equal(res.statusCode, 200);
+    const contracts = JSON.parse(res.body);
+    assert.ok(Array.isArray(contracts));
+    assert.ok(contracts.length >= 3);
 
-  const res = await app.inject({
-    method: 'GET',
-    url: `/api/v1/console/contracts/${deployment.contracts.kycRegistry}`,
+    const factory = contracts.find((c: any) => c.name === 'LoanFactory');
+    assert.ok(factory);
+    assert.equal(factory.address.toLowerCase(), deployment.contracts.loanFactory.toLowerCase());
+    assert.equal(factory.hasBytecode, true);
+    assert.equal(factory.type, 'FACTORY');
+    assert.equal(factory.provenance.origin, 'BLOCKCHAIN');
   });
 
-  assert.equal(res.statusCode, 200);
-  const detail = JSON.parse(res.body);
-  assert.equal(detail.name, 'KYCRegistry');
-  assert.equal(detail.hasBytecode, true);
-  assert.ok(detail.bytecodeSize > 0);
-  assert.ok(Array.isArray(detail.eventsEmitted));
-  assert.equal(detail.provenance.origin, 'BLOCKCHAIN');
-});
+  await t.test('GET /api/v1/console/contracts/:address inspects specific contract detail', async () => {
+    const { app, deployment } = await setupTestApp();
 
-test('GET /api/v1/console/indexer returns synchronization state and lag', async () => {
-  const { app } = await setupTestApp();
+    const res = await app.inject({
+      method: 'GET',
+      url: `/api/v1/console/contracts/${deployment.contracts.kycRegistry}`,
+    });
 
-  const res = await app.inject({
-    method: 'GET',
-    url: '/api/v1/console/indexer',
+    assert.equal(res.statusCode, 200);
+    const detail = JSON.parse(res.body);
+    assert.equal(detail.name, 'KYCRegistry');
+    assert.equal(detail.hasBytecode, true);
+    assert.ok(detail.bytecodeSize > 0);
+    assert.ok(Array.isArray(detail.eventsEmitted));
+    assert.equal(detail.provenance.origin, 'BLOCKCHAIN');
   });
 
-  assert.equal(res.statusCode, 200);
-  const state = JSON.parse(res.body);
-  assert.equal(state.running, true);
-  assert.ok(typeof state.lastIndexedBlock === 'string');
-  assert.ok(typeof state.currentHeadBlock === 'string');
-  assert.ok(typeof state.blockLag === 'number');
-  assert.ok(state.blockLag >= 0);
-  assert.equal(state.provenance.origin, 'BACKEND_INDEXED');
-});
+  await t.test('GET /api/v1/console/indexer returns synchronization state and lag', async () => {
+    const { app } = await setupTestApp();
 
-test('GET /api/v1/console/verification returns institutional attestations queue', async () => {
-  const { app } = await setupTestApp();
+    const res = await app.inject({
+      method: 'GET',
+      url: '/api/v1/console/indexer',
+    });
 
-  const res = await app.inject({
-    method: 'GET',
-    url: '/api/v1/console/verification',
+    assert.equal(res.statusCode, 200);
+    const state = JSON.parse(res.body);
+    assert.equal(state.running, true);
+    assert.ok(typeof state.lastIndexedBlock === 'string');
+    assert.ok(typeof state.currentHeadBlock === 'string');
+    assert.ok(typeof state.blockLag === 'number');
+    assert.ok(state.blockLag >= 0);
+    assert.equal(state.provenance.origin, 'BACKEND_INDEXED');
   });
 
-  assert.equal(res.statusCode, 200);
-  const verifications = JSON.parse(res.body);
-  assert.ok(Array.isArray(verifications));
-  assert.ok(verifications.length > 0);
+  await t.test('GET /api/v1/console/verification returns institutional attestations queue', async () => {
+    const { app } = await setupTestApp();
 
-  const first = verifications[0];
-  assert.ok(first.id);
-  assert.ok(first.walletAddress.startsWith('0x'));
-  assert.ok(first.credentialHash.startsWith('0x'));
-  assert.equal(first.provenance.origin, 'BACKEND_INDEXED');
-});
+    const res = await app.inject({
+      method: 'GET',
+      url: '/api/v1/console/verification',
+    });
 
-test('Alias routes /api/console/* return identical responses to /api/v1/console/*', async () => {
-  const { app } = await setupTestApp();
+    assert.equal(res.statusCode, 200);
+    const verifications = JSON.parse(res.body);
+    assert.ok(Array.isArray(verifications));
+    assert.ok(verifications.length > 0);
 
-  const resV1 = await app.inject({ method: 'GET', url: '/api/v1/console/network' });
-  const resAlias = await app.inject({ method: 'GET', url: '/api/console/network' });
+    const first = verifications[0];
+    assert.ok(first.id);
+    assert.ok(first.walletAddress.startsWith('0x'));
+    assert.ok(first.credentialHash.startsWith('0x'));
+    assert.equal(first.provenance.origin, 'BACKEND_INDEXED');
+  });
 
-  assert.equal(resV1.statusCode, 200);
-  assert.equal(resAlias.statusCode, 200);
-  assert.deepEqual(JSON.parse(resV1.body).chainId, JSON.parse(resAlias.body).chainId);
-});
+  await t.test('Alias routes /api/console/* return identical responses to /api/v1/console/*', async () => {
+    const { app } = await setupTestApp();
 
-test('GET /api/v1/evaluator/wallets returns live test accounts with balances and verification', async () => {
-  const { app } = await setupTestApp();
+    const resV1 = await app.inject({ method: 'GET', url: '/api/v1/console/network' });
+    const resAlias = await app.inject({ method: 'GET', url: '/api/console/network' });
 
-  const res = await app.inject({ method: 'GET', url: '/api/v1/evaluator/wallets' });
-  assert.equal(res.statusCode, 200);
-  const wallets = JSON.parse(res.body);
-  assert.ok(Array.isArray(wallets));
-  assert.ok(wallets.length >= 7);
+    assert.equal(resV1.statusCode, 200);
+    assert.equal(resAlias.statusCode, 200);
+    assert.deepEqual(JSON.parse(resV1.body).chainId, JSON.parse(resAlias.body).chainId);
+  });
 
-  const borrower = wallets.find((w: any) => w.role === 'BORROWER');
-  assert.ok(borrower);
-  assert.ok(borrower.address.startsWith('0x'));
-  assert.ok(typeof borrower.balanceWei === 'string');
-  assert.ok(typeof borrower.balanceEth === 'string');
-  assert.ok(typeof borrower.isVerified === 'boolean');
+  await t.test('GET /api/v1/evaluator/wallets returns live test accounts with balances and verification', async () => {
+    const { app } = await setupTestApp();
+
+    const res = await app.inject({ method: 'GET', url: '/api/v1/evaluator/wallets' });
+    assert.equal(res.statusCode, 200);
+    const wallets = JSON.parse(res.body);
+    assert.ok(Array.isArray(wallets));
+    assert.ok(wallets.length >= 7);
+
+    const borrower = wallets.find((w: any) => w.role === 'BORROWER');
+    assert.ok(borrower);
+    assert.ok(borrower.address.startsWith('0x'));
+    assert.ok(typeof borrower.balanceWei === 'string');
+    assert.ok(typeof borrower.balanceEth === 'string');
+    assert.ok(typeof borrower.isVerified === 'boolean');
+  });
 });

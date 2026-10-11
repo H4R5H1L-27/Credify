@@ -216,5 +216,53 @@ Prior to Work Package 5:
 ### Status
 Accepted and verified in WP5.
 
+---
+
+## ADR-007: Core Protocol Lifecycles, Edge Cases, and UI Contract Invariants
+
+### Context
+Work Package 6 mandates thorough verification and user interface integration for all 6 core lifecycle flows:
+1. Loan creation from natural language text to validated on-chain terms with cryptographic binding.
+2. Multi-lender syndicate funding with automatic on-chain activation upon reaching 100% target.
+3. Controlled supplier spending with allowlist enforcement and per-merchant spend caps.
+4. Full principal plus interest repayment with pro-rata claims (including unspent capital) and on-chain credit score enhancement (+8 points).
+5. Default declaration following grace period expiry, threshold-crossing quorum consensus, unspent principal pro-rata claims, and on-chain credit penalty (-20 points).
+6. Unfunded pool cancellation following funding deadline expiry, unlocking 100% principal refunds.
+
+Critical edge cases must also be strictly enforced and surfaced with clear error messaging:
+- Over-contribution attempts prevented in UI and rejected on-chain (`TargetExceeded`).
+- Spend exceeding cap prevented in UI and rejected on-chain (`SpendLimitExceeded` / `MerchantSpendCapExceeded`).
+- Spend after loan repayment or default rejected on-chain (`NotActive`).
+- Repayment after maturity but before default succeeds, allowing the borrower to cure overdue balances.
+- Non-lender default voting rejected with dedicated error (`NotLender`).
+- Double claim and double refund attempts rejected (`NothingToClaim` / `AlreadyClaimed`).
+- Rounding dust does not lock contract funds or cause integer underflow.
+
+### Decision
+1. **Contract Edge Case Assertions (`Credify.test.ts`)**:
+   - Added test verifying spend rejection when status is Repaid or Defaulted (`NotActive`).
+   - Added test verifying that full repayment after maturity but before default declaration succeeds, curing the loan into Repaid status, resetting debt to zero, and increasing reputation score (+8 points).
+   - Verified that non-lender default votes revert with custom error `NotLender`.
+   - Verified that double claims and double refunds revert with custom error `NothingToClaim` or `AlreadyClaimed`.
+   - Contract test suite expanded to 33 passing Mocha/Ethers tests.
+2. **Web UI Cancellation and Refund Support (`LoanDetailPage.tsx`)**:
+   - Added visual status alert and action card for `CANCELLED` pools, allowing participating lenders to execute `executeClaimRefund` via connected wallet.
+   - Added visual alert for `FUNDING` pools that have passed their `fundingDeadline`, enabling any user or evaluator to trigger `cancelUnfunded` on-chain.
+   - Added local academic simulation helper ("Simulate Funding Expiry (+8 Days)") on Hardhat localhost, allowing instant testing of time-based expiry and cancellation flows.
+   - Updated lifecycle stepper component to render `CANCELLED` and `Refunds Claimable` state.
+3. **Custom Error Translation (`useContractAction.ts`)**:
+   - Added explicit user-friendly translation for custom errors: `BorrowerCannotContribute`, `MerchantSpendCapExceeded`, `FundingNotExpired`, `AlreadyClaimed`, `NotLender`, and `GracePeriodActive`.
+4. **Comprehensive Academic Scenario Seeder (`scenario-seeder.ts`)**:
+   - Enhanced `ScenarioSeeder.seedAll()` to instantiate and project all 5 protocol lifecycle states on local EVM nodes:
+     - Scenario 1: Completed Repaid agreement with dividends claimed (+8 borrower score).
+     - Scenario 2: Cancelled unfunded agreement with open lender refunds.
+     - Scenario 3: Defaulted agreement with unspent principal claimable and -20 penalty.
+     - Scenario 4: Active agreement with partial supplier disbursements.
+     - Scenario 5: In-progress syndicate funding agreement.
+   - Provides teachers, evaluators, and students with immediate access to realistic live protocol states and verified historical ledger provenance.
+
+### Status
+Accepted and verified in WP6.
+
 
 

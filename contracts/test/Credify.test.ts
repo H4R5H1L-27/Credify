@@ -1024,6 +1024,68 @@ describe('Credify protocol', function () {
     expect(await ethers.provider.getBalance(await pool.getAddress())).to.equal(0);
   });
 
+  it('reverts spend attempts when pool is already Repaid or Defaulted', async function () {
+    // 1. Repaid pool rejection
+    await pool.connect(lenderA).contribute({ value: ethers.parseEther('6') });
+    await pool.connect(lenderB).contribute({ value: ethers.parseEther('4') });
+    await pool.connect(borrower).spend(merchantA.address, ethers.parseEther('2'), ethers.id('supplies'));
+    await pool.connect(borrower).repay({ value: ethers.parseEther('10.8') });
+    expect(await pool.status()).to.equal(2); // Repaid
+    await expectRevert(
+      () => pool.connect(borrower).spend(merchantA.address, ethers.parseEther('1'), ethers.id('extra')),
+      'NotActive'
+    );
+
+    // 2. Defaulted pool rejection
+    const terms2 = defaultTerms(borrower.address, {
+      agreementHash: ethers.id('Defaulted spend rejection test')
+    });
+    const tx2 = await factory.connect(borrower).createLoan(terms2);
+    const receipt2 = await tx2.wait();
+    const event2 = receipt2.logs.find((log: any) => log.fragment && log.fragment.name === 'LoanCreated');
+    const pool2Addr = event2.args[0];
+    const pool2 = await ethers.getContractAt('LoanPool', pool2Addr);
+
+    await pool2.connect(lenderA).contribute({ value: ethers.parseEther('6') });
+    await pool2.connect(lenderB).contribute({ value: ethers.parseEther('4') });
+    await ethers.provider.send('evm_increaseTime', [18 * 24 * 60 * 60]);
+    await ethers.provider.send('evm_mine', []);
+    await pool2.connect(lenderA).voteDefault();
+    expect(await pool2.status()).to.equal(3); // Defaulted
+
+    await expectRevert(
+      () => pool2.connect(borrower).spend(merchantA.address, ethers.parseEther('1'), ethers.id('extra')),
+      'NotActive'
+    );
+  });
+
+  it('allows repayment after maturity but before default declaration, successfully transitioning to Repaid and updating reputation', async function () {
+    await pool.connect(lenderA).contribute({ value: ethers.parseEther('6') });
+    await pool.connect(lenderB).contribute({ value: ethers.parseEther('4') });
+    await pool.connect(borrower).spend(merchantA.address, ethers.parseEther('3'), ethers.id('gear'));
+
+    // Fast-forward 20 days (past 14d tenure + 3d grace period)
+    await ethers.provider.send('evm_increaseTime', [20 * 24 * 60 * 60]);
+    await ethers.provider.send('evm_mine', []);
+
+    // Pool is past maturity and grace period, but no default vote has occurred -> remains Active
+    expect(await pool.status()).to.equal(1); // Active
+
+    // Borrower successfully satisfies full debt obligations (10.8 ETH)
+    const repayTx = await pool.connect(borrower).repay({ value: ethers.parseEther('10.8') });
+    await repayTx.wait();
+
+    // Successfully transitioned to Repaid
+    expect(await pool.status()).to.equal(2); // Repaid
+    expect(await pool.totalRepaid()).to.equal(ethers.parseEther('10.8'));
+
+    // Reputation score increased by +8 points (from 50 to 58)
+    const [score, successful, defaults] = await reputation.getScore(borrower.address);
+    expect(score).to.equal(58);
+    expect(successful).to.equal(1);
+    expect(defaults).to.equal(0);
+  });
+
   it('separates funding deadline from activation maturity and emits maturity in LoanActivated', async function () {
     // At creation: maturity is 0, fundingDeadline is block.timestamp + 7 days
     expect(await pool.maturity()).to.equal(0);
