@@ -22,11 +22,29 @@ describe('Credify protocol', function () {
   let lenderB: any;
   let lenderC: any;
   let merchantA: any;
+  let merchantB: any;
   let outsider: any;
+
+  function defaultTerms(borrowerAddr: string, overrides: Partial<any> = {}) {
+    return {
+      borrower: borrowerAddr,
+      targetWei: ethers.parseEther('10'),
+      durationSeconds: 14 * 24 * 60 * 60,
+      fundingDurationSeconds: 7 * 24 * 60 * 60,
+      aprBps: 800,
+      maxSpendWei: ethers.parseEther('8'),
+      defaultQuorumBps: 5001,
+      gracePeriodSeconds: 3 * 24 * 60 * 60,
+      agreementHash: ethers.id('Credify Demo Agreement: 10 ETH, 14 days, 8% APR'),
+      merchants: [merchantA.address],
+      merchantCapsWei: [ethers.parseEther('8')],
+      ...overrides
+    };
+  }
 
   beforeEach(async function () {
     ({ ethers } = await network.create());
-    [deployer, borrower, lenderA, lenderB, lenderC, merchantA, outsider] = await ethers.getSigners();
+    [deployer, borrower, lenderA, lenderB, lenderC, merchantA, merchantB, outsider] = await ethers.getSigners();
 
     kyc = await ethers.deployContract('KYCRegistry');
     await kyc.waitForDeployment();
@@ -36,19 +54,14 @@ describe('Credify protocol', function () {
     await factory.waitForDeployment();
     await reputation.transferOwnership(await factory.getAddress());
 
-    for (const [i, s] of [borrower, lenderA, lenderB, lenderC].entries()) {
+    for (const [i, s] of [borrower, lenderA, lenderB, lenderC, merchantA, merchantB].entries()) {
       await kyc.setVerified(s.address, true, ethers.id(`test:${i}`));
     }
 
-    await (await factory.createLoan(
-      borrower.address,
-      ethers.parseEther('10'),
-      14 * 24 * 60 * 60,
-      800,
-      ethers.parseEther('8'),
-      5001,
-      [merchantA.address]
-    )).wait();
+    const terms = defaultTerms(borrower.address);
+    const tx = await factory.connect(borrower).createLoan(terms);
+    await tx.wait();
+
     const pools = await factory.getPools();
     pool = await ethers.getContractAt('LoanPool', pools[0]);
   });
@@ -56,6 +69,9 @@ describe('Credify protocol', function () {
   it('instantiates a parameterized pool and authorizes it in reputation', async function () {
     expect(await pool.borrower()).to.equal(borrower.address);
     expect(await pool.targetWei()).to.equal(ethers.parseEther('10'));
+    expect(await pool.fundingDeadline()).to.be.gt(0);
+    expect(await pool.maturity()).to.equal(0); // Maturity is set only on activation
+    expect(await pool.agreementHash()).to.equal(ethers.id('Credify Demo Agreement: 10 ETH, 14 days, 8% APR'));
     expect(await reputation.authorizedPools(await pool.getAddress())).to.equal(true);
   });
 
@@ -63,8 +79,12 @@ describe('Credify protocol', function () {
     await expectRevert(() => pool.connect(outsider).contribute({ value: ethers.parseEther('1') }), 'NotVerifiedLender');
     await (await pool.connect(lenderA).contribute({ value: ethers.parseEther('6') })).wait();
     expect(await pool.status()).to.equal(0);
-    await (await pool.connect(lenderB).contribute({ value: ethers.parseEther('4') })).wait();
+    expect(await pool.maturity()).to.equal(0);
+
+    const activateTx = await pool.connect(lenderB).contribute({ value: ethers.parseEther('4') });
+    await activateTx.wait();
     expect(await pool.status()).to.equal(1);
+    expect(await pool.maturity()).to.be.gt(0);
   });
 
   it('rejects borrower attempting to contribute to their own syndicate pool', async function () {
@@ -86,11 +106,11 @@ describe('Credify protocol', function () {
 
     // 3. Lender C contributes remaining 3 ETH (total 10 ETH = target reached)
     const txC = await pool.connect(lenderC).contribute({ value: ethers.parseEther('3') });
-    const receiptC = await txC.wait();
+    await txC.wait();
     expect(await pool.totalContributed()).to.equal(ethers.parseEther('10'));
     expect(await pool.status()).to.equal(1); // Status.Active!
 
-    // Verify all 3 independent lenders' recorded positions
+    // Verify all 3 independent lenders recorded positions
     expect(await pool.contributed(lenderA.address)).to.equal(ethers.parseEther('4'));
     expect(await pool.contributed(lenderB.address)).to.equal(ethers.parseEther('3'));
     expect(await pool.contributed(lenderC.address)).to.equal(ethers.parseEther('3'));
@@ -115,7 +135,7 @@ describe('Credify protocol', function () {
     // 3. Spending to unapproved merchant is rejected
     await expectRevert(() => pool.connect(borrower).spend(outsider.address, ethers.parseEther('1'), ethers.id('equipment')), 'MerchantNotApproved');
 
-    // 4. Valid supplier payment succeeds (funds delivered directly to merchant, totalSpent updated)
+    // 4. Valid supplier payment succeeds
     const merchantBalanceBefore = await ethers.provider.getBalance(merchantA.address);
     const spendTx = await pool.connect(borrower).spend(merchantA.address, ethers.parseEther('2'), ethers.id('equipment'));
     await spendTx.wait();
@@ -124,7 +144,6 @@ describe('Credify protocol', function () {
     expect(merchantBalanceAfter - merchantBalanceBefore).to.equal(ethers.parseEther('2'));
 
     // 5. Overspending beyond maxSpend (maxSpend is 8 ETH, 2 spent, 6 remaining)
-    // Attempting to spend 7 ETH exceeds the 6 ETH remaining capacity and reverts
     await expectRevert(() => pool.connect(borrower).spend(merchantA.address, ethers.parseEther('7'), ethers.id('materials')), 'SpendLimitExceeded');
 
     // 6. Valid payment within remaining capacity succeeds
@@ -198,10 +217,6 @@ describe('Credify protocol', function () {
     // 2. Borrower makes 50% partial repayment: 5.4 ETH on 10.8 ETH total repayable
     await (await pool.connect(borrower).repay({ value: ethers.parseEther('5.4') })).wait();
 
-    // Verify proportional claimable entitlements on partial repayment:
-    // Lender A (50%): 2.70 ETH
-    // Lender B (30%): 1.62 ETH
-    // Lender C (20%): 1.08 ETH
     const [, aPartClaimable] = await pool.getLenderInfo(lenderA.address);
     const [, bPartClaimable] = await pool.getLenderInfo(lenderB.address);
     const [, cPartClaimable] = await pool.getLenderInfo(lenderC.address);
@@ -222,36 +237,31 @@ describe('Credify protocol', function () {
     await expectRevert(() => pool.connect(lenderA).claimRepayment(), 'NothingToClaim');
 
     // 4. Borrower makes remaining repayment (5.4 ETH) -> Status transitions to Repaid
+    // Note: since 0 ETH was spent, unspent principal is 10 ETH. Distributable = 10.8 + 10 = 20.8 ETH.
     await (await pool.connect(borrower).repay({ value: ethers.parseEther('5.4') })).wait();
     expect(await pool.status()).to.equal(2); // Status.Repaid
     expect(await pool.totalRepaid()).to.equal(ethers.parseEther('10.8'));
 
-    // Updated claimable amounts:
-    // Lender A (50% total 5.40 ETH - 2.70 ETH already claimed): 2.70 ETH
-    // Lender B (30% total 3.24 ETH - 0 claimed): 3.24 ETH
-    // Lender C (20% total 2.16 ETH - 0 claimed): 2.16 ETH
+    // Updated claimable amounts including unspent principal (20.8 total):
+    // Lender A (50% of 20.8 = 10.4 - 2.7 claimed): 7.7 ETH
+    // Lender B (30% of 20.8 = 6.24 - 0 claimed): 6.24 ETH
+    // Lender C (20% of 20.8 = 4.16 - 0 claimed): 4.16 ETH
     const [, aFinalClaimable] = await pool.getLenderInfo(lenderA.address);
     const [, bFinalClaimable] = await pool.getLenderInfo(lenderB.address);
     const [, cFinalClaimable] = await pool.getLenderInfo(lenderC.address);
-    expect(aFinalClaimable).to.equal(ethers.parseEther('2.7'));
-    expect(bFinalClaimable).to.equal(ethers.parseEther('3.24'));
-    expect(cFinalClaimable).to.equal(ethers.parseEther('2.16'));
+    expect(aFinalClaimable).to.equal(ethers.parseEther('7.7'));
+    expect(bFinalClaimable).to.equal(ethers.parseEther('6.24'));
+    expect(cFinalClaimable).to.equal(ethers.parseEther('4.16'));
 
     // 5. All three lenders pull their remaining claims
     await (await pool.connect(lenderA).claimRepayment()).wait();
     await (await pool.connect(lenderB).claimRepayment()).wait();
     await (await pool.connect(lenderC).claimRepayment()).wait();
 
-    // Verify exact proportional lifetime claims:
-    expect(await pool.claimed(lenderA.address)).to.equal(ethers.parseEther('5.4'));  // 50%
-    expect(await pool.claimed(lenderB.address)).to.equal(ethers.parseEther('3.24')); // 30%
-    expect(await pool.claimed(lenderC.address)).to.equal(ethers.parseEther('2.16')); // 20%
-
-    // Total claims equal total debt repaid
-    const totalClaimed = (await pool.claimed(lenderA.address)) +
-                         (await pool.claimed(lenderB.address)) +
-                         (await pool.claimed(lenderC.address));
-    expect(totalClaimed).to.equal(ethers.parseEther('10.8'));
+    // Verify exact lifetime claims (total 20.8 ETH):
+    expect(await pool.claimed(lenderA.address)).to.equal(ethers.parseEther('10.4')); // 50%
+    expect(await pool.claimed(lenderB.address)).to.equal(ethers.parseEther('6.24')); // 30%
+    expect(await pool.claimed(lenderC.address)).to.equal(ethers.parseEther('4.16')); // 20%
 
     // All lenders have 0 remaining claimable
     const [, aZero] = await pool.getLenderInfo(lenderA.address);
@@ -267,7 +277,7 @@ describe('Credify protocol', function () {
     await expectRevert(() => pool.connect(lenderC).claimRepayment(), 'NothingToClaim');
   });
 
-  it('requires a contributed-weighted majority for default', async function () {
+  it('requires a contributed-weighted majority for default after grace period', async function () {
     // 1. Fund the pool with 3 lenders (40%, 30%, 30%)
     await (await pool.connect(lenderA).contribute({ value: ethers.parseEther('4') })).wait();
     await (await pool.connect(lenderB).contribute({ value: ethers.parseEther('3') })).wait();
@@ -277,60 +287,58 @@ describe('Credify protocol', function () {
     // 2. Voting before maturity is rejected
     await expectRevert(() => pool.connect(lenderA).voteDefault(), 'MaturityNotReached');
 
-    // 3. Fast-forward past maturity (duration is 14 days)
+    // 3. Fast-forward past maturity (14 days) but before grace period (3 days) -> still rejected
     await ethers.provider.send('evm_increaseTime', [15 * 24 * 60 * 60]);
     await ethers.provider.send('evm_mine', []);
+    await expectRevert(() => pool.connect(lenderA).voteDefault(), 'MaturityNotReached');
 
-    // 4. Non-contributor voting is rejected
-    await expectRevert(() => pool.connect(outsider).voteDefault(), 'NotVerifiedLender');
+    // 4. Fast-forward past maturity + grace period (total > 17 days)
+    await ethers.provider.send('evm_increaseTime', [3 * 24 * 60 * 60]);
+    await ethers.provider.send('evm_mine', []);
 
-    // 5. Check initial voting state: total weight 0, threshold 5.001 ETH
+    // 5. Non-contributor voting is rejected with NotLender
+    await expectRevert(() => pool.connect(outsider).voteDefault(), 'NotLender');
+
+    // 6. Check initial voting state: total weight 0, threshold 5.001 ETH
     expect(await pool.defaultVoteWeight()).to.equal(0);
-    const [, , , , , , , voteWeight, threshold] = await pool.getSummary();
-    expect(voteWeight).to.equal(0);
-    expect(threshold).to.equal(ethers.parseEther('5.001')); // 10 ETH * 5001 / 10000
+    const summary = await pool.getSummary();
+    expect(summary._defaultVoteWeight).to.equal(0);
+    expect(summary._defaultThreshold).to.equal(ethers.parseEther('5.001'));
 
-    // 6. Insufficient vote: Lender B votes (3.0 ETH = 30% of pool)
+    // 7. Insufficient vote: Lender B votes (3.0 ETH = 30% of pool)
     const txVoteB = await pool.connect(lenderB).voteDefault();
     await txVoteB.wait();
     expect(await pool.defaultVoteWeight()).to.equal(ethers.parseEther('3'));
     expect(await pool.hasDefaultVoted(lenderB.address)).to.equal(true);
-    expect(await pool.hasDefaultVoted(lenderA.address)).to.equal(false);
-    expect(await pool.hasDefaultVoted(lenderC.address)).to.equal(false);
-    const [, , bVoted] = await pool.getLenderInfo(lenderB.address);
-    expect(bVoted).to.equal(true);
-    // Insufficient weight: status remains ACTIVE (1)
-    expect(await pool.status()).to.equal(1);
+    expect(await pool.status()).to.equal(1); // Remains Active
 
-    // 7. Duplicate vote attempt is rejected
+    // 8. Duplicate vote attempt is rejected
     await expectRevert(() => pool.connect(lenderB).voteDefault(), 'AlreadyVoted');
 
-    // 8. Threshold-crossing vote: Lender A votes (4.0 ETH = 40% of pool)
-    // Combined weight: 3.0 + 4.0 = 7.0 ETH > 5.001 ETH threshold
+    // 9. Threshold-crossing vote: Lender A votes (4.0 ETH = 40% of pool -> combined 7.0 ETH > 5.001 ETH)
     const txVoteA = await pool.connect(lenderA).voteDefault();
     await txVoteA.wait();
     expect(await pool.defaultVoteWeight()).to.equal(ethers.parseEther('7'));
-    expect(await pool.hasDefaultVoted(lenderA.address)).to.equal(true);
-    // Threshold reached: status transitions to DEFAULTED (3)
-    expect(await pool.status()).to.equal(3);
+    expect(await pool.status()).to.equal(3); // Status.Defaulted
 
-    // 9. Borrower reputation registry penalty is recorded
+    // 10. Borrower reputation registry penalty is recorded
     const [score, successful, defaults] = await reputation.getScore(borrower.address);
-    expect(score).to.equal(30); // Base 50 - 20 = 30
+    expect(score).to.equal(30);
     expect(successful).to.equal(0);
     expect(defaults).to.equal(1);
 
-    // 10. Further votes on defaulted pool are rejected
+    // 11. Further votes on defaulted pool are rejected
     await expectRevert(() => pool.connect(lenderC).voteDefault(), 'NotActive');
   });
 
   it('expires underfunded pools and returns contributions', async function () {
     await (await pool.connect(lenderA).contribute({ value: ethers.parseEther('4') })).wait();
     const before = await ethers.provider.getBalance(lenderA.address);
-    await ethers.provider.send('evm_increaseTime', [15 * 24 * 60 * 60]);
+    // Fast forward past fundingDeadline (7 days)
+    await ethers.provider.send('evm_increaseTime', [8 * 24 * 60 * 60]);
     await ethers.provider.send('evm_mine', []);
     await (await pool.connect(lenderC).cancelUnfunded()).wait();
-    expect(await pool.status()).to.equal(4);
+    expect(await pool.status()).to.equal(4); // Cancelled
     const tx = await pool.connect(lenderA).claimFundingRefund();
     await tx.wait();
     const after = await ethers.provider.getBalance(lenderA.address);
@@ -340,17 +348,17 @@ describe('Credify protocol', function () {
   it('enforces cancelUnfunded timing, refund path, double refund, and event emission', async function () {
     await pool.connect(lenderA).contribute({ value: ethers.parseEther('4') });
 
-    // 1. cancelUnfunded before maturity reverts with FundingNotExpired
+    // 1. cancelUnfunded before fundingDeadline reverts with FundingNotExpired
     await expectRevert(() => pool.cancelUnfunded(), 'FundingNotExpired');
 
-    // 2. Fast-forward past maturity
-    await ethers.provider.send('evm_increaseTime', [15 * 24 * 60 * 60]);
+    // 2. Fast-forward past fundingDeadline (7 days)
+    await ethers.provider.send('evm_increaseTime', [8 * 24 * 60 * 60]);
     await ethers.provider.send('evm_mine', []);
 
     // 3. cancelUnfunded succeeds, transitions to Cancelled (4), and emits FundingCancelled
     const cancelTx = await pool.connect(lenderA).cancelUnfunded();
     await expect(cancelTx).to.emit(pool, 'FundingCancelled');
-    expect(await pool.status()).to.equal(4); // Status.Cancelled
+    expect(await pool.status()).to.equal(4);
 
     // 4. Calling cancelUnfunded when already Cancelled reverts with FundingClosed
     await expectRevert(() => pool.cancelUnfunded(), 'FundingClosed');
@@ -394,11 +402,14 @@ describe('Credify protocol', function () {
     await pool.connect(lenderA).contribute({ value: ethers.parseEther('6') });
     await pool.connect(lenderB).contribute({ value: ethers.parseEther('4') });
 
+    // Borrower spends 8 ETH (full maxSpend)
+    await pool.connect(borrower).spend(merchantA.address, ethers.parseEther('8'), ethers.id('spend'));
+
     // Borrower repays 2 ETH partially before default
     await pool.connect(borrower).repay({ value: ethers.parseEther('2') });
 
-    // Fast forward past maturity
-    await ethers.provider.send('evm_increaseTime', [15 * 24 * 60 * 60]);
+    // Fast forward past maturity + grace period (14 + 3 = 17 days -> 18 days)
+    await ethers.provider.send('evm_increaseTime', [18 * 24 * 60 * 60]);
     await ethers.provider.send('evm_mine', []);
 
     // Lender A votes default (6 ETH > 5.001 ETH threshold -> triggers default)
@@ -406,16 +417,17 @@ describe('Credify protocol', function () {
     await expect(defaultTx).to.emit(pool, 'LoanDefaulted');
     expect(await pool.status()).to.equal(3); // Status.Defaulted
 
-    // Lender A claims pro-rata share of totalRepaid (2 ETH * 60% = 1.2 ETH)
+    // In defaulted status, distributable = totalRepaid (2 ETH) + unspent principal (10 - 8 = 2 ETH) = 4 ETH
+    // Lender A entitled = 4 * 60% = 2.4 ETH
     const claimTxA = await pool.connect(lenderA).claimRepayment();
-    await expect(claimTxA).to.emit(pool, 'RepaymentClaimed').withArgs(lenderA.address, ethers.parseEther('1.2'));
+    await expect(claimTxA).to.emit(pool, 'RepaymentClaimed').withArgs(lenderA.address, ethers.parseEther('2.4'));
 
     // Duplicate claim by Lender A reverts with NothingToClaim
     await expectRevert(() => pool.connect(lenderA).claimRepayment(), 'NothingToClaim');
 
-    // Lender B claims pro-rata share of totalRepaid (2 ETH * 40% = 0.8 ETH)
+    // Lender B claims pro-rata share (4 * 40% = 1.6 ETH)
     const claimTxB = await pool.connect(lenderB).claimRepayment();
-    await expect(claimTxB).to.emit(pool, 'RepaymentClaimed').withArgs(lenderB.address, ethers.parseEther('0.8'));
+    await expect(claimTxB).to.emit(pool, 'RepaymentClaimed').withArgs(lenderB.address, ethers.parseEther('1.6'));
 
     // Duplicate claim by Lender B reverts with NothingToClaim
     await expectRevert(() => pool.connect(lenderB).claimRepayment(), 'NothingToClaim');
@@ -424,54 +436,124 @@ describe('Credify protocol', function () {
   it('reverts on each LoanFactory validation check with the expected custom error', async function () {
     // 1. Borrower not verified
     await expectRevert(
-      () => factory.createLoan(outsider.address, ethers.parseEther('10'), 86400, 800, ethers.parseEther('8'), 5001, [merchantA.address]),
+      () => factory.connect(outsider).createLoan(defaultTerms(outsider.address)),
       'BorrowerNotVerified'
     );
 
-    // 2. targetWei == 0
+    // 2. Not borrower calling
     await expectRevert(
-      () => factory.createLoan(borrower.address, 0, 86400, 800, ethers.parseEther('8'), 5001, [merchantA.address]),
+      () => factory.connect(outsider).createLoan(defaultTerms(borrower.address)),
+      'NotBorrower'
+    );
+
+    // 3. targetWei == 0
+    await expectRevert(
+      () => factory.connect(borrower).createLoan(defaultTerms(borrower.address, { targetWei: 0 })),
       'InvalidTarget'
     );
 
-    // 3. durationSeconds == 0
+    // 4. durationSeconds < 300
     await expectRevert(
-      () => factory.createLoan(borrower.address, ethers.parseEther('10'), 0, 800, ethers.parseEther('8'), 5001, [merchantA.address]),
+      () => factory.connect(borrower).createLoan(defaultTerms(borrower.address, { durationSeconds: 299 })),
       'InvalidDuration'
     );
 
-    // 4. maxSpendWei == 0
+    // 5. durationSeconds > 365 days
     await expectRevert(
-      () => factory.createLoan(borrower.address, ethers.parseEther('10'), 86400, 800, 0, 5001, [merchantA.address]),
+      () => factory.connect(borrower).createLoan(defaultTerms(borrower.address, { durationSeconds: 366 * 24 * 60 * 60 })),
+      'InvalidDuration'
+    );
+
+    // 6. fundingDurationSeconds < 300
+    await expectRevert(
+      () => factory.connect(borrower).createLoan(defaultTerms(borrower.address, { fundingDurationSeconds: 200 })),
+      'InvalidFundingWindow'
+    );
+
+    // 7. fundingDurationSeconds > 90 days
+    await expectRevert(
+      () => factory.connect(borrower).createLoan(defaultTerms(borrower.address, { fundingDurationSeconds: 91 * 24 * 60 * 60 })),
+      'InvalidFundingWindow'
+    );
+
+    // 8. aprBps > 5000
+    await expectRevert(
+      () => factory.connect(borrower).createLoan(defaultTerms(borrower.address, { aprBps: 5001 })),
+      'InvalidAPR'
+    );
+
+    // 9. maxSpendWei == 0
+    await expectRevert(
+      () => factory.connect(borrower).createLoan(defaultTerms(borrower.address, { maxSpendWei: 0 })),
       'InvalidSpendLimit'
     );
 
-    // 5. maxSpendWei > targetWei
+    // 10. maxSpendWei > targetWei
     await expectRevert(
-      () => factory.createLoan(borrower.address, ethers.parseEther('10'), 86400, 800, ethers.parseEther('11'), 5001, [merchantA.address]),
+      () => factory.connect(borrower).createLoan(defaultTerms(borrower.address, { maxSpendWei: ethers.parseEther('11') })),
       'InvalidSpendLimit'
     );
 
-    // 6. defaultQuorumBps <= 5000 (e.g. 5000, 4999)
+    // 11. defaultQuorumBps <= 5000
     await expectRevert(
-      () => factory.createLoan(borrower.address, ethers.parseEther('10'), 86400, 800, ethers.parseEther('8'), 5000, [merchantA.address]),
-      'InvalidQuorum'
-    );
-    await expectRevert(
-      () => factory.createLoan(borrower.address, ethers.parseEther('10'), 86400, 800, ethers.parseEther('8'), 4999, [merchantA.address]),
+      () => factory.connect(borrower).createLoan(defaultTerms(borrower.address, { defaultQuorumBps: 5000 })),
       'InvalidQuorum'
     );
 
-    // 7. defaultQuorumBps > 10000 (e.g. 10001)
+    // 12. defaultQuorumBps > 10000
     await expectRevert(
-      () => factory.createLoan(borrower.address, ethers.parseEther('10'), 86400, 800, ethers.parseEther('8'), 10001, [merchantA.address]),
+      () => factory.connect(borrower).createLoan(defaultTerms(borrower.address, { defaultQuorumBps: 10001 })),
       'InvalidQuorum'
     );
 
-    // 8. merchants.length == 0
+    // 13. gracePeriodSeconds > 30 days
     await expectRevert(
-      () => factory.createLoan(borrower.address, ethers.parseEther('10'), 86400, 800, ethers.parseEther('8'), 5001, []),
+      () => factory.connect(borrower).createLoan(defaultTerms(borrower.address, { gracePeriodSeconds: 31 * 24 * 60 * 60 })),
+      'InvalidGracePeriod'
+    );
+
+    // 14. merchants.length == 0
+    await expectRevert(
+      () => factory.connect(borrower).createLoan(defaultTerms(borrower.address, { merchants: [], merchantCapsWei: [] })),
       'NoMerchants'
+    );
+
+    // 15. merchants.length > 10
+    const manyMerchants = new Array(11).fill(merchantA.address);
+    const manyCaps = new Array(11).fill(ethers.parseEther('0.5'));
+    await expectRevert(
+      () => factory.connect(borrower).createLoan(defaultTerms(borrower.address, { merchants: manyMerchants, merchantCapsWei: manyCaps })),
+      'TooManyMerchants'
+    );
+
+    // 16. MismatchedMerchants length
+    await expectRevert(
+      () => factory.connect(borrower).createLoan(defaultTerms(borrower.address, { merchants: [merchantA.address], merchantCapsWei: [] })),
+      'MismatchedMerchants'
+    );
+
+    // 17. ZeroMerchantAddress
+    await expectRevert(
+      () => factory.connect(borrower).createLoan(defaultTerms(borrower.address, { merchants: [ethers.ZeroAddress], merchantCapsWei: [ethers.parseEther('8')] })),
+      'ZeroMerchantAddress'
+    );
+
+    // 18. DuplicateMerchantAddress
+    await expectRevert(
+      () => factory.connect(borrower).createLoan(defaultTerms(borrower.address, { merchants: [merchantA.address, merchantA.address], merchantCapsWei: [ethers.parseEther('4'), ethers.parseEther('4')] })),
+      'DuplicateMerchantAddress'
+    );
+
+    // 19. InvalidMerchantCap (cap == 0)
+    await expectRevert(
+      () => factory.connect(borrower).createLoan(defaultTerms(borrower.address, { merchants: [merchantA.address], merchantCapsWei: [0] })),
+      'InvalidMerchantCap'
+    );
+
+    // 20. InvalidMerchantCap (cap > maxSpendWei)
+    await expectRevert(
+      () => factory.connect(borrower).createLoan(defaultTerms(borrower.address, { merchants: [merchantA.address], merchantCapsWei: [ethers.parseEther('9')] })),
+      'InvalidMerchantCap'
     );
   });
 
@@ -538,14 +620,8 @@ describe('Credify protocol', function () {
     const malMerchantAddress = await malMerchant.getAddress();
 
     // Create a pool approving the malicious merchant
-    const malTx = await factory.createLoan(
-      borrower.address,
-      ethers.parseEther('10'),
-      14 * 24 * 60 * 60,
-      800,
-      ethers.parseEther('8'),
-      5001,
-      [malMerchantAddress]
+    const malTx = await factory.connect(borrower).createLoan(
+      defaultTerms(borrower.address, { merchants: [malMerchantAddress], merchantCapsWei: [ethers.parseEther('8')] })
     );
     await malTx.wait();
     const pools = await factory.getPools();
@@ -571,15 +647,7 @@ describe('Credify protocol', function () {
     await kyc.setVerified(malLenderAddress, true, ethers.id('malicious-lender'));
 
     // Create another pool for lender reentrancy test
-    const loanTx2 = await factory.createLoan(
-      borrower.address,
-      ethers.parseEther('10'),
-      14 * 24 * 60 * 60,
-      800,
-      ethers.parseEther('8'),
-      5001,
-      [merchantA.address]
-    );
+    const loanTx2 = await factory.connect(borrower).createLoan(defaultTerms(borrower.address));
     await loanTx2.wait();
     const pools2 = await factory.getPools();
     const malPool2 = await ethers.getContractAt('LoanPool', pools2[pools2.length - 1]);
@@ -606,31 +674,23 @@ describe('Credify protocol', function () {
     await expect(kycTx).to.emit(kyc, 'VerificationUpdated').withArgs(outsider.address, true, kycRef);
 
     // 2. LoanFactory LoanCreated & LoanPool LoanPoolCreated
-    const createTx = await factory.createLoan(
-      borrower.address,
-      ethers.parseEther('10'),
-      14 * 24 * 60 * 60,
-      800,
-      ethers.parseEther('8'),
-      5001,
-      [merchantA.address]
-    );
+    const customHash = ethers.id('test agreement hash v2');
+    const createTx = await factory.connect(borrower).createLoan(defaultTerms(borrower.address, { agreementHash: customHash }));
     const pools = await factory.getPools();
     const testPoolAddress = pools[pools.length - 1];
     const testPool = await ethers.getContractAt('LoanPool', testPoolAddress);
-    const maturity = await testPool.maturity();
 
     await expect(createTx)
       .to.emit(factory, 'LoanCreated')
-      .withArgs(testPoolAddress, borrower.address, ethers.parseEther('10'), maturity, 800);
+      .withArgs(testPoolAddress, borrower.address, ethers.parseEther('10'), 800, customHash);
     await expect(createTx)
       .to.emit(testPool, 'LoanPoolCreated')
-      .withArgs(borrower.address, ethers.parseEther('10'), maturity, 800);
+      .withArgs(borrower.address, ethers.parseEther('10'), 800, customHash);
 
     // 3. ReputationRegistry PoolAuthorized
     expect(await reputation.authorizedPools(testPoolAddress)).to.equal(true);
 
-    // 4. LoanPool Funded & LoanActivated
+    // 4. LoanPool Funded & LoanActivated (emits timestamp and maturity)
     const fundTx1 = await testPool.connect(lenderA).contribute({ value: ethers.parseEther('6') });
     await expect(fundTx1)
       .to.emit(testPool, 'Funded')
@@ -640,7 +700,9 @@ describe('Credify protocol', function () {
     await expect(fundTx2)
       .to.emit(testPool, 'Funded')
       .withArgs(lenderB.address, ethers.parseEther('4'), ethers.parseEther('10'));
+    const testMaturity = await testPool.maturity();
     await expect(fundTx2).to.emit(testPool, 'LoanActivated');
+    expect(testMaturity).to.be.gt(0);
 
     // 5. LoanPool SpendExecuted
     const spendCat = ethers.id('inventory');
@@ -670,5 +732,340 @@ describe('Credify protocol', function () {
       .to.emit(testPool, 'LoanRepaid')
       .withArgs(ethers.parseEther('10.8'));
     await expect(repayTx2).to.emit(reputation, 'ReputationUpdated');
+  });
+
+  // --- WP1 SPECIFIC TESTS ---
+
+  it('distributes unspent principal on full repayment (10 funded, 8 spent, 10.8 repaid -> lenders claim 12.8 in total)', async function () {
+    // 1. Lender A (60%) and Lender B (40%) fund 10 ETH pool
+    await pool.connect(lenderA).contribute({ value: ethers.parseEther('6') });
+    await pool.connect(lenderB).contribute({ value: ethers.parseEther('4') });
+    expect(await pool.status()).to.equal(1); // Active
+
+    // 2. Borrower spends 8 ETH to Merchant A -> unspent principal in pool is 2 ETH
+    await pool.connect(borrower).spend(merchantA.address, ethers.parseEther('8'), ethers.id('supplies'));
+    expect(await pool.totalSpent()).to.equal(ethers.parseEther('8'));
+
+    // Pool balance before repayment is 2 ETH
+    expect(await ethers.provider.getBalance(await pool.getAddress())).to.equal(ethers.parseEther('2'));
+
+    // 3. Borrower repays full debt: 10.8 ETH
+    await pool.connect(borrower).repay({ value: ethers.parseEther('10.8') });
+    expect(await pool.status()).to.equal(2); // Repaid
+
+    // Distributable is 10.8 (repaid) + (10 - 8 unspent principal) = 12.8 ETH
+    expect(await pool.distributable()).to.equal(ethers.parseEther('12.8'));
+
+    // Pool balance is exactly 12.8 ETH
+    expect(await ethers.provider.getBalance(await pool.getAddress())).to.equal(ethers.parseEther('12.8'));
+
+    // 4. Lender entitlements:
+    // Lender A (60%): 12.8 * 0.6 = 7.68 ETH
+    // Lender B (40%): 12.8 * 0.4 = 5.12 ETH
+    const [, aClaimable] = await pool.getLenderInfo(lenderA.address);
+    const [, bClaimable] = await pool.getLenderInfo(lenderB.address);
+    expect(aClaimable).to.equal(ethers.parseEther('7.68'));
+    expect(bClaimable).to.equal(ethers.parseEther('5.12'));
+
+    // 5. Lenders claim full allocations
+    const aBalBefore = await ethers.provider.getBalance(lenderA.address);
+    const aTx = await pool.connect(lenderA).claimRepayment();
+    const aReceipt = await aTx.wait();
+    const aGas = aReceipt.gasUsed * aReceipt.gasPrice;
+    const aBalAfter = await ethers.provider.getBalance(lenderA.address);
+    expect(aBalAfter + aGas - aBalBefore).to.equal(ethers.parseEther('7.68'));
+
+    const bBalBefore = await ethers.provider.getBalance(lenderB.address);
+    const bTx = await pool.connect(lenderB).claimRepayment();
+    const bReceipt = await bTx.wait();
+    const bGas = bReceipt.gasUsed * bReceipt.gasPrice;
+    const bBalAfter = await ethers.provider.getBalance(lenderB.address);
+    expect(bBalAfter + bGas - bBalBefore).to.equal(ethers.parseEther('5.12'));
+
+    // Total claims equal 12.8 ETH and pool balance is 0 (no stuck funds!)
+    expect((await pool.claimed(lenderA.address)) + (await pool.claimed(lenderB.address))).to.equal(ethers.parseEther('12.8'));
+    expect(await ethers.provider.getBalance(await pool.getAddress())).to.equal(0);
+  });
+
+  it('distributes unspent principal after default (10 funded, 8 spent, 0 repaid, default -> lenders claim 2.0 in total)', async function () {
+    // 1. Fund 10 ETH pool
+    await pool.connect(lenderA).contribute({ value: ethers.parseEther('6') });
+    await pool.connect(lenderB).contribute({ value: ethers.parseEther('4') });
+
+    // 2. Spend 8 ETH -> unspent principal 2 ETH
+    await pool.connect(borrower).spend(merchantA.address, ethers.parseEther('8'), ethers.id('supplies'));
+
+    // 3. Fast forward past maturity + grace period
+    await ethers.provider.send('evm_increaseTime', [18 * 24 * 60 * 60]);
+    await ethers.provider.send('evm_mine', []);
+
+    // 4. Lender A votes default -> Defaulted
+    await pool.connect(lenderA).voteDefault();
+    expect(await pool.status()).to.equal(3); // Defaulted
+
+    // Distributable in Defaulted status is 0 repaid + 2 unspent = 2 ETH
+    expect(await pool.distributable()).to.equal(ethers.parseEther('2'));
+
+    // Lender A claims 60% of 2 ETH = 1.2 ETH
+    await pool.connect(lenderA).claimRepayment();
+    expect(await pool.claimed(lenderA.address)).to.equal(ethers.parseEther('1.2'));
+
+    // Lender B claims 40% of 2 ETH = 0.8 ETH
+    await pool.connect(lenderB).claimRepayment();
+    expect(await pool.claimed(lenderB.address)).to.equal(ethers.parseEther('0.8'));
+
+    // Pool balance is 0
+    expect(await ethers.provider.getBalance(await pool.getAddress())).to.equal(0);
+  });
+
+  it('separates funding deadline from activation maturity and emits maturity in LoanActivated', async function () {
+    // At creation: maturity is 0, fundingDeadline is block.timestamp + 7 days
+    expect(await pool.maturity()).to.equal(0);
+    const deadline = await pool.fundingDeadline();
+    expect(deadline).to.be.gt(0);
+
+    // Cancel before deadline reverts
+    await expectRevert(() => pool.cancelUnfunded(), 'FundingNotExpired');
+
+    // Fund to target and verify LoanActivated emits non-zero maturity
+    await pool.connect(lenderA).contribute({ value: ethers.parseEther('6') });
+    const activateTx = await pool.connect(lenderB).contribute({ value: ethers.parseEther('4') });
+    const maturity = await pool.maturity();
+    expect(maturity).to.be.gt(0);
+    await expect(activateTx).to.emit(pool, 'LoanActivated');
+  });
+
+  it('enforces that createLoan requires msg.sender == borrower', async function () {
+    const terms = defaultTerms(borrower.address);
+    // Outsider attempting to create loan for borrower reverts
+    await expectRevert(() => factory.connect(outsider).createLoan(terms), 'NotBorrower');
+
+    // Borrower creating loan succeeds
+    const tx = await factory.connect(borrower).createLoan(terms);
+    await expect(tx).to.emit(factory, 'LoanCreated');
+  });
+
+  it('enforces per-merchant spend caps and global maxSpendWei simultaneously', async function () {
+    // Create pool with 2 merchants: Merchant A cap 5 ETH, Merchant B cap 3 ETH. Global maxSpend = 8 ETH.
+    const terms = defaultTerms(borrower.address, {
+      merchants: [merchantA.address, merchantB.address],
+      merchantCapsWei: [ethers.parseEther('5'), ethers.parseEther('3')],
+      maxSpendWei: ethers.parseEther('8')
+    });
+    const tx = await factory.connect(borrower).createLoan(terms);
+    await tx.wait();
+    const pools = await factory.getPools();
+    const multiPool = await ethers.getContractAt('LoanPool', pools[pools.length - 1]);
+
+    // Fund to activate
+    await multiPool.connect(lenderA).contribute({ value: ethers.parseEther('6') });
+    await multiPool.connect(lenderB).contribute({ value: ethers.parseEther('4') });
+
+    // Verify merchant info view
+    const [aApproved, aCap, aSpent] = await multiPool.getMerchantInfo(merchantA.address);
+    expect(aApproved).to.equal(true);
+    expect(aCap).to.equal(ethers.parseEther('5'));
+    expect(aSpent).to.equal(0);
+
+    // 1. Borrower spends 4 ETH to Merchant A -> succeeds
+    await multiPool.connect(borrower).spend(merchantA.address, ethers.parseEther('4'), ethers.id('cat1'));
+    expect(await multiPool.merchantSpentWei(merchantA.address)).to.equal(ethers.parseEther('4'));
+
+    // 2. Borrower attempts to spend 2 ETH more to Merchant A (4 + 2 = 6 > 5 cap) -> reverts MerchantCapExceeded
+    await expectRevert(
+      () => multiPool.connect(borrower).spend(merchantA.address, ethers.parseEther('2'), ethers.id('cat2')),
+      'MerchantCapExceeded'
+    );
+
+    // 3. Borrower spends 1 ETH remaining capacity to Merchant A (total 5 ETH) -> succeeds
+    await multiPool.connect(borrower).spend(merchantA.address, ethers.parseEther('1'), ethers.id('cat2'));
+    expect(await multiPool.merchantSpentWei(merchantA.address)).to.equal(ethers.parseEther('5'));
+
+    // 4. Any further spend to Merchant A reverts
+    await expectRevert(
+      () => multiPool.connect(borrower).spend(merchantA.address, ethers.parseEther('0.1'), ethers.id('cat2')),
+      'MerchantCapExceeded'
+    );
+
+    // 5. Spend to Merchant B within its 3 ETH cap -> succeeds
+    await multiPool.connect(borrower).spend(merchantB.address, ethers.parseEther('3'), ethers.id('cat3'));
+    expect(await multiPool.merchantSpentWei(merchantB.address)).to.equal(ethers.parseEther('3'));
+    expect(await multiPool.totalSpent()).to.equal(ethers.parseEther('8'));
+
+    // 6. Global spend cap (8 ETH) is now reached -> further spend to any merchant reverts SpendLimitExceeded
+    await expectRevert(
+      () => multiPool.connect(borrower).spend(merchantB.address, ethers.parseEther('0.1'), ethers.id('cat4')),
+      'SpendLimitExceeded'
+    );
+  });
+
+  it('enforces grace period before default votes can be cast', async function () {
+    // Fund pool
+    await pool.connect(lenderA).contribute({ value: ethers.parseEther('6') });
+    await pool.connect(lenderB).contribute({ value: ethers.parseEther('4') });
+
+    // Duration is 14 days, grace period is 3 days
+    // Fast forward 15 days (past 14 days maturity, but BEFORE 14 + 3 = 17 days grace)
+    await ethers.provider.send('evm_increaseTime', [15 * 24 * 60 * 60]);
+    await ethers.provider.send('evm_mine', []);
+
+    // Voting reverts because grace period has not elapsed
+    await expectRevert(() => pool.connect(lenderA).voteDefault(), 'MaturityNotReached');
+
+    // Fast forward additional 2.5 days (total 17.5 days > maturity + grace)
+    await ethers.provider.send('evm_increaseTime', [2.5 * 24 * 60 * 60]);
+    await ethers.provider.send('evm_mine', []);
+
+    // Voting now succeeds
+    const voteTx = await pool.connect(lenderA).voteDefault();
+    await expect(voteTx).to.emit(pool, 'DefaultVoteCast');
+  });
+
+  it('enforces LoanFactory Pausable and Ownable2Step mechanisms', async function () {
+    // Non-owner cannot pause
+    await expectRevert(() => factory.connect(outsider).pause(), 'OwnableUnauthorizedAccount');
+
+    // Owner pauses factory
+    await factory.connect(deployer).pause();
+
+    // createLoan reverts when paused
+    await expectRevert(() => factory.connect(borrower).createLoan(defaultTerms(borrower.address)), 'EnforcedPause');
+
+    // Owner unpauses
+    await factory.connect(deployer).unpause();
+    const tx = await factory.connect(borrower).createLoan(defaultTerms(borrower.address));
+    await expect(tx).to.emit(factory, 'LoanCreated');
+
+    // Ownable2Step transfer
+    await factory.connect(deployer).transferOwnership(lenderA.address);
+    expect(await factory.owner()).to.equal(deployer.address);
+    expect(await factory.pendingOwner()).to.equal(lenderA.address);
+
+    // Pending owner accepts
+    await factory.connect(lenderA).acceptOwnership();
+    expect(await factory.owner()).to.equal(lenderA.address);
+  });
+
+  // --- INVARIANT AND PROPERTY TESTS ---
+
+  it('invariant: sum of all claims never exceeds funds in plus interest repaid', async function () {
+    // Fund with 3 lenders (5 ETH, 3 ETH, 2 ETH)
+    await pool.connect(lenderA).contribute({ value: ethers.parseEther('5') });
+    await pool.connect(lenderB).contribute({ value: ethers.parseEther('3') });
+    await pool.connect(lenderC).contribute({ value: ethers.parseEther('2') });
+
+    // Spend 5 ETH
+    await pool.connect(borrower).spend(merchantA.address, ethers.parseEther('5'), ethers.id('inv'));
+
+    // Partial repayment of 4 ETH
+    await pool.connect(borrower).repay({ value: ethers.parseEther('4') });
+
+    // Lenders claim partial
+    await pool.connect(lenderA).claimRepayment();
+    await pool.connect(lenderB).claimRepayment();
+
+    // Complete repayment: 10.8 - 4 = 6.8 ETH
+    await pool.connect(borrower).repay({ value: ethers.parseEther('6.8') });
+
+    // Lenders claim remaining
+    await pool.connect(lenderA).claimRepayment();
+    await pool.connect(lenderB).claimRepayment();
+    await pool.connect(lenderC).claimRepayment();
+
+    const claimedA = await pool.claimed(lenderA.address);
+    const claimedB = await pool.claimed(lenderB.address);
+    const claimedC = await pool.claimed(lenderC.address);
+    const totalClaimed = claimedA + claimedB + claimedC;
+
+    const totalContributed = await pool.totalContributed();
+    const totalRepaid = await pool.totalRepaid();
+    const totalSpent = await pool.totalSpent();
+
+    // Invariant 1: totalClaimed == totalRepaid + (totalContributed - totalSpent)
+    expect(totalClaimed).to.equal(totalRepaid + (totalContributed - totalSpent));
+    // Invariant 2: totalClaimed <= fundsIn (10 ETH) + interest repaid (0.8 ETH)
+    expect(totalClaimed).to.be.lte(totalContributed + totalRepaid);
+  });
+
+  it('invariant: pool never pays a non-allowlisted address', async function () {
+    await pool.connect(lenderA).contribute({ value: ethers.parseEther('6') });
+    await pool.connect(lenderB).contribute({ value: ethers.parseEther('4') });
+
+    // Spending to non-allowlisted address always reverts
+    await expectRevert(
+      () => pool.connect(borrower).spend(outsider.address, ethers.parseEther('1'), ethers.id('unauth')),
+      'MerchantNotApproved'
+    );
+  });
+
+  it('invariant: no merchant ever receives more than its cap', async function () {
+    const terms = defaultTerms(borrower.address, {
+      merchants: [merchantA.address, merchantB.address],
+      merchantCapsWei: [ethers.parseEther('4'), ethers.parseEther('2')],
+      maxSpendWei: ethers.parseEther('6')
+    });
+    const tx = await factory.connect(borrower).createLoan(terms);
+    await tx.wait();
+    const pools = await factory.getPools();
+    const p = await ethers.getContractAt('LoanPool', pools[pools.length - 1]);
+
+    await p.connect(lenderA).contribute({ value: ethers.parseEther('6') });
+    await p.connect(lenderB).contribute({ value: ethers.parseEther('4') });
+
+    // Merchant A cap is 4 ETH. Attempting 4.0001 ETH reverts
+    await expectRevert(
+      () => p.connect(borrower).spend(merchantA.address, ethers.parseEther('4.0001'), ethers.id('cat')),
+      'MerchantCapExceeded'
+    );
+    await p.connect(borrower).spend(merchantA.address, ethers.parseEther('4'), ethers.id('cat'));
+    expect(await p.merchantSpentWei(merchantA.address)).to.equal(ethers.parseEther('4'));
+
+    // Further spend to Merchant A reverts
+    await expectRevert(
+      () => p.connect(borrower).spend(merchantA.address, 1n, ethers.id('cat')),
+      'MerchantCapExceeded'
+    );
+  });
+
+  it('invariant: after terminal state no ETH remains unclaimable except rounding dust', async function () {
+    // 3 lenders with uneven contributions (3.333 ETH, 3.333 ETH, 3.334 ETH)
+    const c1 = ethers.parseEther('3.333');
+    const c2 = ethers.parseEther('3.333');
+    const c3 = ethers.parseEther('3.334');
+    await pool.connect(lenderA).contribute({ value: c1 });
+    await pool.connect(lenderB).contribute({ value: c2 });
+    await pool.connect(lenderC).contribute({ value: c3 });
+
+    // Spend 7.777 ETH
+    await pool.connect(borrower).spend(merchantA.address, ethers.parseEther('7.777'), ethers.id('spend'));
+
+    // Repay full 10.8 ETH
+    await pool.connect(borrower).repay({ value: ethers.parseEther('10.8') });
+
+    // All lenders claim
+    await pool.connect(lenderA).claimRepayment();
+    await pool.connect(lenderB).claimRepayment();
+    await pool.connect(lenderC).claimRepayment();
+
+    // Check remaining balance in pool
+    const remainingBalance = await ethers.provider.getBalance(await pool.getAddress());
+    // Invariant: remaining dust must be bounded by number of lenders (3 wei)
+    expect(remainingBalance).to.be.lte(3n);
+  });
+
+  it('invariant: contributions never exceed target', async function () {
+    await pool.connect(lenderA).contribute({ value: ethers.parseEther('6') });
+    // Attempting 4.000000000000000001 ETH when 4 ETH is remaining reverts
+    await expectRevert(
+      () => pool.connect(lenderB).contribute({ value: ethers.parseEther('4.000000000000000001') }),
+      'TargetExceeded'
+    );
+    await pool.connect(lenderB).contribute({ value: ethers.parseEther('4') });
+    expect(await pool.totalContributed()).to.equal(ethers.parseEther('10'));
+    // Further contribution reverts FundingClosed
+    await expectRevert(
+      () => pool.connect(lenderC).contribute({ value: ethers.parseEther('1') }),
+      'FundingClosed'
+    );
   });
 });

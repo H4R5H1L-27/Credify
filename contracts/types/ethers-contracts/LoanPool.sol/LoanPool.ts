@@ -4,13 +4,18 @@
 import type { BaseContract, BigNumberish, BytesLike, FunctionFragment, Result, Interface, EventFragment, AddressLike, ContractRunner, ContractMethod, Listener } from "ethers"
 import type { TypedContractEvent, TypedDeferredTopicFilter, TypedEventLog, TypedLogDescription, TypedListener, TypedContractMethod } from "../common.js"
   
+    export type LoanTermsStruct = {borrower: AddressLike, targetWei: BigNumberish, durationSeconds: BigNumberish, fundingDurationSeconds: BigNumberish, aprBps: BigNumberish, maxSpendWei: BigNumberish, defaultQuorumBps: BigNumberish, gracePeriodSeconds: BigNumberish, agreementHash: BytesLike, merchants: AddressLike[], merchantCapsWei: BigNumberish[]}
+
+    export type LoanTermsStructOutput = [borrower: string, targetWei: bigint, durationSeconds: bigint, fundingDurationSeconds: bigint, aprBps: bigint, maxSpendWei: bigint, defaultQuorumBps: bigint, gracePeriodSeconds: bigint, agreementHash: string, merchants: string[], merchantCapsWei: bigint[]] & {borrower: string, targetWei: bigint, durationSeconds: bigint, fundingDurationSeconds: bigint, aprBps: bigint, maxSpendWei: bigint, defaultQuorumBps: bigint, gracePeriodSeconds: bigint, agreementHash: string, merchants: string[], merchantCapsWei: bigint[] }
+  
 
   export interface LoanPoolInterface extends Interface {
-    getFunction(nameOrSignature: "approvedMerchant" | "approvedMerchants" | "aprBps" | "borrower" | "cancelUnfunded" | "claimFundingRefund" | "claimRepayment" | "claimed" | "contribute" | "contributed" | "createdAt" | "defaultQuorumBps" | "defaultVoteWeight" | "durationSeconds" | "factory" | "getApprovedMerchants" | "getLenderInfo" | "getSummary" | "hasDefaultVoted" | "kycRegistry" | "maturity" | "maxSpendWei" | "refunded" | "repay" | "reputationRegistry" | "spend" | "status" | "targetWei" | "totalContributed" | "totalRepaid" | "totalRepayable" | "totalSpent" | "voteDefault"): FunctionFragment;
+    getFunction(nameOrSignature: "agreementHash" | "approvedMerchant" | "approvedMerchants" | "aprBps" | "borrower" | "cancelUnfunded" | "claimFundingRefund" | "claimRepayment" | "claimed" | "contribute" | "contributed" | "createdAt" | "defaultQuorumBps" | "defaultVoteWeight" | "distributable" | "durationSeconds" | "factory" | "fundingDeadline" | "getApprovedMerchants" | "getLenderInfo" | "getMerchantInfo" | "getSummary" | "gracePeriodSeconds" | "hasDefaultVoted" | "kycRegistry" | "maturity" | "maxSpendWei" | "merchantCapWei" | "merchantSpentWei" | "refunded" | "repay" | "reputationRegistry" | "spend" | "status" | "targetWei" | "totalContributed" | "totalRepaid" | "totalRepayable" | "totalSpent" | "voteDefault"): FunctionFragment;
 
     getEvent(nameOrSignatureOrTopic: "DefaultVoteCast" | "Funded" | "FundingCancelled" | "FundingRefunded" | "LoanActivated" | "LoanDefaulted" | "LoanPoolCreated" | "LoanRepaid" | "RepaymentClaimed" | "RepaymentReceived" | "SpendExecuted"): EventFragment;
 
-    encodeFunctionData(functionFragment: 'approvedMerchant', values: [AddressLike]): string;
+    encodeFunctionData(functionFragment: 'agreementHash', values?: undefined): string;
+encodeFunctionData(functionFragment: 'approvedMerchant', values: [AddressLike]): string;
 encodeFunctionData(functionFragment: 'approvedMerchants', values: [BigNumberish]): string;
 encodeFunctionData(functionFragment: 'aprBps', values?: undefined): string;
 encodeFunctionData(functionFragment: 'borrower', values?: undefined): string;
@@ -23,15 +28,21 @@ encodeFunctionData(functionFragment: 'contributed', values: [AddressLike]): stri
 encodeFunctionData(functionFragment: 'createdAt', values?: undefined): string;
 encodeFunctionData(functionFragment: 'defaultQuorumBps', values?: undefined): string;
 encodeFunctionData(functionFragment: 'defaultVoteWeight', values?: undefined): string;
+encodeFunctionData(functionFragment: 'distributable', values?: undefined): string;
 encodeFunctionData(functionFragment: 'durationSeconds', values?: undefined): string;
 encodeFunctionData(functionFragment: 'factory', values?: undefined): string;
+encodeFunctionData(functionFragment: 'fundingDeadline', values?: undefined): string;
 encodeFunctionData(functionFragment: 'getApprovedMerchants', values?: undefined): string;
 encodeFunctionData(functionFragment: 'getLenderInfo', values: [AddressLike]): string;
+encodeFunctionData(functionFragment: 'getMerchantInfo', values: [AddressLike]): string;
 encodeFunctionData(functionFragment: 'getSummary', values?: undefined): string;
+encodeFunctionData(functionFragment: 'gracePeriodSeconds', values?: undefined): string;
 encodeFunctionData(functionFragment: 'hasDefaultVoted', values: [AddressLike]): string;
 encodeFunctionData(functionFragment: 'kycRegistry', values?: undefined): string;
 encodeFunctionData(functionFragment: 'maturity', values?: undefined): string;
 encodeFunctionData(functionFragment: 'maxSpendWei', values?: undefined): string;
+encodeFunctionData(functionFragment: 'merchantCapWei', values: [AddressLike]): string;
+encodeFunctionData(functionFragment: 'merchantSpentWei', values: [AddressLike]): string;
 encodeFunctionData(functionFragment: 'refunded', values: [AddressLike]): string;
 encodeFunctionData(functionFragment: 'repay', values?: undefined): string;
 encodeFunctionData(functionFragment: 'reputationRegistry', values?: undefined): string;
@@ -44,7 +55,8 @@ encodeFunctionData(functionFragment: 'totalRepayable', values?: undefined): stri
 encodeFunctionData(functionFragment: 'totalSpent', values?: undefined): string;
 encodeFunctionData(functionFragment: 'voteDefault', values?: undefined): string;
 
-    decodeFunctionResult(functionFragment: 'approvedMerchant', data: BytesLike): Result;
+    decodeFunctionResult(functionFragment: 'agreementHash', data: BytesLike): Result;
+decodeFunctionResult(functionFragment: 'approvedMerchant', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'approvedMerchants', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'aprBps', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'borrower', data: BytesLike): Result;
@@ -57,15 +69,21 @@ decodeFunctionResult(functionFragment: 'contributed', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'createdAt', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'defaultQuorumBps', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'defaultVoteWeight', data: BytesLike): Result;
+decodeFunctionResult(functionFragment: 'distributable', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'durationSeconds', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'factory', data: BytesLike): Result;
+decodeFunctionResult(functionFragment: 'fundingDeadline', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'getApprovedMerchants', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'getLenderInfo', data: BytesLike): Result;
+decodeFunctionResult(functionFragment: 'getMerchantInfo', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'getSummary', data: BytesLike): Result;
+decodeFunctionResult(functionFragment: 'gracePeriodSeconds', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'hasDefaultVoted', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'kycRegistry', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'maturity', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'maxSpendWei', data: BytesLike): Result;
+decodeFunctionResult(functionFragment: 'merchantCapWei', data: BytesLike): Result;
+decodeFunctionResult(functionFragment: 'merchantSpentWei', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'refunded', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'repay', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'reputationRegistry', data: BytesLike): Result;
@@ -129,9 +147,9 @@ decodeFunctionResult(functionFragment: 'voteDefault', data: BytesLike): Result;
   
 
     export namespace LoanActivatedEvent {
-      export type InputTuple = [timestamp: BigNumberish];
-      export type OutputTuple = [timestamp: bigint];
-      export interface OutputObject {timestamp: bigint };
+      export type InputTuple = [timestamp: BigNumberish, maturity: BigNumberish];
+      export type OutputTuple = [timestamp: bigint, maturity: bigint];
+      export interface OutputObject {timestamp: bigint, maturity: bigint };
       export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>
       export type Filter = TypedDeferredTopicFilter<Event>
       export type Log = TypedEventLog<Event>
@@ -153,9 +171,9 @@ decodeFunctionResult(functionFragment: 'voteDefault', data: BytesLike): Result;
   
 
     export namespace LoanPoolCreatedEvent {
-      export type InputTuple = [borrower: AddressLike, targetWei: BigNumberish, maturity: BigNumberish, aprBps: BigNumberish];
-      export type OutputTuple = [borrower: string, targetWei: bigint, maturity: bigint, aprBps: bigint];
-      export interface OutputObject {borrower: string, targetWei: bigint, maturity: bigint, aprBps: bigint };
+      export type InputTuple = [borrower: AddressLike, targetWei: BigNumberish, aprBps: BigNumberish, agreementHash: BytesLike];
+      export type OutputTuple = [borrower: string, targetWei: bigint, aprBps: bigint, agreementHash: string];
+      export interface OutputObject {borrower: string, targetWei: bigint, aprBps: bigint, agreementHash: string };
       export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>
       export type Filter = TypedDeferredTopicFilter<Event>
       export type Log = TypedEventLog<Event>
@@ -245,6 +263,14 @@ decodeFunctionResult(functionFragment: 'voteDefault', data: BytesLike): Result;
 
 
     
+    
+    agreementHash: TypedContractMethod<
+      [],
+      [string],
+      'view'
+    >
+    
+
     
     approvedMerchant: TypedContractMethod<
       [arg0: AddressLike, ],
@@ -350,6 +376,14 @@ decodeFunctionResult(functionFragment: 'voteDefault', data: BytesLike): Result;
     
 
     
+    distributable: TypedContractMethod<
+      [],
+      [bigint],
+      'view'
+    >
+    
+
+    
     durationSeconds: TypedContractMethod<
       [],
       [bigint],
@@ -361,6 +395,14 @@ decodeFunctionResult(functionFragment: 'voteDefault', data: BytesLike): Result;
     factory: TypedContractMethod<
       [],
       [string],
+      'view'
+    >
+    
+
+    
+    fundingDeadline: TypedContractMethod<
+      [],
+      [bigint],
       'view'
     >
     
@@ -382,9 +424,25 @@ decodeFunctionResult(functionFragment: 'voteDefault', data: BytesLike): Result;
     
 
     
+    getMerchantInfo: TypedContractMethod<
+      [merchant: AddressLike, ],
+      [[boolean, bigint, bigint] & {approved: boolean, capWei: bigint, spentWei: bigint }],
+      'view'
+    >
+    
+
+    
     getSummary: TypedContractMethod<
       [],
-      [[bigint, bigint, bigint, bigint, bigint, bigint, bigint, bigint, bigint] & {_status: bigint, _targetWei: bigint, _totalContributed: bigint, _totalRepaid: bigint, _totalRepayable: bigint, _totalSpent: bigint, _maturity: bigint, _defaultVoteWeight: bigint, _defaultThreshold: bigint }],
+      [[bigint, bigint, bigint, bigint, bigint, bigint, bigint, bigint, bigint, bigint, bigint, string] & {_status: bigint, _targetWei: bigint, _totalContributed: bigint, _totalRepaid: bigint, _totalRepayable: bigint, _totalSpent: bigint, _maturity: bigint, _defaultVoteWeight: bigint, _defaultThreshold: bigint, _fundingDeadline: bigint, _gracePeriodSeconds: bigint, _agreementHash: string }],
+      'view'
+    >
+    
+
+    
+    gracePeriodSeconds: TypedContractMethod<
+      [],
+      [bigint],
       'view'
     >
     
@@ -416,6 +474,22 @@ decodeFunctionResult(functionFragment: 'voteDefault', data: BytesLike): Result;
     
     maxSpendWei: TypedContractMethod<
       [],
+      [bigint],
+      'view'
+    >
+    
+
+    
+    merchantCapWei: TypedContractMethod<
+      [arg0: AddressLike, ],
+      [bigint],
+      'view'
+    >
+    
+
+    
+    merchantSpentWei: TypedContractMethod<
+      [arg0: AddressLike, ],
       [bigint],
       'view'
     >
@@ -512,7 +586,12 @@ decodeFunctionResult(functionFragment: 'voteDefault', data: BytesLike): Result;
 
     getFunction<T extends ContractMethod = ContractMethod>(key: string | FunctionFragment): T;
 
-    getFunction(nameOrSignature: 'approvedMerchant'): TypedContractMethod<
+    getFunction(nameOrSignature: 'agreementHash'): TypedContractMethod<
+      [],
+      [string],
+      'view'
+    >;
+getFunction(nameOrSignature: 'approvedMerchant'): TypedContractMethod<
       [arg0: AddressLike, ],
       [boolean],
       'view'
@@ -577,6 +656,11 @@ getFunction(nameOrSignature: 'defaultVoteWeight'): TypedContractMethod<
       [bigint],
       'view'
     >;
+getFunction(nameOrSignature: 'distributable'): TypedContractMethod<
+      [],
+      [bigint],
+      'view'
+    >;
 getFunction(nameOrSignature: 'durationSeconds'): TypedContractMethod<
       [],
       [bigint],
@@ -585,6 +669,11 @@ getFunction(nameOrSignature: 'durationSeconds'): TypedContractMethod<
 getFunction(nameOrSignature: 'factory'): TypedContractMethod<
       [],
       [string],
+      'view'
+    >;
+getFunction(nameOrSignature: 'fundingDeadline'): TypedContractMethod<
+      [],
+      [bigint],
       'view'
     >;
 getFunction(nameOrSignature: 'getApprovedMerchants'): TypedContractMethod<
@@ -597,9 +686,19 @@ getFunction(nameOrSignature: 'getLenderInfo'): TypedContractMethod<
       [[bigint, bigint, boolean] & {amount: bigint, claimable: bigint, voted: boolean }],
       'view'
     >;
+getFunction(nameOrSignature: 'getMerchantInfo'): TypedContractMethod<
+      [merchant: AddressLike, ],
+      [[boolean, bigint, bigint] & {approved: boolean, capWei: bigint, spentWei: bigint }],
+      'view'
+    >;
 getFunction(nameOrSignature: 'getSummary'): TypedContractMethod<
       [],
-      [[bigint, bigint, bigint, bigint, bigint, bigint, bigint, bigint, bigint] & {_status: bigint, _targetWei: bigint, _totalContributed: bigint, _totalRepaid: bigint, _totalRepayable: bigint, _totalSpent: bigint, _maturity: bigint, _defaultVoteWeight: bigint, _defaultThreshold: bigint }],
+      [[bigint, bigint, bigint, bigint, bigint, bigint, bigint, bigint, bigint, bigint, bigint, string] & {_status: bigint, _targetWei: bigint, _totalContributed: bigint, _totalRepaid: bigint, _totalRepayable: bigint, _totalSpent: bigint, _maturity: bigint, _defaultVoteWeight: bigint, _defaultThreshold: bigint, _fundingDeadline: bigint, _gracePeriodSeconds: bigint, _agreementHash: string }],
+      'view'
+    >;
+getFunction(nameOrSignature: 'gracePeriodSeconds'): TypedContractMethod<
+      [],
+      [bigint],
       'view'
     >;
 getFunction(nameOrSignature: 'hasDefaultVoted'): TypedContractMethod<
@@ -619,6 +718,16 @@ getFunction(nameOrSignature: 'maturity'): TypedContractMethod<
     >;
 getFunction(nameOrSignature: 'maxSpendWei'): TypedContractMethod<
       [],
+      [bigint],
+      'view'
+    >;
+getFunction(nameOrSignature: 'merchantCapWei'): TypedContractMethod<
+      [arg0: AddressLike, ],
+      [bigint],
+      'view'
+    >;
+getFunction(nameOrSignature: 'merchantSpentWei'): TypedContractMethod<
+      [arg0: AddressLike, ],
       [bigint],
       'view'
     >;
@@ -708,7 +817,7 @@ getEvent(key: 'SpendExecuted'): TypedContractEvent<SpendExecutedEvent.InputTuple
       FundingRefunded: TypedContractEvent<FundingRefundedEvent.InputTuple, FundingRefundedEvent.OutputTuple, FundingRefundedEvent.OutputObject>;
     
 
-      'LoanActivated(uint256)': TypedContractEvent<LoanActivatedEvent.InputTuple, LoanActivatedEvent.OutputTuple, LoanActivatedEvent.OutputObject>;
+      'LoanActivated(uint256,uint256)': TypedContractEvent<LoanActivatedEvent.InputTuple, LoanActivatedEvent.OutputTuple, LoanActivatedEvent.OutputObject>;
       LoanActivated: TypedContractEvent<LoanActivatedEvent.InputTuple, LoanActivatedEvent.OutputTuple, LoanActivatedEvent.OutputObject>;
     
 
@@ -716,7 +825,7 @@ getEvent(key: 'SpendExecuted'): TypedContractEvent<SpendExecutedEvent.InputTuple
       LoanDefaulted: TypedContractEvent<LoanDefaultedEvent.InputTuple, LoanDefaultedEvent.OutputTuple, LoanDefaultedEvent.OutputObject>;
     
 
-      'LoanPoolCreated(address,uint256,uint256,uint256)': TypedContractEvent<LoanPoolCreatedEvent.InputTuple, LoanPoolCreatedEvent.OutputTuple, LoanPoolCreatedEvent.OutputObject>;
+      'LoanPoolCreated(address,uint256,uint256,bytes32)': TypedContractEvent<LoanPoolCreatedEvent.InputTuple, LoanPoolCreatedEvent.OutputTuple, LoanPoolCreatedEvent.OutputObject>;
       LoanPoolCreated: TypedContractEvent<LoanPoolCreatedEvent.InputTuple, LoanPoolCreatedEvent.OutputTuple, LoanPoolCreatedEvent.OutputObject>;
     
 

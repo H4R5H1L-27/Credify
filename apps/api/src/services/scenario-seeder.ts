@@ -101,10 +101,14 @@ export class ScenarioSeeder {
       borrower: borrowerAddr,
       targetWei: target1,
       durationSeconds: duration1,
+      fundingDurationSeconds: 7 * 86400,
       aprBps: apr1,
       maxSpendWei: maxSpend1,
       defaultQuorumBps: quorum1,
+      gracePeriodSeconds: 3 * 86400,
+      agreementHash: '0x1111111111111111111111111111111111111111111111111111111111111111',
       merchants,
+      merchantCapsWei: [5_000_000_000_000_000_000n, 3_000_000_000_000_000_000n]
     });
 
     let pools = await this.chain.getPools();
@@ -144,10 +148,14 @@ export class ScenarioSeeder {
       borrower: borrowerAddr,
       targetWei: target2,
       durationSeconds: duration2,
+      fundingDurationSeconds: 7 * 86400,
       aprBps: apr2,
       maxSpendWei: maxSpend2,
       defaultQuorumBps: 5001,
+      gracePeriodSeconds: 3 * 86400,
+      agreementHash: '0x2222222222222222222222222222222222222222222222222222222222222222',
       merchants,
+      merchantCapsWei: [2_500_000_000_000_000_000n, 2_000_000_000_000_000_000n]
     });
 
     pools = await this.chain.getPools();
@@ -175,10 +183,14 @@ export class ScenarioSeeder {
       borrower: borrowerAddr,
       targetWei: target3,
       durationSeconds: duration3,
+      fundingDurationSeconds: 7 * 86400,
       aprBps: apr3,
       maxSpendWei: maxSpend3,
       defaultQuorumBps: 5001,
+      gracePeriodSeconds: 3 * 86400,
+      agreementHash: '0x3333333333333333333333333333333333333333333333333333333333333333',
       merchants,
+      merchantCapsWei: [3_000_000_000_000_000_000n, 3_000_000_000_000_000_000n]
     });
 
     pools = await this.chain.getPools();

@@ -127,9 +127,10 @@ export class ChainIndexer {
     };
 
 
+    const loanCreatedEvent = factoryAbi.find((x) => x.type === 'event' && x.name === 'LoanCreated')!;
     const factoryLogs = await this.chain.publicClient.getLogs({
       address: this.chain.deployment.contracts.loanFactory,
-      event: factoryAbi[2],
+      event: loanCreatedEvent as any,
       fromBlock: from,
       toBlock: to
     });
@@ -154,8 +155,8 @@ export class ChainIndexer {
         data: {
           borrower: args.borrower,
           targetWei: args.targetWei?.toString(),
-          maturity: args.maturity?.toString(),
-          aprBps: args.aprBps?.toString()
+          aprBps: args.aprBps?.toString(),
+          agreementHash: args.agreementHash?.toString()
         }
       });
     }

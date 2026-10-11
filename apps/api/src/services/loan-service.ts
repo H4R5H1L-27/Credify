@@ -18,7 +18,7 @@ export class LoanService {
 
   async detail(pool: Address): Promise<LoanSummary> {
     const raw = await this.chain.readLoan(pool);
-    const [status, target, contributed, repaid, repayable, spent, maturity, voteWeight, threshold] = raw.summary as readonly bigint[];
+    const [status, target, contributed, repaid, repayable, spent, maturity, voteWeight, threshold, fundingDeadline, gracePeriodSeconds, agreementHash] = raw.summary as readonly any[];
     const borrower = (await principalForAddress(this.chain, raw.borrower as Address)) ?? {
       id: raw.borrower, displayName: 'External borrower', role: 'BORROWER' as const, walletAddress: raw.borrower, verified: await this.chain.verified(raw.borrower as Address)
     };
@@ -89,6 +89,7 @@ export class LoanService {
       fundedBps: target === 0n ? 0 : Number((contributed * 10000n) / target),
       aprBps: Number(await this.chain.publicClient.readContract({ address: pool, abi: [{ type: 'function', name: 'aprBps', stateMutability: 'view', inputs: [], outputs: [{ type: 'uint256' }] }] as const, functionName: 'aprBps' })),
       durationSeconds: Number(await this.chain.publicClient.readContract({ address: pool, abi: [{ type: 'function', name: 'durationSeconds', stateMutability: 'view', inputs: [], outputs: [{ type: 'uint256' }] }] as const, functionName: 'durationSeconds' })),
+      fundingDeadline: fundingDeadline ? new Date(Number(fundingDeadline) * 1000).toISOString() : undefined,
       maturity: new Date(Number(maturity) * 1000).toISOString(),
       totalRepaidWei: repaid.toString(),
       totalRepayableWei: repayable.toString(),
@@ -96,6 +97,8 @@ export class LoanService {
       maxSpendWei: (await this.chain.publicClient.readContract({ address: pool, abi: [{ type: 'function', name: 'maxSpendWei', stateMutability: 'view', inputs: [], outputs: [{ type: 'uint256' }] }] as const, functionName: 'maxSpendWei' })).toString(),
       defaultVoteWeightWei: voteWeight.toString(),
       defaultThresholdWei: threshold.toString(),
+      gracePeriodSeconds: gracePeriodSeconds !== undefined ? Number(gracePeriodSeconds) : undefined,
+      agreementHash: agreementHash ? String(agreementHash) : undefined,
       lenders,
       merchants: (raw.merchants as Address[]).map((x) => x)
     };
@@ -111,14 +114,30 @@ export class LoanService {
     const requestedMerchants = parsed.terms.merchants as Address[];
     const allowed = new Set(merchants.map((x) => x.toLowerCase()));
     if (requestedMerchants.some((m) => !allowed.has(m.toLowerCase()))) throw new Error('UNKNOWN_MERCHANT');
+
+    const defaultFundingDuration = 7 * 24 * 60 * 60;
+    const defaultGracePeriod = 3 * 24 * 60 * 60;
+    const fundingDurationSeconds = (parsed.terms as any).fundingDurationSeconds ?? defaultFundingDuration;
+    const gracePeriodSeconds = (parsed.terms as any).gracePeriodSeconds ?? defaultGracePeriod;
+    const agreementHash = ((parsed.terms as any).agreementHash ?? '0x0000000000000000000000000000000000000000000000000000000000000000') as `0x${string}`;
+    const maxSpendWei = BigInt(parsed.terms.maxSpendWei);
+    const count = requestedMerchants.length || 1;
+    const merchantCapsWei = (parsed.terms as any).merchantCapsWei
+      ? (parsed.terms as any).merchantCapsWei.map((c: any) => BigInt(c))
+      : requestedMerchants.map(() => maxSpendWei / BigInt(count));
+
     const tx = await this.chain.createLoan(input.borrowerId, {
-      borrower: borrower.walletAddress,
+      borrower: borrower.walletAddress as Address,
       targetWei: BigInt(parsed.terms.targetWei),
       durationSeconds: parsed.terms.durationSeconds,
+      fundingDurationSeconds,
       aprBps: parsed.terms.aprBps,
-      maxSpendWei: BigInt(parsed.terms.maxSpendWei),
+      maxSpendWei,
       defaultQuorumBps: parsed.terms.defaultQuorumBps,
-      merchants: requestedMerchants
+      gracePeriodSeconds,
+      agreementHash,
+      merchants: requestedMerchants,
+      merchantCapsWei
     });
     const pools = await this.chain.getPools();
     const address = pools[pools.length - 1];

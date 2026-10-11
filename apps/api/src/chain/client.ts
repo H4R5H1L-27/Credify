@@ -35,15 +35,38 @@ export class ChainClient {
 
   async blockNumber() { return this.publicClient.getBlockNumber({ cacheTime: 0 }); }
 
-  async createLoan(principalId: string, args: {
-    borrower: Address; targetWei: bigint; durationSeconds: number; aprBps: number; maxSpendWei: bigint; defaultQuorumBps: number; merchants: Address[];
+  async createLoan(principalId: string, terms: {
+    borrower: Address;
+    targetWei: bigint;
+    durationSeconds: number;
+    fundingDurationSeconds: number;
+    aprBps: number;
+    maxSpendWei: bigint;
+    defaultQuorumBps: number;
+    gracePeriodSeconds: number;
+    agreementHash: `0x${string}`;
+    merchants: Address[];
+    merchantCapsWei: bigint[];
   }): Promise<{ hash: Hash; receiptBlock: string }> {
     const wallet = this.walletForPrincipalId(principalId);
+    const contractTerms = {
+      borrower: terms.borrower,
+      targetWei: terms.targetWei,
+      durationSeconds: BigInt(terms.durationSeconds),
+      fundingDurationSeconds: BigInt(terms.fundingDurationSeconds),
+      aprBps: BigInt(terms.aprBps),
+      maxSpendWei: terms.maxSpendWei,
+      defaultQuorumBps: BigInt(terms.defaultQuorumBps),
+      gracePeriodSeconds: BigInt(terms.gracePeriodSeconds),
+      agreementHash: terms.agreementHash,
+      merchants: terms.merchants,
+      merchantCapsWei: terms.merchantCapsWei
+    };
     const { request } = await this.publicClient.simulateContract({
       address: this.deployment.contracts.loanFactory,
       abi: factoryAbi,
       functionName: 'createLoan',
-      args: [args.borrower, args.targetWei, BigInt(args.durationSeconds), BigInt(args.aprBps), args.maxSpendWei, BigInt(args.defaultQuorumBps), args.merchants],
+      args: [contractTerms],
       account: wallet.account!
     });
     const hash = await wallet.writeContract(request);

@@ -9,10 +9,14 @@ export type Role = z.infer<typeof roleSchema>;
 export const termSheetSchema = z.object({
   targetWei: z.string().regex(/^\d+$/),
   durationSeconds: z.number().int().positive(),
+  fundingDurationSeconds: z.number().int().positive().optional(),
   aprBps: z.number().int().min(0).max(5000),
   maxSpendWei: z.string().regex(/^\d+$/),
   defaultQuorumBps: z.number().int().min(5001).max(10000).default(5001),
-  merchants: z.array(z.string().regex(/^0x[a-fA-F0-9]{40}$/)).min(1)
+  gracePeriodSeconds: z.number().int().min(0).optional(),
+  agreementHash: z.string().regex(/^0x[a-fA-F0-9]{64}$/).optional(),
+  merchants: z.array(z.string().regex(/^0x[a-fA-F0-9]{40}$/)).min(1),
+  merchantCapsWei: z.array(z.string().regex(/^\d+$/)).optional()
 });
 export type TermSheet = z.infer<typeof termSheetSchema>;
 
@@ -78,6 +82,7 @@ export type LoanSummary = {
   fundedBps: number;
   aprBps: number;
   durationSeconds: number;
+  fundingDeadline?: string;
   maturity: string;
   totalRepaidWei: string;
   totalRepayableWei: string;
@@ -85,6 +90,8 @@ export type LoanSummary = {
   maxSpendWei: string;
   defaultVoteWeightWei: string;
   defaultThresholdWei: string;
+  gracePeriodSeconds?: number;
+  agreementHash?: string;
   lenders: Array<{
     id: string;
     displayName: string;
@@ -96,6 +103,7 @@ export type LoanSummary = {
     hasVoted?: boolean;
   }>;
   merchants: string[];
+  merchantCapsWei?: string[];
 };
 
 export type ReputationOutcomeSummary = {

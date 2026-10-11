@@ -25,21 +25,29 @@ export const reputationAbi = [
 
 export const factoryAbi = [
   { type: 'function', name: 'createLoan', stateMutability: 'nonpayable', inputs: [
-    { name: 'borrower', type: 'address' },
-    { name: 'targetWei', type: 'uint256' },
-    { name: 'durationSeconds', type: 'uint256' },
-    { name: 'aprBps', type: 'uint256' },
-    { name: 'maxSpendWei', type: 'uint256' },
-    { name: 'defaultQuorumBps', type: 'uint256' },
-    { name: 'merchants', type: 'address[]' }
+    { name: 'terms', type: 'tuple', components: [
+      { name: 'borrower', type: 'address' },
+      { name: 'targetWei', type: 'uint256' },
+      { name: 'durationSeconds', type: 'uint256' },
+      { name: 'fundingDurationSeconds', type: 'uint256' },
+      { name: 'aprBps', type: 'uint256' },
+      { name: 'maxSpendWei', type: 'uint256' },
+      { name: 'defaultQuorumBps', type: 'uint256' },
+      { name: 'gracePeriodSeconds', type: 'uint256' },
+      { name: 'agreementHash', type: 'bytes32' },
+      { name: 'merchants', type: 'address[]' },
+      { name: 'merchantCapsWei', type: 'uint256[]' }
+    ] }
   ], outputs: [{ name: 'pool', type: 'address' }] },
   { type: 'function', name: 'getPools', stateMutability: 'view', inputs: [], outputs: [{ type: 'address[]' }] },
+  { type: 'function', name: 'pause', stateMutability: 'nonpayable', inputs: [], outputs: [] },
+  { type: 'function', name: 'unpause', stateMutability: 'nonpayable', inputs: [], outputs: [] },
   { type: 'event', name: 'LoanCreated', anonymous: false, inputs: [
     { indexed: true, name: 'pool', type: 'address' },
     { indexed: true, name: 'borrower', type: 'address' },
     { indexed: false, name: 'targetWei', type: 'uint256' },
-    { indexed: false, name: 'maturity', type: 'uint256' },
-    { indexed: false, name: 'aprBps', type: 'uint256' }
+    { indexed: false, name: 'aprBps', type: 'uint256' },
+    { indexed: true, name: 'agreementHash', type: 'bytes32' }
   ] }
 ] as const;
 
@@ -48,15 +56,19 @@ export const poolAbi = [
   { type: 'function', name: 'targetWei', stateMutability: 'view', inputs: [], outputs: [{ type: 'uint256' }] },
   { type: 'function', name: 'createdAt', stateMutability: 'view', inputs: [], outputs: [{ type: 'uint256' }] },
   { type: 'function', name: 'durationSeconds', stateMutability: 'view', inputs: [], outputs: [{ type: 'uint256' }] },
+  { type: 'function', name: 'fundingDeadline', stateMutability: 'view', inputs: [], outputs: [{ type: 'uint256' }] },
   { type: 'function', name: 'maturity', stateMutability: 'view', inputs: [], outputs: [{ type: 'uint256' }] },
   { type: 'function', name: 'aprBps', stateMutability: 'view', inputs: [], outputs: [{ type: 'uint256' }] },
   { type: 'function', name: 'maxSpendWei', stateMutability: 'view', inputs: [], outputs: [{ type: 'uint256' }] },
   { type: 'function', name: 'defaultQuorumBps', stateMutability: 'view', inputs: [], outputs: [{ type: 'uint256' }] },
+  { type: 'function', name: 'gracePeriodSeconds', stateMutability: 'view', inputs: [], outputs: [{ type: 'uint256' }] },
+  { type: 'function', name: 'agreementHash', stateMutability: 'view', inputs: [], outputs: [{ type: 'bytes32' }] },
   { type: 'function', name: 'status', stateMutability: 'view', inputs: [], outputs: [{ type: 'uint8' }] },
   { type: 'function', name: 'totalContributed', stateMutability: 'view', inputs: [], outputs: [{ type: 'uint256' }] },
   { type: 'function', name: 'totalRepaid', stateMutability: 'view', inputs: [], outputs: [{ type: 'uint256' }] },
   { type: 'function', name: 'totalSpent', stateMutability: 'view', inputs: [], outputs: [{ type: 'uint256' }] },
   { type: 'function', name: 'totalRepayable', stateMutability: 'view', inputs: [], outputs: [{ type: 'uint256' }] },
+  { type: 'function', name: 'distributable', stateMutability: 'view', inputs: [], outputs: [{ type: 'uint256' }] },
   { type: 'function', name: 'getSummary', stateMutability: 'view', inputs: [], outputs: [
     { name: '_status', type: 'uint8' },
     { name: '_targetWei', type: 'uint256' },
@@ -66,7 +78,10 @@ export const poolAbi = [
     { name: '_totalSpent', type: 'uint256' },
     { name: '_maturity', type: 'uint256' },
     { name: '_defaultVoteWeight', type: 'uint256' },
-    { name: '_defaultThreshold', type: 'uint256' }
+    { name: '_defaultThreshold', type: 'uint256' },
+    { name: '_fundingDeadline', type: 'uint256' },
+    { name: '_gracePeriodSeconds', type: 'uint256' },
+    { name: '_agreementHash', type: 'bytes32' }
   ] },
   { type: 'function', name: 'getLenderInfo', stateMutability: 'view', inputs: [{ name: 'lender', type: 'address' }], outputs: [
     { name: 'amount', type: 'uint256' },
@@ -74,8 +89,15 @@ export const poolAbi = [
     { name: 'voted', type: 'bool' }
   ] },
   { type: 'function', name: 'getApprovedMerchants', stateMutability: 'view', inputs: [], outputs: [{ type: 'address[]' }] },
+  { type: 'function', name: 'getMerchantInfo', stateMutability: 'view', inputs: [{ name: 'merchant', type: 'address' }], outputs: [
+    { name: 'approved', type: 'bool' },
+    { name: 'capWei', type: 'uint256' },
+    { name: 'spentWei', type: 'uint256' }
+  ] },
   { type: 'function', name: 'claimed', stateMutability: 'view', inputs: [{ name: 'lender', type: 'address' }], outputs: [{ type: 'uint256' }] },
   { type: 'function', name: 'contributed', stateMutability: 'view', inputs: [{ name: 'lender', type: 'address' }], outputs: [{ type: 'uint256' }] },
+  { type: 'function', name: 'merchantCapWei', stateMutability: 'view', inputs: [{ name: 'merchant', type: 'address' }], outputs: [{ type: 'uint256' }] },
+  { type: 'function', name: 'merchantSpentWei', stateMutability: 'view', inputs: [{ name: 'merchant', type: 'address' }], outputs: [{ type: 'uint256' }] },
   { type: 'function', name: 'contribute', stateMutability: 'payable', inputs: [], outputs: [] },
   { type: 'function', name: 'spend', stateMutability: 'nonpayable', inputs: [
     { name: 'merchant', type: 'address' },
@@ -92,15 +114,18 @@ export const poolAbi = [
   { type: 'event', name: 'LoanPoolCreated', anonymous: false, inputs: [
     { indexed: true, name: 'borrower', type: 'address' },
     { indexed: false, name: 'targetWei', type: 'uint256' },
-    { indexed: false, name: 'maturity', type: 'uint256' },
-    { indexed: false, name: 'aprBps', type: 'uint256' }
+    { indexed: false, name: 'aprBps', type: 'uint256' },
+    { indexed: true, name: 'agreementHash', type: 'bytes32' }
   ] },
   { type: 'event', name: 'Funded', anonymous: false, inputs: [
     { indexed: true, name: 'lender', type: 'address' },
     { indexed: false, name: 'amount', type: 'uint256' },
     { indexed: false, name: 'totalContributed', type: 'uint256' }
   ] },
-  { type: 'event', name: 'LoanActivated', anonymous: false, inputs: [{ indexed: false, name: 'timestamp', type: 'uint256' }] },
+  { type: 'event', name: 'LoanActivated', anonymous: false, inputs: [
+    { indexed: false, name: 'timestamp', type: 'uint256' },
+    { indexed: false, name: 'maturity', type: 'uint256' }
+  ] },
   { type: 'event', name: 'SpendExecuted', anonymous: false, inputs: [
     { indexed: true, name: 'merchant', type: 'address' },
     { indexed: false, name: 'amount', type: 'uint256' },

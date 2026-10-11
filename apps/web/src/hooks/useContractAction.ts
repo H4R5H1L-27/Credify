@@ -348,19 +348,26 @@ export function useContractAction() {
       'Loan Deployment',
       async () => {
         const nonce = await publicClient!.getTransactionCount({ address: address as Address });
+        const terms = {
+          borrower: address as Address,
+          targetWei: BigInt(args.terms.targetWei),
+          durationSeconds: BigInt(args.terms.durationSeconds),
+          fundingDurationSeconds: BigInt((args.terms as any).fundingDurationSeconds ?? 7 * 86400),
+          aprBps: BigInt(args.terms.aprBps),
+          maxSpendWei: BigInt(args.terms.maxSpendWei),
+          defaultQuorumBps: BigInt(args.terms.defaultQuorumBps),
+          gracePeriodSeconds: BigInt((args.terms as any).gracePeriodSeconds ?? 3 * 86400),
+          agreementHash: ((args.terms as any).agreementHash ?? '0x0000000000000000000000000000000000000000000000000000000000000000') as `0x${string}`,
+          merchants: args.terms.merchants as readonly `0x${string}`[],
+          merchantCapsWei: (args.terms as any).merchantCapsWei
+            ? (args.terms as any).merchantCapsWei.map((c: any) => BigInt(c))
+            : (args.terms.merchants as readonly `0x${string}`[]).map(() => BigInt(args.terms.maxSpendWei) / BigInt((args.terms.merchants as readonly `0x${string}`[]).length || 1)),
+        };
         return writeContractAsync({
           address: factoryAddress,
           abi: factoryAbi,
           functionName: 'createLoan',
-          args: [
-            address as Address,
-            BigInt(args.terms.targetWei),
-            BigInt(args.terms.durationSeconds),
-            BigInt(args.terms.aprBps),
-            BigInt(args.terms.maxSpendWei),
-            BigInt(args.terms.defaultQuorumBps),
-            args.terms.merchants as Address[],
-          ],
+          args: [terms],
           nonce,
         });
       },

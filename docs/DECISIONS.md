@@ -17,3 +17,44 @@ Work package WP0 requires establishing an automated verification baseline coveri
 
 ### Status
 Accepted and verified in WP0 baseline.
+
+---
+
+## ADR-002: Loan Terms Struct, Timing Parameters, and Enforceable Clauses (WP1)
+
+### Context
+Work package WP1 introduces configurable credit terms, unspent principal recovery, separate funding and maturity timing, caller authentication, merchant-specific spend limits, and governance grace periods. We need unambiguous decisions on timing semantics, parameter bounds, and late fees.
+
+### Decisions
+1. **LoanTerms Struct**: Encapsulate all loan initialization parameters into a single `LoanTerms` struct to prevent Solidity stack-too-deep errors in `LoanFactory.createLoan` and `LoanPool` constructor.
+2. **Funding Deadline Semantics**:
+   - `fundingDurationSeconds` is passed in `LoanTerms` as a relative duration in seconds (bounded between 5 minutes and 90 days).
+   - In `LoanPool`, `fundingDeadline` is stored as an immutable absolute timestamp (`block.timestamp + terms.fundingDurationSeconds`).
+   - Rationale: Relative durations ensure transactions and signed term sheets do not expire prior to mining, while allowing local deterministic test scenarios.
+3. **Maturity Timing**:
+   - Maturity is decoupled from creation. It is initialized to `0` and dynamically set upon full funding activation: `maturity = block.timestamp + durationSeconds`.
+   - `LoanActivated(timestamp, maturity)` emits the final maturity timestamp.
+4. **Parameter Bounds & Distinct Custom Errors**:
+   - `targetWei`: > 0 (`InvalidTarget`).
+   - `aprBps`: 0 to 5,000 bps (`InvalidAPR`).
+   - `durationSeconds`: 300 s (5 min) to 31,536,000 s (365 days) (`InvalidDuration`).
+   - `fundingDurationSeconds`: 300 s (5 min) to 7,776,000 s (90 days) (`InvalidFundingWindow`).
+   - `maxSpendWei`: > 0 and <= `targetWei` (`InvalidSpendLimit`).
+   - `defaultQuorumBps`: 5,001 to 10,000 bps (`InvalidQuorum`).
+   - `gracePeriodSeconds`: 0 to 2,592,000 s (30 days) (`InvalidGracePeriod`).
+   - `merchants`: 1 to 10 non-zero, unique addresses (`NoMerchants`, `TooManyMerchants`, `ZeroMerchantAddress`, `DuplicateMerchantAddress`).
+   - `merchantCapsWei`: Length must match `merchants` (`MismatchedMerchants`); each cap must be > 0 and <= `maxSpendWei` (`InvalidMerchantCap`).
+5. **Caller Authentication on Factory**:
+   - `LoanFactory.createLoan` requires `msg.sender == terms.borrower` (`NotBorrower`).
+6. **Unspent Principal Distribution (`distributable()`)**:
+   - In terminal states (`Repaid`, `Defaulted`), `distributable() = totalRepaid + (totalContributed - totalSpent)`. In active states, `distributable() = totalRepaid`.
+   - Eliminates trapped capital: lenders claim both their interest/repayment share and their unspent escrowed principal pro-rata.
+7. **Per-Merchant Caps**:
+   - Each merchant is assigned `merchantCapWei`. `LoanPool.spend` checks both per-merchant remaining capacity and global `maxSpendWei`.
+8. **Grace Period**:
+   - Default voting requires `block.timestamp >= maturity + gracePeriodSeconds`.
+9. **Late Fee (Item 9)**:
+   - We choose **not** to build the optional dynamic late fee. Credify maintains fixed, immutable flat-interest semantics (`totalRepayable = target + (target * aprBps) / 10000`). Dynamic late fees would create volatile claimable amounts during active default governance.
+
+### Status
+Accepted and implemented in WP1.

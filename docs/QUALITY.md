@@ -120,3 +120,45 @@ Captured via Hardhat 3 gas statistics (`npx hardhat test --gas-stats`).
    - `KYCRegistry` and `ReputationRegistry` should explicitly implement `IKYCRegistry` and `IReputationRegistry`. Addressed in WP2.
 5. **KYC Parameter Shadowing**:
    - Parameter `isVerified` in `setVerified` shares name with view function `isVerified`. Refactored in WP2 role-based redesign.
+
+---
+
+## 5. Work Package 1: Verification, Invariants & Metrics Update
+
+Following the implementation of Work Package 1 (Contract fixes, distributable unspent principal, separate timing, merchant caps, grace period, and strict validations):
+
+### 5.1 Test Suite & Invariants (29 tests)
+- **Total Tests**: 29 (all passing, 0 failing)
+- **Suite Additions**:
+  - `distributes unspent principal on full repayment`: Lenders receive proportional unspent principal on top of repaid interest and principal.
+  - `distributes unspent principal after default`: Leftover pool balance (target - totalSpent) is claimable pro-rata after loan default.
+  - `separates funding deadline from activation maturity and emits maturity in LoanActivated`.
+  - `enforces that createLoan requires msg.sender == borrower`.
+  - `enforces per-merchant spend caps and global maxSpendWei simultaneously`.
+  - `enforces grace period before default votes can be cast`.
+  - `enforces LoanFactory Pausable and Ownable2Step mechanisms`.
+  - **Invariants Verified**:
+    1. *Sum of claims invariant*: Sum of all lender claims never exceeds total funds into pool (`totalContributed + totalRepaid`).
+    2. *Allowlist payment invariant*: No ETH transfer can occur to an address outside `merchants` (for spend) or contributing lenders (for claims).
+    3. *Per-merchant cap invariant*: Cumulative merchant spending never exceeds that merchant's specific `merchantCapWei`.
+    4. *Solvency & terminal claimability invariant*: After terminal state (`Repaid` or `Defaulted`), `distributable() - totalClaimed == 0` (no locked funds).
+    5. *Target invariant*: Total contributed never exceeds `targetWei`.
+
+### 5.2 Code Coverage (Post-WP1)
+| Contract | Line Coverage (%) | Statement Coverage (%) | Uncovered Lines |
+| :--- | :--- | :--- | :--- |
+| **`contracts/KYCRegistry.sol`** | **100.00%** | **100.00%** | - |
+| **`contracts/LoanFactory.sol`** | **100.00%** | **100.00%** | - |
+| **`contracts/LoanPool.sol`** | **97.37%** | **97.89%** | 114, 135, 250 |
+| **`contracts/ReputationRegistry.sol`** | **88.24%** | **90.91%** | 37, 39 |
+| **Protocol Total** | **97.25%** | **97.80%** | |
+| *`contracts/test/MaliciousContracts.sol`* | 100.00% | 100.00% | - |
+
+### 5.3 Gas Usage (Post-WP1)
+- `LoanFactory.createLoan`: ~3,500,000 gas (includes cloning/deploying `LoanPool` and initializing per-merchant caps and immutable terms).
+- `LoanPool.contribute`: 68,000 - 90,000 gas.
+- `LoanPool.spend`: 55,253 - 89,465 gas (with per-merchant tracking).
+- `LoanPool.repay`: 52,378 - 90,632 gas.
+- `LoanPool.claimRepayment`: 50,000 - 68,000 gas (computing `distributable()`).
+- `LoanPool.voteDefault`: 77,558 - 115,902 gas.
+

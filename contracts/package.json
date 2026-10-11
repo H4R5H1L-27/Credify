@@ -10,7 +10,7 @@
     "test": "hardhat test",
     "test:coverage": "hardhat test --coverage",
     "test:gas": "hardhat test --gas-stats",
-    "slither": "slither contracts --solc-remaps \"@openzeppelin/=node_modules/@openzeppelin/\" --json slither-report.json",
+    "slither": "slither contracts --solc-remaps \"@openzeppelin/=../node_modules/@openzeppelin/\" --json slither-report.json --overwrite",
     "node": "hardhat node",
     "deploy:local": "hardhat run scripts/deploy.ts --network localhost"
   },

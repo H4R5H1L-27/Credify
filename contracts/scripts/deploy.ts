@@ -35,19 +35,29 @@ async function main() {
 
   const target = ethers.parseEther('10');
   const duration = 60 * 60 * 24 * 14;
+  const fundingDuration = 60 * 60 * 24 * 7;
   const aprBps = 800;
   const maxSpend = ethers.parseEther('8');
   const quorum = 5001;
+  const gracePeriod = 60 * 60 * 24 * 3;
+  const agreementHash = ethers.id('Credify Demo Agreement: 10 ETH, 14 days, 8% APR');
+  const merchantCaps = [ethers.parseEther('5'), ethers.parseEther('3')];
 
-  const tx = await factory.createLoan(
-    borrower.address,
-    target,
-    duration,
+  const terms = {
+    borrower: borrower.address,
+    targetWei: target,
+    durationSeconds: duration,
+    fundingDurationSeconds: fundingDuration,
     aprBps,
-    maxSpend,
-    quorum,
-    [merchantA.address, merchantB.address]
-  );
+    maxSpendWei: maxSpend,
+    defaultQuorumBps: quorum,
+    gracePeriodSeconds: gracePeriod,
+    agreementHash,
+    merchants: [merchantA.address, merchantB.address],
+    merchantCapsWei: merchantCaps
+  };
+
+  const tx = await (factory.connect(borrower) as any).createLoan(terms);
   await tx.wait();
 
   const pools = await factory.getPools();
