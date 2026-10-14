@@ -92,16 +92,17 @@ export const BorrowerSpendingPage: React.FC = () => {
     );
   }
 
-  // Authoritative loan calculations
-  const maxSpendNum = selectedLoan ? formatEtherNum(selectedLoan.maxSpendWei) : 0;
-  const totalSpentNum = selectedLoan ? formatEtherNum(selectedLoan.totalSpentWei) : 0;
-  const remainingSpendCapacity = Math.max(0, maxSpendNum - totalSpentNum);
+  // Authoritative loan calculations (using BigInt to prevent IEEE 754 floating point precision dust)
+  const maxSpendWeiBig = selectedLoan ? BigInt(selectedLoan.maxSpendWei) : 0n;
+  const totalSpentWeiBig = selectedLoan ? BigInt(selectedLoan.totalSpentWei) : 0n;
+  const remainingWeiBig = maxSpendWeiBig > totalSpentWeiBig ? maxSpendWeiBig - totalSpentWeiBig : 0n;
+  const remainingSpendCapacity = Number(remainingWeiBig) / 1e18;
 
   const parsedAmountNum = Number(amountEth) || 0;
   const requestedNum = parsedAmountNum;
-  const isOverSpendingCap = parsedAmountNum > remainingSpendCapacity;
+  const isOverSpendingCap = parsedAmountNum > remainingSpendCapacity + 0.0000000001;
   const isOverspend = isOverSpendingCap;
-  const resultingRemainingCapacity = remainingSpendCapacity - requestedNum;
+  const resultingRemainingCapacity = Math.max(0, remainingSpendCapacity - requestedNum);
 
   // Active merchant destination address
   const activeMerchantAddress = isTestUnauthorized ? unauthorizedAddress.trim() : selectedMerchant;
@@ -458,7 +459,7 @@ export const BorrowerSpendingPage: React.FC = () => {
                     </button>
                     <button
                       type="button"
-                      onClick={() => setAmountEth(remainingSpendCapacity.toString())}
+                      onClick={() => setAmountEth(parseFloat(remainingSpendCapacity.toFixed(6)).toString())}
                       className="text-xs font-mono font-bold px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 transition-colors border border-emerald-300 cursor-pointer"
                     >
                       100% MAX

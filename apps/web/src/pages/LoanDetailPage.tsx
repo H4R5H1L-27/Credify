@@ -1199,7 +1199,7 @@ export const LoanDetailPage: React.FC = () => {
                   </button>
                   <button
                     type="button"
-                    onClick={() => setSpendEth(remainingSpendCapacity.toString())}
+                    onClick={() => setSpendEth(parseFloat(remainingSpendCapacity.toFixed(6)).toString())}
                     className="text-xs font-bold px-2 py-0.5 rounded bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 cursor-pointer"
                   >
                     MAX
