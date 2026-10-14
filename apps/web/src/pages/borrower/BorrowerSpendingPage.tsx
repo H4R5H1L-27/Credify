@@ -88,24 +88,7 @@ export const BorrowerSpendingPage: React.FC = () => {
     }
   }, [selectedLoan, selectedMerchant]);
 
-  if (loansLoading || suppliersLoading) {
-    return (
-      <div className="space-y-6 max-w-4xl mx-auto">
-        <div className="h-8 w-48 bg-slate-200 animate-pulse rounded" />
-        <div className="h-64 bg-slate-200 animate-pulse rounded-2xl" />
-      </div>
-    );
-  }
-
-  // Authoritative loan calculations (using BigInt to prevent IEEE 754 floating point precision dust)
-  const maxSpendWeiBig = selectedLoan && selectedLoan.maxSpendWei ? BigInt(selectedLoan.maxSpendWei) : 0n;
-  const totalSpentWeiBig = selectedLoan && selectedLoan.totalSpentWei ? BigInt(selectedLoan.totalSpentWei) : 0n;
-  const remainingWeiBig = maxSpendWeiBig > totalSpentWeiBig ? maxSpendWeiBig - totalSpentWeiBig : 0n;
-  const remainingSpendCapacity = Number(remainingWeiBig) / 1e18;
-  const maxSpendNum = Number(maxSpendWeiBig) / 1e18;
-  const totalSpentNum = Number(totalSpentWeiBig) / 1e18;
-
-  // Real-time on-chain merchant limits
+  // Real-time on-chain merchant limits (Hook must be top-level before any early return)
   const { data: onChainMerchantLimits, refetch: refetchMerchantLimits } = useQuery({
     queryKey: ['onChainMerchantLimits', selectedLoan?.address, selectedLoan?.merchants],
     queryFn: async () => {
@@ -142,6 +125,23 @@ export const BorrowerSpendingPage: React.FC = () => {
     enabled: Boolean(publicClient && selectedLoan?.address && selectedLoan?.merchants?.length),
     refetchInterval: 3000,
   });
+
+  if (loansLoading || suppliersLoading) {
+    return (
+      <div className="space-y-6 max-w-4xl mx-auto">
+        <div className="h-8 w-48 bg-slate-200 animate-pulse rounded" />
+        <div className="h-64 bg-slate-200 animate-pulse rounded-2xl" />
+      </div>
+    );
+  }
+
+  // Authoritative loan calculations (using BigInt to prevent IEEE 754 floating point precision dust)
+  const maxSpendWeiBig = selectedLoan && selectedLoan.maxSpendWei ? BigInt(selectedLoan.maxSpendWei) : 0n;
+  const totalSpentWeiBig = selectedLoan && selectedLoan.totalSpentWei ? BigInt(selectedLoan.totalSpentWei) : 0n;
+  const remainingWeiBig = maxSpendWeiBig > totalSpentWeiBig ? maxSpendWeiBig - totalSpentWeiBig : 0n;
+  const remainingSpendCapacity = Number(remainingWeiBig) / 1e18;
+  const maxSpendNum = Number(maxSpendWeiBig) / 1e18;
+  const totalSpentNum = Number(totalSpentWeiBig) / 1e18;
 
   // Merchant-specific spending caps
   const activeMerchantLimit = selectedMerchant && onChainMerchantLimits
