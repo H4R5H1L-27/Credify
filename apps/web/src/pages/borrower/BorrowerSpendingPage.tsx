@@ -100,11 +100,25 @@ export const BorrowerSpendingPage: React.FC = () => {
   const maxSpendNum = Number(maxSpendWeiBig) / 1e18;
   const totalSpentNum = Number(totalSpentWeiBig) / 1e18;
 
+  // Merchant-specific spending caps
+  const selectedMerchantIndex = selectedLoan && selectedMerchant
+    ? selectedLoan.merchants.findIndex((m) => m.toLowerCase() === selectedMerchant.toLowerCase())
+    : -1;
+
+  const selectedMerchantCapWeiBig = (selectedLoan && selectedMerchantIndex >= 0 && selectedLoan.merchantCapsWei && selectedLoan.merchantCapsWei[selectedMerchantIndex])
+    ? BigInt(selectedLoan.merchantCapsWei[selectedMerchantIndex])
+    : maxSpendWeiBig;
+
+  // Merchant available capacity is constrained by both the global loan remaining spend and the merchant's individual cap
+  const effectiveMerchantMaxWeiBig = selectedMerchantCapWeiBig < remainingWeiBig ? selectedMerchantCapWeiBig : remainingWeiBig;
+  const merchantCapEth = Number(selectedMerchantCapWeiBig) / 1e18;
+  const effectiveRemainingSpendCapacity = Number(effectiveMerchantMaxWeiBig) / 1e18;
+
   const parsedAmountNum = Number(amountEth) || 0;
   const requestedNum = parsedAmountNum;
-  const isOverSpendingCap = parsedAmountNum > remainingSpendCapacity + 0.0000000001;
+  const isOverSpendingCap = parsedAmountNum > effectiveRemainingSpendCapacity + 0.0000000001;
   const isOverspend = isOverSpendingCap;
-  const resultingRemainingCapacity = Math.max(0, remainingSpendCapacity - requestedNum);
+  const resultingRemainingCapacity = Math.max(0, effectiveRemainingSpendCapacity - requestedNum);
 
   // Active merchant destination address
   const activeMerchantAddress = isTestUnauthorized ? unauthorizedAddress.trim() : selectedMerchant;
@@ -115,9 +129,9 @@ export const BorrowerSpendingPage: React.FC = () => {
   const handleSpend = async () => {
     if (!selectedLoan || !activeMerchantAddress || !amountEth) return;
     try {
-      // If user is spending max remaining capacity, use exact remainingWeiBig to prevent 1-wei rounding mismatch
-      const spendWei = (amountEth === remainingSpendCapacity.toString() || amountEth === remainingSpendCapacity.toFixed(18).replace(/\.?0+$/, ''))
-        ? remainingWeiBig.toString()
+      // If user is spending max remaining capacity, use exact effectiveMerchantMaxWeiBig to prevent 1-wei rounding mismatch
+      const spendWei = (amountEth === effectiveRemainingSpendCapacity.toString() || amountEth === effectiveRemainingSpendCapacity.toFixed(18).replace(/\.?0+$/, ''))
+        ? effectiveMerchantMaxWeiBig.toString()
         : parseEtherToWei(amountEth);
 
       await executeSpend(
@@ -134,12 +148,12 @@ export const BorrowerSpendingPage: React.FC = () => {
   };
 
   const setPresetPercent = (percent: number) => {
-    const val = (remainingSpendCapacity * percent).toFixed(2);
+    const val = (effectiveRemainingSpendCapacity * percent).toFixed(2);
     setAmountEth(val);
   };
 
   const setOverspendPreset = () => {
-    const val = (remainingSpendCapacity + 1.0).toFixed(2);
+    const val = (effectiveRemainingSpendCapacity + 1.0).toFixed(2);
     setAmountEth(val);
   };
 
@@ -396,6 +410,11 @@ export const BorrowerSpendingPage: React.FC = () => {
                                 {sup?.category || 'Hardware & Sensors'}
                               </div>
                               <AddressBadge address={mAddr} digits={4} className="mt-1" />
+                              {selectedLoan.merchantCapsWei && selectedLoan.merchantCapsWei[selectedLoan.merchants.indexOf(mAddr)] && (
+                                <div className="text-[11px] font-mono text-slate-600 font-semibold pt-0.5">
+                                  Cap: {(Number(BigInt(selectedLoan.merchantCapsWei[selectedLoan.merchants.indexOf(mAddr)])) / 1e18).toFixed(2)} ETH
+                                </div>
+                              )}
                             </div>
 
                             <span className="flex items-center gap-1 text-[11px] font-mono font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-300 shrink-0">
@@ -434,11 +453,11 @@ export const BorrowerSpendingPage: React.FC = () => {
                     label="Disbursement Amount"
                     value={amountEth}
                     onChange={setAmountEth}
-                    balance={remainingSpendCapacity.toFixed(2)}
-                    maxAmount={remainingSpendCapacity.toString()}
+                    balance={effectiveRemainingSpendCapacity.toFixed(2)}
+                    maxAmount={effectiveRemainingSpendCapacity.toString()}
                     symbol="ETH"
-                    placeholder="1.50"
-                    error={isOverspend ? `Exceeds max remaining capacity of ${remainingSpendCapacity.toFixed(2)} ETH` : undefined}
+                    placeholder="0.08"
+                    error={isOverspend ? `Exceeds max allowable capacity of ${effectiveRemainingSpendCapacity.toFixed(2)} ETH for this supplier` : undefined}
                   />
 
                   {/* Allocation & Overspend Presets */}

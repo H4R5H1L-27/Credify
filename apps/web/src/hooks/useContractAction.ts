@@ -219,8 +219,8 @@ export function useContractAction() {
     if (message.includes('BorrowerCannotContribute')) {
       return { error: 'Contribution rejected: the borrower cannot contribute to their own credit agreement.', code: 'BORROWER_CANNOT_CONTRIBUTE', category: 'contract_reverted' };
     }
-    if (message.includes('MerchantSpendCapExceeded')) {
-      return { error: 'Spend rejected: requested amount exceeds the spending cap allocated for this specific supplier.', code: 'MERCHANT_SPEND_CAP_EXCEEDED', category: 'contract_reverted' };
+    if (message.includes('MerchantCapExceeded') || message.includes('MerchantSpendCapExceeded') || message.includes('0xbc328f2b')) {
+      return { error: 'Spend rejected: requested amount exceeds the spending cap allocated for this specific supplier.', code: 'MERCHANT_CAP_EXCEEDED', category: 'contract_reverted' };
     }
     if (message.includes('FundingNotExpired')) {
       return { error: 'Cancellation rejected: funding deadline has not yet passed.', code: 'FUNDING_NOT_EXPIRED', category: 'contract_reverted' };
