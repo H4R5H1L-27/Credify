@@ -537,6 +537,15 @@ export function useContractAction() {
     const outcome = await runLifecycle(
       'Syndicate Contribution',
       async () => {
+        if (publicClient) {
+          await publicClient.simulateContract({
+            address: poolAddress as Address,
+            abi: poolAbi,
+            functionName: 'contribute',
+            value: BigInt(amountWei),
+            account: address as Address,
+          });
+        }
         const nonce = await publicClient!.getTransactionCount({ address: address as Address });
         return writeContractAsync({
           address: poolAddress as Address,

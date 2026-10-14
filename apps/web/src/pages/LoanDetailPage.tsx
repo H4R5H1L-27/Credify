@@ -79,8 +79,14 @@ export const LoanDetailPage: React.FC = () => {
 
   const [expandedEventId, setExpandedEventId] = useState<string | null>(null);
 
-  // Contextual Action Form States
   const [contributeEth, setContributeEth] = useState('2');
+  const [policyRejection, setPolicyRejection] = useState<{
+    title: string;
+    message: string;
+    errorCode: string;
+    attemptedRole: string;
+    callerAddress: string;
+  } | null>(null);
   const [spendMerchant, setSpendMerchant] = useState('');
   const [isTestUnauthorizedSpend, setIsTestUnauthorizedSpend] = useState(false);
   const [unauthorizedSpendAddress, setUnauthorizedSpendAddress] = useState('0x70997970C51812dc3A010C7d01b50e0d17dc79C8');
@@ -191,8 +197,9 @@ export const LoanDetailPage: React.FC = () => {
   const isPastFundingDeadline = fundingDeadlineTime > 0 && Date.now() > fundingDeadlineTime;
 
   // Governance Derived Metrics (7 Mandatory Metrics)
-  const maturityDateFormatted = formatDate(loan.maturity);
-  const isPastMaturity = new Date(loan.maturity).getTime() <= Date.now();
+  const hasActiveMaturity = Boolean(loan.maturity && new Date(loan.maturity).getFullYear() > 1970 && !isFunding);
+  const maturityDateFormatted = hasActiveMaturity ? formatDate(loan.maturity) : 'Pending Activation';
+  const isPastMaturity = Boolean(hasActiveMaturity && new Date(loan.maturity).getTime() <= Date.now());
   const unpaidWei = BigInt(loan.totalRepayableWei) > BigInt(loan.totalRepaidWei)
     ? BigInt(loan.totalRepayableWei) - BigInt(loan.totalRepaidWei)
     : 0n;
@@ -216,13 +223,35 @@ export const LoanDetailPage: React.FC = () => {
 
   // Action handlers
   const handleContribute = async () => {
-    if (!loanId || isBorrowerOfLoan) return;
+    if (!loanId) return;
+    setPolicyRejection(null);
+
+    if (isBorrowerOfLoan) {
+      setPolicyRejection({
+        title: 'Smart Contract Policy Rejection (BorrowerCannotContribute)',
+        message: 'Under LoanPool.sol rules, borrowers are strictly prohibited from contributing capital to their own credit agreements. Capital must be deployed by independent syndicate lenders.',
+        errorCode: 'BORROWER_CANNOT_CONTRIBUTE',
+        attemptedRole: role || 'BORROWER',
+        callerAddress: currentAddress || '',
+      });
+      return;
+    }
+
     try {
       await executeContribute(loanId, parseEtherToWei(contributeEth));
       await refetchLoan();
       await refetchActivity();
-    } catch {
-      // Surfaced in txState
+    } catch (err: any) {
+      const errStr = err?.message || String(err);
+      if (errStr.includes('NotVerifiedLender') || !isLender) {
+        setPolicyRejection({
+          title: 'Smart Contract Policy Rejection: Not Verified as Lender',
+          message: `The smart contract rejected the contribution (revert NotVerifiedLender). The active wallet (${currentAddress ? truncateAddress(currentAddress, 5) : 'Unknown'}) is registered as a [${role || 'MERCHANT'}] account. Under LoanPool.sol:111, only accounts attested as Lenders in KYCRegistry.sol may deposit syndicate capital.`,
+          errorCode: 'NOT_VERIFIED_LENDER',
+          attemptedRole: role || 'MERCHANT',
+          callerAddress: currentAddress || '',
+        });
+      }
     }
   };
 
@@ -578,7 +607,7 @@ export const LoanDetailPage: React.FC = () => {
                 <span>Settlement</span>
               </div>
               <div className="text-xs text-slate-600 mt-1 font-medium">
-                {isRepaid ? '100% Repaid' : isDefaulted ? 'Defaulted' : isCancelled ? 'Refunds Claimable' : 'Due ' + formatDate(loan.maturity)}
+                {isRepaid ? '100% Repaid' : isDefaulted ? 'Defaulted' : isCancelled ? 'Refunds Claimable' : !hasActiveMaturity ? (loan.durationSeconds ? `${formatDuration(loan.durationSeconds)} (on activation)` : 'Pending Activation') : 'Due ' + formatDate(loan.maturity)}
               </div>
             </div>
           </div>
@@ -817,90 +846,82 @@ export const LoanDetailPage: React.FC = () => {
                 </div>
               </div>
 
-              {!isLender ? (
-                <div className="p-4 rounded-xl bg-amber-50/90 border-2 border-amber-300 text-xs text-amber-950 space-y-3 shadow-xs">
+              {/* Dynamic Policy Rejection Banner (Surfaced AFTER transaction is attempted) */}
+              {policyRejection && (
+                <div className="p-4 rounded-xl bg-rose-50 border-2 border-rose-300 text-xs text-rose-950 space-y-3 shadow-xs animate-in fade-in duration-200">
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex items-center gap-2">
-                      <div className="p-1 rounded-md bg-amber-200/80 text-amber-900">
-                        <ShieldAlert className="w-4 h-4" />
+                      <div className="p-1.5 rounded-lg bg-rose-200 text-rose-900 shrink-0">
+                        <AlertTriangle className="w-4 h-4" />
                       </div>
                       <div>
-                        <span className="font-bold text-xs uppercase tracking-wide text-amber-950 font-mono block">
-                          Policy Guard: Non-Lender Wallet Connected
+                        <span className="font-bold text-xs uppercase tracking-wide text-rose-950 font-mono block">
+                          {policyRejection.title}
                         </span>
-                        <span className="text-[11px] text-amber-800 font-medium">
-                          Active wallet is registered as <strong className="uppercase font-bold text-amber-950">[{role}]</strong> ({currentAddress ? truncateAddress(currentAddress, 5) : 'Unknown'}), not an accredited Institutional Lender.
+                        <span className="text-[11px] text-rose-800 font-medium">
+                          Active Account: <strong className="font-mono">{truncateAddress(policyRejection.callerAddress, 5)}</strong> (Role: <strong className="uppercase font-bold">{policyRejection.attemptedRole}</strong>)
                         </span>
                       </div>
                     </div>
-                    <Badge variant="outline" className="text-[10px] font-mono font-bold bg-amber-100 text-amber-900 border-amber-400 shrink-0">
-                      ON-CHAIN RULE #4
+                    <Badge variant="outline" className="text-[10px] font-mono font-bold bg-rose-100 text-rose-900 border-rose-400 shrink-0">
+                      {policyRejection.errorCode}
                     </Badge>
                   </div>
 
-                  <p className="leading-relaxed font-medium text-amber-900 bg-white/70 p-3 rounded-lg border border-amber-200">
-                    Under <code className="bg-amber-100 px-1 py-0.5 rounded font-mono font-bold text-slate-950 text-[11px]">LoanPool.sol:111</code>, 
-                    the contract enforces: <code className="bg-amber-100 px-1 py-0.5 rounded font-mono font-bold text-slate-950 text-[11px]">require(kycRegistry.isVerified(msg.sender, Role.Lender))</code>. 
-                    Suppliers, borrowers, and unvetted actors cannot deposit capital or claim syndicate voting weight.
+                  <p className="leading-relaxed font-medium text-rose-900 bg-white/85 p-3 rounded-lg border border-rose-200">
+                    {policyRejection.message}
                   </p>
 
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-1 border-t border-amber-200">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-1 border-t border-rose-200">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="text-[11px] text-amber-900 font-bold">Switch to Verified Lender:</span>
+                      <span className="text-[11px] text-rose-900 font-bold">Switch to Authorized Syndicate Lender:</span>
                       <button
                         type="button"
-                        onClick={() => switchPersona('lender-alpha')}
+                        onClick={() => {
+                          switchPersona('lender-alpha');
+                          setPolicyRejection(null);
+                        }}
                         className="px-2.5 py-1 rounded text-xs font-bold bg-[#ffe600] text-black hover:bg-yellow-400 border border-yellow-400 shadow-xs cursor-pointer inline-flex items-center gap-1 transition-all"
                       >
                         Meera Capital (75% Lead)
                       </button>
                       <button
                         type="button"
-                        onClick={() => switchPersona('lender-beta')}
+                        onClick={() => {
+                          switchPersona('lender-beta');
+                          setPolicyRejection(null);
+                        }}
                         className="px-2.5 py-1 rounded text-xs font-semibold bg-white text-slate-800 hover:bg-slate-100 border border-slate-300 shadow-xs cursor-pointer transition-all"
                       >
                         Northstar Labs (25% Syndicate)
                       </button>
                     </div>
 
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={handleContribute}
-                      loading={isExecuting}
-                      className="text-xs font-mono font-bold border-rose-300 bg-rose-50/80 text-rose-900 hover:bg-rose-100 hover:border-rose-400 cursor-pointer self-start sm:self-auto shrink-0"
-                      title="Attempts the transaction to demonstrate on-chain revert NotVerifiedLender() for presentation/demo purposes"
+                    <button
+                      type="button"
+                      onClick={() => setPolicyRejection(null)}
+                      className="text-xs text-rose-700 hover:text-rose-900 underline font-medium cursor-pointer self-start sm:self-auto"
                     >
-                      <AlertTriangle className="w-3.5 h-3.5 text-rose-600 mr-1" />
-                      Demonstrate Policy Revert
-                    </Button>
+                      Dismiss
+                    </button>
                   </div>
                 </div>
-              ) : !isVerified ? (
-                <Alert variant="warning" title="Verification Required">
-                  Lenders must be verified in the <code className="font-mono">KYCRegistry</code> smart contract before contributing. Complete verification in the{' '}
-                  <Link to="/app/verify" className="underline font-semibold">
-                    Verification Workflow
-                  </Link>.
-                </Alert>
-              ) : null}
+              )}
 
               {/* Quick Allocation Shortcuts */}
-              {isLender && (
-                <div className="flex items-center gap-2 pt-0.5">
-                  <span className="text-xs text-slate-600 font-medium">Quick Allocation:</span>
-                  {[25, 50, 75, 100].map((pct) => (
-                    <button
-                      key={pct}
-                      type="button"
-                      onClick={() => handleSetAllocationPercent(pct)}
-                      className="text-xs font-semibold px-2 py-0.5 rounded bg-slate-100 border border-slate-200 hover:border-yellow-400 hover:bg-yellow-50 text-slate-700 hover:text-slate-900 transition-colors cursor-pointer"
-                    >
-                      {pct === 100 ? 'MAX (100%)' : `${pct}%`}
-                    </button>
-                  ))}
-                </div>
-              )}
+              <div className="flex items-center gap-2 pt-0.5">
+                <span className="text-xs text-slate-600 font-medium">Quick Allocation:</span>
+                {[25, 50, 75, 100].map((pct) => (
+                  <button
+                    key={pct}
+                    type="button"
+                    onClick={() => handleSetAllocationPercent(pct)}
+                    className="text-xs font-semibold px-2 py-0.5 rounded bg-slate-100 border border-slate-200 hover:border-yellow-400 hover:bg-yellow-50 text-slate-700 hover:text-slate-900 transition-colors cursor-pointer"
+                  >
+                    {pct === 100 ? 'MAX (100%)' : `${pct}%`}
+                  </button>
+                ))}
+              </div>
 
               <div className="flex items-center gap-2">
                 <div className="relative flex-1">
@@ -911,34 +932,27 @@ export const LoanDetailPage: React.FC = () => {
                     max={remainingFundingNum.toString()}
                     value={contributeEth}
                     onChange={(e) => setContributeEth(e.target.value)}
-                    disabled={!isLender}
                     className={`w-full text-xs p-2.5 pr-14 rounded-lg border font-mono focus:outline-none focus:ring-2 ${
-                      !isLender
-                        ? 'border-slate-200 bg-slate-100 text-slate-400 cursor-not-allowed'
-                        : isOverCapacity
+                      isOverCapacity
                         ? 'border-rose-400 focus:ring-rose-400 text-rose-900 bg-rose-50'
                         : 'border-slate-200 focus:ring-yellow-400 bg-slate-50 focus:bg-white text-slate-900 placeholder:text-slate-400'
                     }`}
-                    placeholder={!isLender ? `Locked: [${role}] cannot deposit capital` : 'Amount in ETH'}
+                    placeholder="Amount in ETH"
                   />
-                  {isLender && (
-                    <button
-                      type="button"
-                      onClick={() => setContributeEth(remainingFundingNum.toString())}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-900 hover:bg-slate-200 bg-slate-100 border border-slate-300 px-1.5 py-0.5 rounded cursor-pointer"
-                    >
-                      MAX
-                    </button>
-                  )}
+                  <button
+                    type="button"
+                    onClick={() => setContributeEth(remainingFundingNum.toString())}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-900 hover:bg-slate-200 bg-slate-100 border border-slate-300 px-1.5 py-0.5 rounded cursor-pointer"
+                  >
+                    MAX
+                  </button>
                 </div>
 
                 <Button
                   size="sm"
-                  variant={isLender ? 'primary' : 'secondary'}
+                  variant="primary"
                   disabled={
                     isExecuting ||
-                    !isLender ||
-                    !isVerified ||
                     contributeAmountNum <= 0 ||
                     isOverCapacity
                   }
@@ -946,7 +960,7 @@ export const LoanDetailPage: React.FC = () => {
                   onClick={handleContribute}
                   className="text-xs shrink-0 font-bold"
                 >
-                  {isLender ? 'Contribute ETH' : `Ineligible (${role})`}
+                  Contribute ETH
                 </Button>
               </div>
 
@@ -1665,7 +1679,9 @@ export const LoanDetailPage: React.FC = () => {
                 {maturityDateFormatted}
               </div>
               <div className="text-xs font-medium">
-                {isPastMaturity ? (
+                {!hasActiveMaturity ? (
+                  <span className="text-slate-400 font-medium">Locks on Full Funding</span>
+                ) : isPastMaturity ? (
                   <span className="text-rose-700 font-bold">Past Due</span>
                 ) : (
                   <span className="text-slate-500">Within Term</span>
@@ -1677,7 +1693,7 @@ export const LoanDetailPage: React.FC = () => {
             <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
               <div className="text-[11px] text-slate-500 font-semibold uppercase tracking-wider">2. Unpaid Amount</div>
               <div className="font-black font-mono text-slate-950 text-xs">
-                {unpaidEthStr} ETH
+                {unpaidEthStr}
               </div>
               <div className="text-xs text-slate-500 font-medium">
                 Debt outstanding
@@ -1690,7 +1706,7 @@ export const LoanDetailPage: React.FC = () => {
             }`}>
               <div className="text-[11px] text-slate-500 font-semibold uppercase tracking-wider">3. Lender Weight</div>
               <div className="font-black font-mono text-slate-950 text-xs">
-                {lenderVotingWeightEth} ETH
+                {lenderVotingWeightEth}
               </div>
               <div className="text-xs text-yellow-800 font-semibold">
                 {activeLenderPosition ? `${lenderVotingSharePercent}% share` : 'Non-lender (0%)'}
@@ -1701,7 +1717,7 @@ export const LoanDetailPage: React.FC = () => {
             <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
               <div className="text-[11px] text-slate-500 font-semibold uppercase tracking-wider">4. Threshold</div>
               <div className="font-black font-mono text-slate-950 text-xs">
-                &gt; {defaultThresholdEth} ETH
+                &gt; {defaultThresholdEth}
               </div>
               <div className="text-xs text-slate-500 font-mono font-medium">
                 {loan.targetWei ? `>50.01% capital` : 'Quorum'}
@@ -1714,7 +1730,7 @@ export const LoanDetailPage: React.FC = () => {
               <div className={`font-black font-mono text-xs ${
                 currentVotesWei > 0n ? 'text-amber-700' : 'text-slate-950'
               }`}>
-                {currentVotesEth} ETH
+                {currentVotesEth}
               </div>
               <div className="text-xs text-slate-500 font-medium">
                 {quorumPercent}% of quorum
@@ -1740,7 +1756,7 @@ export const LoanDetailPage: React.FC = () => {
             }`}>
               <div className="text-[11px] text-slate-500 font-semibold uppercase tracking-wider">7. Remaining Weight</div>
               <div className="font-black font-mono text-slate-950 text-xs">
-                {remainingVotingWeightEth} ETH
+                {remainingVotingWeightEth}
               </div>
               <div className="text-xs font-medium">
                 {remainingVotingWeightWei === 0n && currentVotesWei > 0n ? (
@@ -1757,7 +1773,7 @@ export const LoanDetailPage: React.FC = () => {
             <div className="flex justify-between text-xs text-slate-700 font-semibold">
               <span>Quorum Consensus Progress</span>
               <span className="font-mono font-bold text-slate-950">
-                {currentVotesEth} / &gt; {defaultThresholdEth} ETH ({quorumPercent}%)
+                {currentVotesEth} / &gt; {defaultThresholdEth} ({quorumPercent}%)
               </span>
             </div>
             <Progress value={quorumPercent} className="h-2.5" />
