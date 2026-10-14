@@ -93,10 +93,12 @@ export const BorrowerSpendingPage: React.FC = () => {
   }
 
   // Authoritative loan calculations (using BigInt to prevent IEEE 754 floating point precision dust)
-  const maxSpendWeiBig = selectedLoan ? BigInt(selectedLoan.maxSpendWei) : 0n;
-  const totalSpentWeiBig = selectedLoan ? BigInt(selectedLoan.totalSpentWei) : 0n;
+  const maxSpendWeiBig = selectedLoan && selectedLoan.maxSpendWei ? BigInt(selectedLoan.maxSpendWei) : 0n;
+  const totalSpentWeiBig = selectedLoan && selectedLoan.totalSpentWei ? BigInt(selectedLoan.totalSpentWei) : 0n;
   const remainingWeiBig = maxSpendWeiBig > totalSpentWeiBig ? maxSpendWeiBig - totalSpentWeiBig : 0n;
   const remainingSpendCapacity = Number(remainingWeiBig) / 1e18;
+  const maxSpendNum = Number(maxSpendWeiBig) / 1e18;
+  const totalSpentNum = Number(totalSpentWeiBig) / 1e18;
 
   const parsedAmountNum = Number(amountEth) || 0;
   const requestedNum = parsedAmountNum;
