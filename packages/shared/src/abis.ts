@@ -238,7 +238,7 @@ export const DEMO_ACCOUNTS: DemoAccountPreset[] = [
     displayName: 'Blue Oak Partners',
     role: 'LENDER',
     address: '0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65',
-    privateKey: '0x47e179ec197488593b100287e941669c6bf3605b514b9128c373e59ff5250160',
+    privateKey: '0x47e179ec197488593b187f80a00eb0da91f1b9d0b13f8733639f19c30a34926a',
     description: 'Alternative syndicate lender for governance voting demonstration'
   },
   {
@@ -254,7 +254,7 @@ export const DEMO_ACCOUNTS: DemoAccountPreset[] = [
     displayName: 'StudioGrid Equipment',
     role: 'MERCHANT',
     address: '0x976EA74026E726554dB657fA54763abd0C3a0aa9',
-    privateKey: '0x92db14e403b83dde3dfb0224da0772d44e2583de4959838b0e264e1a367b6173',
+    privateKey: '0x92db14e403b83dfe3df233f83dfa3a0d7096f21ca9b0d6d6b8d88b2b4ec1564e',
     description: 'Approved vendor for workspace gear, studio equipment, and servers'
   }
 ];
