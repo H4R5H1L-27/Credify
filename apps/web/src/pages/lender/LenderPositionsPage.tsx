@@ -207,7 +207,7 @@ export const LenderPositionsPage: React.FC = () => {
                     <TableCell className="font-mono">
                       <div className="space-y-0.5">
                         <AddressBadge address={loan.address} digits={6} />
-                        <div className="text-[10px] text-slate-500 font-medium">Target: {formatEther(loan.targetWei)} ETH</div>
+                        <div className="text-[10px] text-slate-500 font-medium">Target: {formatEther(loan.targetWei)}</div>
                       </div>
                     </TableCell>
 

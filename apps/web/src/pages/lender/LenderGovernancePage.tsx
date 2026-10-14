@@ -291,7 +291,7 @@ export const LenderGovernancePage: React.FC = () => {
                             </div>
                             <div className="flex items-center gap-3">
                               <div className="text-right font-mono">
-                                <div className="font-bold text-slate-950">{formatEther(lender.contributedWei)} ETH</div>
+                                <div className="font-bold text-slate-950">{formatEther(lender.contributedWei)}</div>
                                 <div className="text-[10px] text-slate-500 font-medium">{(lender.shareBps / 100).toFixed(1)}% weight</div>
                               </div>
                               <div>

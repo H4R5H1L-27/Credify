@@ -161,11 +161,11 @@ export const SupplierAgreementsPage: React.FC = () => {
                   </TableCell>
 
                   <TableCell className="font-mono text-xs font-bold text-slate-950">
-                    {formatEther(loan.maxSpendWei)} ETH
+                    {formatEther(loan.maxSpendWei)}
                   </TableCell>
 
                   <TableCell className="font-mono text-xs text-slate-800 font-bold">
-                    {formatEther(loan.targetWei)} ETH
+                    {formatEther(loan.targetWei)}
                   </TableCell>
 
                   <TableCell className="text-xs text-slate-800 font-mono font-medium">

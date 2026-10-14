@@ -278,7 +278,7 @@ export const BorrowerSpendingPage: React.FC = () => {
                   >
                     {activeLoans.map((l) => (
                       <option key={l.address} value={l.address}>
-                        {l.address.slice(0, 12)}… — Target: {formatEther(l.targetWei)} ETH | Spend Limit: {formatEther(l.maxSpendWei)} ETH
+                        {l.address.slice(0, 12)}… — Target: {formatEther(l.targetWei)} | Spend Limit: {formatEther(l.maxSpendWei)}
                       </option>
                     ))}
                   </select>
@@ -290,7 +290,7 @@ export const BorrowerSpendingPage: React.FC = () => {
                     <AddressBadge address={selectedLoan.address} digits={6} />
                   </div>
                   <div className="font-mono text-slate-700 font-medium">
-                    Principal: <strong className="text-slate-950 font-bold">{formatEther(selectedLoan.targetWei)} ETH</strong>
+                    Principal: <strong className="text-slate-950 font-bold">{formatEther(selectedLoan.targetWei)}</strong>
                   </div>
                 </div>
               )}

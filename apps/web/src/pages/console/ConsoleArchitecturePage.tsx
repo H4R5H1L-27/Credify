@@ -63,7 +63,7 @@ export const ConsoleArchitecturePage: React.FC = () => {
     indexerLag: indexerState?.blockLag,
     contractsCount: contracts.length,
     eventsCount: indexerState?.totalEventsIndexed,
-    escrowBalance: `${formatEther(totalEscrowWei.toString(), 4)} ETH`,
+    escrowBalance: formatEther(totalEscrowWei.toString(), 4),
   };
 
   const handleRefresh = () => {

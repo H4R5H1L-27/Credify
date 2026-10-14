@@ -172,7 +172,7 @@ export const BorrowerAgreementsPage: React.FC = () => {
                   </div>
                   <div>
                     <span className="text-slate-500 text-[10px] font-mono font-bold uppercase block">Spend Ceiling</span>
-                    <div className="font-mono font-bold text-emerald-800">{formatEther(loan.maxSpendWei)} ETH</div>
+                    <div className="font-mono font-bold text-emerald-800">{formatEther(loan.maxSpendWei)}</div>
                   </div>
                   <div>
                     <span className="text-slate-500 text-[10px] font-mono font-bold uppercase block">Approved Suppliers</span>

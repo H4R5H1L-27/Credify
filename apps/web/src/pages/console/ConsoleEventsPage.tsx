@@ -377,7 +377,7 @@ export const ConsoleEventsPage: React.FC = () => {
                           >
                             <span className="text-slate-600 font-sans font-semibold text-[11px]">{key}:</span>
                             {isWeiAmount ? (
-                              <span className="text-slate-950 font-bold">{formatEther(val, 2)} ETH</span>
+                              <span className="text-slate-950 font-bold">{formatEther(val, 2)}</span>
                             ) : isAddr ? (
                               <span className="text-slate-950 font-bold">{val.slice(0, 6)}...{val.slice(-4)}</span>
                             ) : (

@@ -557,7 +557,7 @@ export const ConsoleReplayPage: React.FC = () => {
             <div>
               <span className="text-slate-500 block text-[10px] font-bold">VALUE TRANSFERRED</span>
               <span className="font-bold text-slate-950 block">
-                {formatEther(currentTransaction.valueWei || '0')} ETH
+                {formatEther(currentTransaction.valueWei || '0')}
               </span>
             </div>
           </div>

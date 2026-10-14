@@ -472,10 +472,10 @@ export const BorrowerRepaymentsPage: React.FC = () => {
                       return (
                         <TableRow key={evt.id}>
                           <TableCell className="font-mono font-bold text-emerald-800">
-                            +{formatEther(amountWei)} ETH
+                            +{formatEther(amountWei)}
                           </TableCell>
                           <TableCell className="font-mono font-bold text-slate-950">
-                            {formatEther(totalRepaidWei)} ETH
+                            {formatEther(totalRepaidWei)}
                           </TableCell>
                           <TableCell className="font-mono text-slate-800 font-bold">
                             #{evt.blockNumber}

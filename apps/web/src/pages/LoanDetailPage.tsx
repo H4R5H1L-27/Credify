@@ -384,7 +384,7 @@ export const LoanDetailPage: React.FC = () => {
                   icon={<RotateCcw className="w-3.5 h-3.5" />}
                   className="text-xs font-bold"
                 >
-                  Claim Full Refund ({formatEther(activeLenderPosition.contributedWei)} ETH)
+                  Claim Full Refund ({formatEther(activeLenderPosition.contributedWei)})
                 </Button>
               </div>
             )}
@@ -478,7 +478,7 @@ export const LoanDetailPage: React.FC = () => {
             <div className="text-right">
               <div className="text-xs text-slate-500 font-semibold uppercase tracking-wider">Principal Target</div>
               <div className="text-xl font-black text-slate-950 font-mono">
-                {formatEther(loan.targetWei)} ETH
+                {formatEther(loan.targetWei)}
               </div>
             </div>
             <div className="h-8 w-px bg-slate-200 hidden md:block" />
@@ -592,7 +592,7 @@ export const LoanDetailPage: React.FC = () => {
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 text-xs">
             <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 space-y-1">
               <div className="text-slate-500 font-semibold uppercase tracking-wider text-[11px]">Principal</div>
-              <div className="font-black text-slate-950 font-mono text-sm">{formatEther(loan.targetWei)} ETH</div>
+              <div className="font-black text-slate-950 font-mono text-sm">{formatEther(loan.targetWei)}</div>
             </div>
             <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 space-y-1">
               <div className="text-slate-500 font-semibold uppercase tracking-wider text-[11px]">Interest Rate</div>
@@ -604,15 +604,15 @@ export const LoanDetailPage: React.FC = () => {
             </div>
             <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 space-y-1">
               <div className="text-slate-500 font-semibold uppercase tracking-wider text-[11px]">Total Repayable</div>
-              <div className="font-black text-slate-950 font-mono text-sm">{formatEther(loan.totalRepayableWei)} ETH</div>
+              <div className="font-black text-slate-950 font-mono text-sm">{formatEther(loan.totalRepayableWei)}</div>
             </div>
             <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 space-y-1">
               <div className="text-slate-500 font-semibold uppercase tracking-wider text-[11px]">Spend Limit</div>
-              <div className="font-black text-slate-950 font-mono text-sm">{formatEther(loan.maxSpendWei)} ETH</div>
+              <div className="font-black text-slate-950 font-mono text-sm">{formatEther(loan.maxSpendWei)}</div>
             </div>
             <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 space-y-1">
               <div className="text-slate-500 font-semibold uppercase tracking-wider text-[11px]">Default Quorum</div>
-              <div className="font-black text-slate-950 font-mono text-sm">{formatEther(loan.defaultThresholdWei)} ETH</div>
+              <div className="font-black text-slate-950 font-mono text-sm">{formatEther(loan.defaultThresholdWei)}</div>
             </div>
           </div>
         </div>
@@ -708,7 +708,7 @@ export const LoanDetailPage: React.FC = () => {
             </div>
             <div className="text-right">
               <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-yellow-50 border border-yellow-300 text-xs font-mono font-bold text-slate-950">
-                {formatEther(loan.contributedWei)} ETH of {formatEther(loan.targetWei)} ETH
+                {formatEther(loan.contributedWei)} of {formatEther(loan.targetWei)}
               </span>
             </div>
           </div>
@@ -750,7 +750,7 @@ export const LoanDetailPage: React.FC = () => {
                       )}
                     </div>
                     <div className="text-right font-mono">
-                      <div className="font-bold text-slate-950">{formatEther(lender.contributedWei)} ETH</div>
+                      <div className="font-bold text-slate-950">{formatEther(lender.contributedWei)}</div>
                       <div className="text-xs text-slate-500">{(lender.shareBps / 100).toFixed(2)}% share</div>
                     </div>
                   </div>
@@ -769,7 +769,7 @@ export const LoanDetailPage: React.FC = () => {
               <div className="grid grid-cols-3 gap-3 text-xs">
                 <div>
                   <div className="text-slate-600 font-medium">Contributed</div>
-                  <div className="font-mono font-bold text-slate-950">{formatEther(activeLenderPosition.contributedWei)} ETH</div>
+                  <div className="font-mono font-bold text-slate-950">{formatEther(activeLenderPosition.contributedWei)}</div>
                 </div>
                 <div>
                   <div className="text-slate-600 font-medium">Share</div>
@@ -777,7 +777,7 @@ export const LoanDetailPage: React.FC = () => {
                 </div>
                 <div>
                   <div className="text-slate-600 font-medium">Claimable</div>
-                  <div className="font-mono font-bold text-emerald-700">{formatEther(lenderClaimableWei)} ETH</div>
+                  <div className="font-mono font-bold text-emerald-700">{formatEther(lenderClaimableWei)}</div>
                 </div>
               </div>
             </div>
@@ -962,7 +962,7 @@ export const LoanDetailPage: React.FC = () => {
             </div>
             <div className="text-right">
               <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-yellow-50 border border-yellow-300 text-xs font-mono font-bold text-slate-950">
-                {formatEther(loan.totalSpentWei)} ETH of {formatEther(loan.maxSpendWei)} ETH
+                {formatEther(loan.totalSpentWei)} of {formatEther(loan.maxSpendWei)}
               </span>
             </div>
           </div>
@@ -1072,7 +1072,7 @@ export const LoanDetailPage: React.FC = () => {
                     </div>
                     <div className="text-right font-mono">
                       {evt.data?.amountWei && (
-                        <div className="font-bold text-slate-950">-{formatEther(evt.data.amountWei)} ETH</div>
+                        <div className="font-bold text-slate-950">-{formatEther(evt.data.amountWei)}</div>
                       )}
                       <div className="text-xs text-slate-500">
                         Tx: {evt.transactionHash.slice(0, 8)}...
@@ -1255,7 +1255,7 @@ export const LoanDetailPage: React.FC = () => {
             </div>
             <div className="text-right">
               <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-yellow-50 border border-yellow-300 text-xs font-mono font-bold text-slate-950">
-                {formatEther(loan.totalRepaidWei)} ETH of {formatEther(loan.totalRepayableWei)} ETH
+                {formatEther(loan.totalRepaidWei)} of {formatEther(loan.totalRepayableWei)}
               </span>
             </div>
           </div>
@@ -1264,7 +1264,7 @@ export const LoanDetailPage: React.FC = () => {
           <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 text-xs">
             <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 space-y-0.5">
               <div className="text-[11px] text-slate-500 font-semibold uppercase tracking-wider">1. Principal</div>
-              <div className="font-black font-mono text-slate-950 text-sm">{formatEther(loan.targetWei)} ETH</div>
+              <div className="font-black font-mono text-slate-950 text-sm">{formatEther(loan.targetWei)}</div>
               <div className="text-xs text-slate-500 font-medium">Target borrowed</div>
             </div>
 
@@ -1278,13 +1278,13 @@ export const LoanDetailPage: React.FC = () => {
 
             <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 space-y-0.5">
               <div className="text-[11px] text-slate-500 font-semibold uppercase tracking-wider">3. Total Repayable</div>
-              <div className="font-black font-mono text-slate-950 text-sm">{formatEther(loan.totalRepayableWei)} ETH</div>
+              <div className="font-black font-mono text-slate-950 text-sm">{formatEther(loan.totalRepayableWei)}</div>
               <div className="text-xs text-slate-500 font-medium">Principal + interest</div>
             </div>
 
             <div className="p-2.5 rounded-xl bg-emerald-50 border border-emerald-200 space-y-0.5">
               <div className="text-[11px] text-emerald-800 font-semibold uppercase tracking-wider">4. Amount Repaid</div>
-              <div className="font-black font-mono text-emerald-700 text-sm">{formatEther(loan.totalRepaidWei)} ETH</div>
+              <div className="font-black font-mono text-emerald-700 text-sm">{formatEther(loan.totalRepaidWei)}</div>
               <div className="text-xs text-emerald-700 font-medium">{repaymentPercent}% satisfied</div>
             </div>
 
@@ -1343,7 +1343,7 @@ export const LoanDetailPage: React.FC = () => {
                     </div>
                     <div className="text-right font-mono">
                       {evt.data?.amountWei && (
-                        <div className="font-bold text-slate-950">+{formatEther(evt.data.amountWei)} ETH</div>
+                        <div className="font-bold text-slate-950">+{formatEther(evt.data.amountWei)}</div>
                       )}
                       <div className="text-xs text-slate-500">
                         Tx: {evt.transactionHash.slice(0, 8)}...
@@ -1450,7 +1450,7 @@ export const LoanDetailPage: React.FC = () => {
                   <div className={`text-base font-bold ${
                     BigInt(lenderClaimableWei) > 0n ? 'text-emerald-700' : 'text-slate-500'
                   }`}>
-                    {formatEther(lenderClaimableWei)} ETH
+                    {formatEther(lenderClaimableWei)}
                   </div>
                 </div>
               </div>
@@ -1460,7 +1460,7 @@ export const LoanDetailPage: React.FC = () => {
                 <div className="p-2.5 rounded-lg bg-white border border-slate-200 space-y-0.5">
                   <div className="text-xs text-slate-500 font-medium uppercase">1. Contribution</div>
                   <div className="font-bold font-mono text-slate-900 text-sm">
-                    {formatEther(activeLenderPosition.contributedWei)} ETH
+                    {formatEther(activeLenderPosition.contributedWei)}
                   </div>
                   <div className="text-xs text-yellow-800 font-bold font-mono">
                     {(activeLenderPosition.shareBps / 100).toFixed(2)}% share
@@ -1470,7 +1470,7 @@ export const LoanDetailPage: React.FC = () => {
                 <div className="p-2.5 rounded-lg bg-white border border-slate-200 space-y-0.5">
                   <div className="text-xs text-slate-500 font-medium uppercase">2. Total Contributed</div>
                   <div className="font-bold font-mono text-slate-700 text-sm">
-                    {formatEther(loan.contributedWei)} ETH
+                    {formatEther(loan.contributedWei)}
                   </div>
                   <div className="text-xs text-slate-500">Pool target</div>
                 </div>
@@ -1478,17 +1478,17 @@ export const LoanDetailPage: React.FC = () => {
                 <div className="p-2.5 rounded-lg bg-white border border-slate-200 space-y-0.5">
                   <div className="text-xs text-slate-500 font-medium uppercase">3. Total Repaid</div>
                   <div className="font-bold font-mono text-slate-700 text-sm">
-                    {formatEther(loan.totalRepaidWei)} ETH
+                    {formatEther(loan.totalRepaidWei)}
                   </div>
                   <div className="text-xs text-slate-500">
-                    of {formatEther(loan.totalRepayableWei)} ETH
+                    of {formatEther(loan.totalRepayableWei)}
                   </div>
                 </div>
 
                 <div className="p-2.5 rounded-lg bg-white border border-slate-200 space-y-0.5">
                   <div className="text-xs text-slate-500 font-medium uppercase">4. Claimed Amount</div>
                   <div className="font-bold font-mono text-slate-700 text-sm">
-                    {formatEther(activeLenderPosition.claimedWei || '0')} ETH
+                    {formatEther(activeLenderPosition.claimedWei || '0')}
                   </div>
                   <div className="text-xs text-slate-500">Already withdrawn</div>
                 </div>
@@ -1502,7 +1502,7 @@ export const LoanDetailPage: React.FC = () => {
                   <div className={`font-bold font-mono text-sm ${
                     BigInt(lenderClaimableWei) > 0n ? 'text-emerald-700' : 'text-slate-500'
                   }`}>
-                    {formatEther(lenderClaimableWei)} ETH
+                    {formatEther(lenderClaimableWei)}
                   </div>
                   <div className="text-xs opacity-80">
                     {BigInt(lenderClaimableWei) > 0n ? 'Ready to pull' : 'No balance due'}
@@ -1521,7 +1521,7 @@ export const LoanDetailPage: React.FC = () => {
                   icon={<Download className="w-3.5 h-3.5" />}
                 >
                   {BigInt(lenderClaimableWei) > 0n
-                    ? `Withdraw ${formatEther(lenderClaimableWei)} ETH via MetaMask`
+                    ? `Withdraw ${formatEther(lenderClaimableWei)} via MetaMask`
                     : BigInt(activeLenderPosition.claimedWei || '0') > 0n
                     ? 'All Available Repayments Claimed ✓'
                     : 'Awaiting Borrower Repayments'}
@@ -1726,7 +1726,7 @@ export const LoanDetailPage: React.FC = () => {
                       </div>
                       <div className="flex items-center gap-3">
                         <div className="text-right font-mono">
-                          <div className="font-bold text-slate-950">{formatEther(lender.contributedWei)} ETH</div>
+                          <div className="font-bold text-slate-950">{formatEther(lender.contributedWei)}</div>
                           <div className="text-xs text-slate-500">{(lender.shareBps / 100).toFixed(2)}% voting weight</div>
                         </div>
                         <div>
