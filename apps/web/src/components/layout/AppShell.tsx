@@ -189,7 +189,7 @@ export const AppShell: React.FC = () => {
                   <NavLink
                     key={item.to}
                     to={item.to}
-                    end={item.to.endsWith('overview') || item.to.endsWith('portfolio') || item.to.endsWith('evaluator')}
+                    end={item.to !== '/app/verify'}
                     className={({ isActive }) =>
                       cn(
                         'flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs transition-colors select-none',
@@ -259,7 +259,7 @@ export const AppShell: React.FC = () => {
                       <NavLink
                         key={item.to}
                         to={item.to}
-                        end={item.to.endsWith('overview') || item.to.endsWith('portfolio') || item.to.endsWith('evaluator')}
+                        end={item.to !== '/app/verify'}
                         className={({ isActive }) =>
                           cn(
                             'flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium transition-colors',
