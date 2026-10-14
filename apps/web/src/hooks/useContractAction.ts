@@ -171,7 +171,11 @@ export function useContractAction() {
       return { error: 'Contribution rejected: amount exceeds remaining pool target capacity.', code: 'TARGET_EXCEEDED', category: 'contract_reverted' };
     }
     if (message.includes('NotVerifiedLender') || message.includes('0xa373b4a9')) {
-      return { error: 'Contribution rejected: connected account is not verified in KYCRegistry.', code: 'NOT_VERIFIED_LENDER', category: 'contract_reverted' };
+      return {
+        error: 'Syndicate Contribution Rejected: Connected wallet is not verified under IKYCRegistry.Role.Lender. Under protocol policy (LoanPool.sol line 111), non-lenders (merchants, borrowers, unregistered callers) cannot deposit capital or acquire voting power.',
+        code: 'NOT_VERIFIED_LENDER',
+        category: 'contract_reverted',
+      };
     }
     if (message.includes('FundingClosed') || message.includes('0xf3e84c4c')) {
       return { error: 'Contribution rejected: funding window for this loan pool is closed.', code: 'FUNDING_CLOSED', category: 'contract_reverted' };

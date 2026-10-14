@@ -24,6 +24,7 @@ import {
   formatDuration,
   formatDate,
   timeAgo,
+  truncateAddress,
 } from '../lib/utils';
 import {
   ArrowLeft,
@@ -54,7 +55,7 @@ import {
 
 export const LoanDetailPage: React.FC = () => {
   const { loanId } = useParams<{ loanId: string }>();
-  const { isVerified, address: currentAddress, isLender, isBorrower } = useIdentity();
+  const { isVerified, address: currentAddress, isLender, isBorrower, role, switchPersona } = useIdentity();
   const { isConnected, targetNetwork } = useWallet();
 
   const { data: loan, isLoading: loanLoading, error: loanError, refetch: refetchLoan } = useLoan(loanId);
@@ -816,29 +817,90 @@ export const LoanDetailPage: React.FC = () => {
                 </div>
               </div>
 
-              {!isVerified && (
+              {!isLender ? (
+                <div className="p-4 rounded-xl bg-amber-50/90 border-2 border-amber-300 text-xs text-amber-950 space-y-3 shadow-xs">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <div className="p-1 rounded-md bg-amber-200/80 text-amber-900">
+                        <ShieldAlert className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <span className="font-bold text-xs uppercase tracking-wide text-amber-950 font-mono block">
+                          Policy Guard: Non-Lender Wallet Connected
+                        </span>
+                        <span className="text-[11px] text-amber-800 font-medium">
+                          Active wallet is registered as <strong className="uppercase font-bold text-amber-950">[{role}]</strong> ({currentAddress ? truncateAddress(currentAddress, 5) : 'Unknown'}), not an accredited Institutional Lender.
+                        </span>
+                      </div>
+                    </div>
+                    <Badge variant="outline" className="text-[10px] font-mono font-bold bg-amber-100 text-amber-900 border-amber-400 shrink-0">
+                      ON-CHAIN RULE #4
+                    </Badge>
+                  </div>
+
+                  <p className="leading-relaxed font-medium text-amber-900 bg-white/70 p-3 rounded-lg border border-amber-200">
+                    Under <code className="bg-amber-100 px-1 py-0.5 rounded font-mono font-bold text-slate-950 text-[11px]">LoanPool.sol:111</code>, 
+                    the contract enforces: <code className="bg-amber-100 px-1 py-0.5 rounded font-mono font-bold text-slate-950 text-[11px]">require(kycRegistry.isVerified(msg.sender, Role.Lender))</code>. 
+                    Suppliers, borrowers, and unvetted actors cannot deposit capital or claim syndicate voting weight.
+                  </p>
+
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-1 border-t border-amber-200">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="text-[11px] text-amber-900 font-bold">Switch to Verified Lender:</span>
+                      <button
+                        type="button"
+                        onClick={() => switchPersona('lender-alpha')}
+                        className="px-2.5 py-1 rounded text-xs font-bold bg-[#ffe600] text-black hover:bg-yellow-400 border border-yellow-400 shadow-xs cursor-pointer inline-flex items-center gap-1 transition-all"
+                      >
+                        Meera Capital (75% Lead)
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => switchPersona('lender-beta')}
+                        className="px-2.5 py-1 rounded text-xs font-semibold bg-white text-slate-800 hover:bg-slate-100 border border-slate-300 shadow-xs cursor-pointer transition-all"
+                      >
+                        Northstar Labs (25% Syndicate)
+                      </button>
+                    </div>
+
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={handleContribute}
+                      loading={isExecuting}
+                      className="text-xs font-mono font-bold border-rose-300 bg-rose-50/80 text-rose-900 hover:bg-rose-100 hover:border-rose-400 cursor-pointer self-start sm:self-auto shrink-0"
+                      title="Attempts the transaction to demonstrate on-chain revert NotVerifiedLender() for presentation/demo purposes"
+                    >
+                      <AlertTriangle className="w-3.5 h-3.5 text-rose-600 mr-1" />
+                      Demonstrate Policy Revert
+                    </Button>
+                  </div>
+                </div>
+              ) : !isVerified ? (
                 <Alert variant="warning" title="Verification Required">
                   Lenders must be verified in the <code className="font-mono">KYCRegistry</code> smart contract before contributing. Complete verification in the{' '}
                   <Link to="/app/verify" className="underline font-semibold">
                     Verification Workflow
                   </Link>.
                 </Alert>
-              )}
+              ) : null}
 
               {/* Quick Allocation Shortcuts */}
-              <div className="flex items-center gap-2 pt-0.5">
-                <span className="text-xs text-slate-600 font-medium">Quick Allocation:</span>
-                {[25, 50, 75, 100].map((pct) => (
-                  <button
-                    key={pct}
-                    type="button"
-                    onClick={() => handleSetAllocationPercent(pct)}
-                    className="text-xs font-semibold px-2 py-0.5 rounded bg-slate-100 border border-slate-200 hover:border-yellow-400 hover:bg-yellow-50 text-slate-700 hover:text-slate-900 transition-colors cursor-pointer"
-                  >
-                    {pct === 100 ? 'MAX (100%)' : `${pct}%`}
-                  </button>
-                ))}
-              </div>
+              {isLender && (
+                <div className="flex items-center gap-2 pt-0.5">
+                  <span className="text-xs text-slate-600 font-medium">Quick Allocation:</span>
+                  {[25, 50, 75, 100].map((pct) => (
+                    <button
+                      key={pct}
+                      type="button"
+                      onClick={() => handleSetAllocationPercent(pct)}
+                      className="text-xs font-semibold px-2 py-0.5 rounded bg-slate-100 border border-slate-200 hover:border-yellow-400 hover:bg-yellow-50 text-slate-700 hover:text-slate-900 transition-colors cursor-pointer"
+                    >
+                      {pct === 100 ? 'MAX (100%)' : `${pct}%`}
+                    </button>
+                  ))}
+                </div>
+              )}
 
               <div className="flex items-center gap-2">
                 <div className="relative flex-1">
@@ -849,36 +911,42 @@ export const LoanDetailPage: React.FC = () => {
                     max={remainingFundingNum.toString()}
                     value={contributeEth}
                     onChange={(e) => setContributeEth(e.target.value)}
+                    disabled={!isLender}
                     className={`w-full text-xs p-2.5 pr-14 rounded-lg border font-mono focus:outline-none focus:ring-2 ${
-                      isOverCapacity
+                      !isLender
+                        ? 'border-slate-200 bg-slate-100 text-slate-400 cursor-not-allowed'
+                        : isOverCapacity
                         ? 'border-rose-400 focus:ring-rose-400 text-rose-900 bg-rose-50'
                         : 'border-slate-200 focus:ring-yellow-400 bg-slate-50 focus:bg-white text-slate-900 placeholder:text-slate-400'
                     }`}
-                    placeholder="Amount in ETH"
+                    placeholder={!isLender ? `Locked: [${role}] cannot deposit capital` : 'Amount in ETH'}
                   />
-                  <button
-                    type="button"
-                    onClick={() => setContributeEth(remainingFundingNum.toString())}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-900 hover:bg-slate-200 bg-slate-100 border border-slate-300 px-1.5 py-0.5 rounded cursor-pointer"
-                  >
-                    MAX
-                  </button>
+                  {isLender && (
+                    <button
+                      type="button"
+                      onClick={() => setContributeEth(remainingFundingNum.toString())}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-900 hover:bg-slate-200 bg-slate-100 border border-slate-300 px-1.5 py-0.5 rounded cursor-pointer"
+                    >
+                      MAX
+                    </button>
+                  )}
                 </div>
 
                 <Button
                   size="sm"
-                  variant="primary"
+                  variant={isLender ? 'primary' : 'secondary'}
                   disabled={
                     isExecuting ||
+                    !isLender ||
                     !isVerified ||
                     contributeAmountNum <= 0 ||
                     isOverCapacity
                   }
                   loading={isExecuting}
                   onClick={handleContribute}
-                  className="text-xs shrink-0"
+                  className="text-xs shrink-0 font-bold"
                 >
-                  Contribute ETH
+                  {isLender ? 'Contribute ETH' : `Ineligible (${role})`}
                 </Button>
               </div>
 

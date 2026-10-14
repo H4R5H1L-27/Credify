@@ -123,7 +123,7 @@ export const ConsoleTrustModelPage: React.FC = () => {
       <TechnicalPanel
         title="Formal Threat Analysis &amp; Smart Contract Mitigations"
         subtitle="Matrix of identified economic and technical attack vectors with their architectural counter-measures."
-        badge={<span className="font-mono text-xs font-bold text-rose-950 bg-rose-50 border border-rose-200 px-2 py-0.5 rounded">6 VECTORS AUDITED</span>}
+        badge={<span className="font-mono text-xs font-bold text-rose-950 bg-rose-50 border border-rose-200 px-2 py-0.5 rounded">7 VECTORS AUDITED</span>}
       >
         <div className="space-y-4 font-sans text-xs">
           {/* Threat Vector 1 */}
@@ -237,6 +237,25 @@ export const ConsoleTrustModelPage: React.FC = () => {
             </p>
             <div className="p-3 rounded-lg bg-slate-50 border border-slate-200 text-slate-800 font-medium leading-relaxed">
               <strong>Protocol Mitigation:</strong> The contract enforces a dedicated <code>fundingDeadline</code>. Once elapsed, any participant can call <code>cancelUnfunded()</code> to transition the pool to CANCELLED and enable 100% principal refunds.
+            </div>
+          </div>
+
+          {/* Threat Vector 7 */}
+          <div className="p-4 rounded-xl bg-white border border-slate-200 space-y-2">
+            <div className="flex items-center justify-between">
+              <div className="font-bold text-slate-950 flex items-center gap-1.5">
+                <ShieldAlert className="w-4 h-4 text-rose-600 shrink-0" />
+                <span>Vector 7: Non-Lender Syndicate Contribution &amp; Governance Hijacking</span>
+              </div>
+              <span className="px-2 py-0.5 rounded font-mono text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-300">
+                MITIGATED
+              </span>
+            </div>
+            <p className="text-slate-600 leading-relaxed">
+              <strong>Attack Scenario:</strong> An unauthorized actor (e.g. supplier, borrower, or unvetted external account) calls <code>LoanPool.contribute()</code> to deposit capital, acquire loan voting weight, or self-fund credit lines.
+            </p>
+            <div className="p-3 rounded-lg bg-slate-50 border border-slate-200 text-slate-800 font-medium leading-relaxed">
+              <strong>Protocol Mitigation:</strong> (1) <code>LoanPool.contribute()</code> strictly enforces <code>require(IKYCRegistry(kycRegistry).isVerified(msg.sender, IKYCRegistry.Role.Lender))</code>, reverting immediately with custom error <code>NotVerifiedLender()</code>. (2) Reverts with <code>BorrowerCannotContribute()</code> if the borrower attempts to fund their own pool.
             </div>
           </div>
         </div>

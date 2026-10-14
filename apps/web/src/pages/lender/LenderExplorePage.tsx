@@ -27,6 +27,7 @@ import {
   ArrowRight,
   ShieldCheck,
   AlertCircle,
+  ShieldAlert,
   LayoutGrid,
   List,
   Store,
@@ -83,7 +84,7 @@ function ReputationRow({ address }: { address: string }) {
 }
 
 export const LenderExplorePage: React.FC = () => {
-  const { isVerified } = useIdentity();
+  const { isVerified, isLender, role, switchPersona } = useIdentity();
   const { data: loans, isLoading } = useLoans();
   const [filter, setFilter] = useState<'FUNDING' | 'ACTIVE' | 'REPAID' | 'DEFAULTED' | 'ALL'>('FUNDING');
   const [viewMode, setViewMode] = useState<'table' | 'cards'>('table');
@@ -140,14 +141,28 @@ export const LenderExplorePage: React.FC = () => {
           </p>
         </div>
 
-        {!isVerified && (
+        {!isLender ? (
+          <div className="flex flex-wrap items-center gap-2 px-3.5 py-2 rounded-xl bg-amber-50 border border-amber-300 text-xs shadow-xs">
+            <ShieldAlert className="w-4 h-4 text-amber-700 shrink-0" />
+            <div className="text-amber-950 font-medium">
+              Connected as <strong className="uppercase font-bold text-amber-950">[{role}]</strong>. Only accredited Lenders can deploy syndicate capital.
+            </div>
+            <button
+              type="button"
+              onClick={() => switchPersona('lender-alpha')}
+              className="ml-auto px-2.5 py-1 rounded text-xs font-bold bg-[#ffe600] text-black hover:bg-yellow-400 border border-yellow-400 shadow-xs cursor-pointer"
+            >
+              Switch to Meera Capital (Lender)
+            </button>
+          </div>
+        ) : !isVerified ? (
           <Link to="/app/verify">
             <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-100 border border-amber-300 text-amber-950 text-xs font-bold hover:bg-amber-200 transition-colors">
               <AlertCircle className="w-3.5 h-3.5 text-amber-700" />
               Verification Required to Deploy Capital
             </span>
           </Link>
-        )}
+        ) : null}
       </div>
 
       {/* Market Discovery Strip */}
