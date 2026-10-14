@@ -37,7 +37,12 @@ import {
   ShieldAlert,
 } from 'lucide-react';
 
+import { usePublicClient } from 'wagmi';
+import { poolAbi } from '@credify/shared';
+import { type Address } from 'viem';
+
 export const BorrowerSpendingPage: React.FC = () => {
+  const publicClient = usePublicClient();
   const { address, isVerified } = useIdentity();
   const { data: loans, isLoading: loansLoading, refetch: refetchLoans } = useLoans();
   const { data: suppliers, isLoading: suppliersLoading } = useQuery({
@@ -100,18 +105,57 @@ export const BorrowerSpendingPage: React.FC = () => {
   const maxSpendNum = Number(maxSpendWeiBig) / 1e18;
   const totalSpentNum = Number(totalSpentWeiBig) / 1e18;
 
+  // Real-time on-chain merchant limits
+  const { data: onChainMerchantLimits, refetch: refetchMerchantLimits } = useQuery({
+    queryKey: ['onChainMerchantLimits', selectedLoan?.address, selectedLoan?.merchants],
+    queryFn: async () => {
+      if (!publicClient || !selectedLoan || !selectedLoan.merchants.length) return {};
+      const results: Record<string, { capWei: bigint; spentWei: bigint; remainingWei: bigint }> = {};
+      for (const m of selectedLoan.merchants) {
+        try {
+          const cap = await publicClient.readContract({
+            address: selectedLoan.address as Address,
+            abi: poolAbi,
+            functionName: 'merchantCapWei',
+            args: [m as Address],
+          });
+          const spent = await publicClient.readContract({
+            address: selectedLoan.address as Address,
+            abi: poolAbi,
+            functionName: 'merchantSpentWei',
+            args: [m as Address],
+          });
+          const capBig = BigInt(cap.toString());
+          const spentBig = BigInt(spent.toString());
+          const remBig = capBig > spentBig ? capBig - spentBig : 0n;
+          results[m.toLowerCase()] = {
+            capWei: capBig,
+            spentWei: spentBig,
+            remainingWei: remBig,
+          };
+        } catch {
+          // Fallback if read fails
+        }
+      }
+      return results;
+    },
+    enabled: Boolean(publicClient && selectedLoan?.address && selectedLoan?.merchants?.length),
+    refetchInterval: 3000,
+  });
+
   // Merchant-specific spending caps
-  const selectedMerchantIndex = selectedLoan && selectedMerchant
-    ? selectedLoan.merchants.findIndex((m) => m.toLowerCase() === selectedMerchant.toLowerCase())
-    : -1;
+  const activeMerchantLimit = selectedMerchant && onChainMerchantLimits
+    ? onChainMerchantLimits[selectedMerchant.toLowerCase()]
+    : undefined;
 
-  const selectedMerchantCapWeiBig = (selectedLoan && selectedMerchantIndex >= 0 && selectedLoan.merchantCapsWei && selectedLoan.merchantCapsWei[selectedMerchantIndex])
-    ? BigInt(selectedLoan.merchantCapsWei[selectedMerchantIndex])
-    : maxSpendWeiBig;
+  const merchantCapWeiBig = activeMerchantLimit ? activeMerchantLimit.capWei : maxSpendWeiBig;
+  const merchantSpentWeiBig = activeMerchantLimit ? activeMerchantLimit.spentWei : 0n;
+  const merchantRemainingWeiBig = activeMerchantLimit ? activeMerchantLimit.remainingWei : remainingWeiBig;
 
-  // Merchant available capacity is constrained by both the global loan remaining spend and the merchant's individual cap
-  const effectiveMerchantMaxWeiBig = selectedMerchantCapWeiBig < remainingWeiBig ? selectedMerchantCapWeiBig : remainingWeiBig;
-  const merchantCapEth = Number(selectedMerchantCapWeiBig) / 1e18;
+  // Merchant available capacity is constrained by BOTH the global pool remaining spend and this merchant's remaining cap
+  const effectiveMerchantMaxWeiBig = merchantRemainingWeiBig < remainingWeiBig ? merchantRemainingWeiBig : remainingWeiBig;
+  const merchantCapEth = Number(merchantCapWeiBig) / 1e18;
+  const merchantSpentEth = Number(merchantSpentWeiBig) / 1e18;
   const effectiveRemainingSpendCapacity = Number(effectiveMerchantMaxWeiBig) / 1e18;
 
   const parsedAmountNum = Number(amountEth) || 0;
@@ -141,6 +185,7 @@ export const BorrowerSpendingPage: React.FC = () => {
         category
       );
       refetchLoans();
+      refetchMerchantLimits();
       setShowMilestone(true);
     } catch {
       // Caught and displayed via useContractAction txState
@@ -410,9 +455,10 @@ export const BorrowerSpendingPage: React.FC = () => {
                                 {sup?.category || 'Hardware & Sensors'}
                               </div>
                               <AddressBadge address={mAddr} digits={4} className="mt-1" />
-                              {selectedLoan.merchantCapsWei && selectedLoan.merchantCapsWei[selectedLoan.merchants.indexOf(mAddr)] && (
-                                <div className="text-[11px] font-mono text-slate-600 font-semibold pt-0.5">
-                                  Cap: {(Number(BigInt(selectedLoan.merchantCapsWei[selectedLoan.merchants.indexOf(mAddr)])) / 1e18).toFixed(2)} ETH
+                              {onChainMerchantLimits && onChainMerchantLimits[mAddr.toLowerCase()] && (
+                                <div className="text-[11px] font-mono text-slate-700 font-semibold pt-0.5 space-y-0.5">
+                                  <div>Cap: {(Number(onChainMerchantLimits[mAddr.toLowerCase()].capWei) / 1e18).toFixed(2)} ETH</div>
+                                  <div className="text-emerald-700">Room: {(Number(onChainMerchantLimits[mAddr.toLowerCase()].remainingWei) / 1e18).toFixed(2)} ETH</div>
                                 </div>
                               )}
                             </div>
