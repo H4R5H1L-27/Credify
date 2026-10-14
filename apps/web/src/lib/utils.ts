@@ -24,11 +24,20 @@ export function formatEtherNum(wei: string | bigint | number): number {
   }
 }
 
+import { parseEther as viemParseEther } from 'viem';
+
 export function parseEtherToWei(eth: string | number): string {
   try {
-    const num = Number(eth);
-    if (isNaN(num) || num <= 0) return '0';
-    return BigInt(Math.round(num * 1e18)).toString();
+    if (typeof eth === 'number') {
+      if (isNaN(eth) || eth <= 0) return '0';
+      eth = eth.toFixed(18).replace(/\.?0+$/, '');
+    }
+    const trimmed = (eth || '').trim();
+    if (!trimmed || Number(trimmed) <= 0) return '0';
+    // Truncate to maximum 18 decimal places to prevent parseEther fractional errors
+    const parts = trimmed.split('.');
+    const cleanStr = parts.length > 1 ? `${parts[0]}.${parts[1].slice(0, 18)}` : parts[0];
+    return viemParseEther(cleanStr).toString();
   } catch {
     return '0';
   }

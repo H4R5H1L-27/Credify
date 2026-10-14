@@ -115,10 +115,15 @@ export const BorrowerSpendingPage: React.FC = () => {
   const handleSpend = async () => {
     if (!selectedLoan || !activeMerchantAddress || !amountEth) return;
     try {
+      // If user is spending max remaining capacity, use exact remainingWeiBig to prevent 1-wei rounding mismatch
+      const spendWei = (amountEth === remainingSpendCapacity.toString() || amountEth === remainingSpendCapacity.toFixed(18).replace(/\.?0+$/, ''))
+        ? remainingWeiBig.toString()
+        : parseEtherToWei(amountEth);
+
       await executeSpend(
         selectedLoan.address,
         activeMerchantAddress,
-        parseEtherToWei(amountEth),
+        spendWei,
         category
       );
       refetchLoans();

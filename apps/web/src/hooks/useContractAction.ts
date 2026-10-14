@@ -582,6 +582,7 @@ export function useContractAction() {
           functionName: 'spend',
           args: [merchantAddress as Address, BigInt(amountWei), categoryBytes32],
           nonce,
+          gas: 500000n,
         });
       },
       () => {
