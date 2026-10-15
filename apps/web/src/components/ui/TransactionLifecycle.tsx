@@ -3,7 +3,7 @@ import { cn, getExplorerTxUrl } from '../../lib/utils';
 import { AddressBadge } from './AddressBadge';
 import { triggerConfetti } from './Confetti';
 import { AnimatedCheckmark } from './MicroInteractions';
-import { Clock, AlertCircle, Loader2, Key, XCircle, ShieldAlert, WifiOff, ExternalLink } from 'lucide-react';
+import { Clock, AlertCircle, Loader2, Key, XCircle, ShieldAlert, WifiOff, ExternalLink, Sparkles } from 'lucide-react';
 import { useWallet } from '../../context/WalletContext';
 
 export type TxLifecycleStep =
@@ -136,10 +136,17 @@ export const TransactionLifecycle: React.FC<{
           </span>
         </div>
         <div className="flex items-center gap-1.5">
-          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-yellow-50 border border-yellow-300 text-yellow-950 flex items-center gap-1">
-            <Key className="w-2.5 h-2.5" />
-            MetaMask
-          </span>
+          {state.isMetaMask ? (
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-50 border border-amber-300 text-amber-950 flex items-center gap-1">
+              <Key className="w-2.5 h-2.5" />
+              MetaMask
+            </span>
+          ) : (
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-yellow-100 border border-yellow-300 text-yellow-950 flex items-center gap-1">
+              <Sparkles className="w-2.5 h-2.5 text-yellow-600" />
+              Guided Mode (Demo Key)
+            </span>
+          )}
         </div>
       </div>
 

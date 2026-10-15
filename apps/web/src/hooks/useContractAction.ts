@@ -242,10 +242,24 @@ export function useContractAction() {
       return { error: 'Default vote rejected: loan pool has not reached maturity date and grace period.', code: 'NOT_AT_MATURITY', category: 'contract_reverted' };
     }
     if (message.includes('invalid block tag') || message.includes('-32000')) {
-      return { error: 'MetaMask block cache desynced from local node. Please clear activity data in MetaMask.', code: 'METAMASK_BLOCK_CACHE', category: 'network_error' };
+      return {
+        error: 'MetaMask block cache desynced after local node restart. In MetaMask, open Settings > Advanced > Clear activity tab data.',
+        code: 'METAMASK_BLOCK_CACHE',
+        category: 'network_error',
+      };
     }
-    if (message.includes('nonce too low')) {
-      return { error: 'MetaMask transaction nonce desynced. Please clear activity data in MetaMask.', code: 'NONCE_TOO_LOW', category: 'network_error' };
+    if (
+      message.includes('nonce too low') ||
+      message.includes('nonce too high') ||
+      message.includes('Nonce too high') ||
+      message.includes('Nonce too low') ||
+      message.includes('replacement transaction underpriced')
+    ) {
+      return {
+        error: 'MetaMask nonce desynced after chain restart. In MetaMask, open Settings > Advanced > Clear activity tab data to reset local nonce cache.',
+        code: 'NONCE_DESYNC',
+        category: 'network_error',
+      };
     }
 
     return {
