@@ -17,7 +17,7 @@ import {
   TransactionState,
   MilestoneCelebration,
 } from '../../components/ui';
-import { formatEther, formatEtherNum, formatDate } from '../../lib/utils';
+import { formatEther, formatEtherNum, formatDate, isValidDate } from '../../lib/utils';
 import {
   Vote,
   ArrowLeft,
@@ -121,7 +121,8 @@ export const LenderGovernancePage: React.FC = () => {
               : 0n;
             const remainingWeightEth = formatEther(remainingWeightWei.toString());
 
-            const isPastMaturity = new Date(loan.maturity).getTime() <= Date.now();
+            const hasActiveMaturity = isValidDate(loan.maturity);
+            const isPastMaturity = hasActiveMaturity && new Date(loan.maturity).getTime() <= Date.now();
             const isDefaulted = loan.status === 'DEFAULTED';
             const isRepaid = loan.status === 'REPAID';
             const isActive = loan.status === 'ACTIVE';
@@ -135,7 +136,7 @@ export const LenderGovernancePage: React.FC = () => {
                         {loan.borrower.displayName} Agreement Syndicate
                       </CardTitle>
                       <CardDescription className="text-xs text-slate-500 font-mono mt-0.5 font-medium">
-                        Contract <AddressBadge address={loan.address} digits={5} /> • Matures: {formatDate(loan.maturity)}
+                        Contract <AddressBadge address={loan.address} digits={5} /> • Matures: {hasActiveMaturity ? formatDate(loan.maturity) : 'Pending Activation'}
                       </CardDescription>
                     </div>
                     <StatusBadge status={loan.status} />
@@ -161,10 +162,12 @@ export const LenderGovernancePage: React.FC = () => {
                     <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
                       <div className="text-[10px] text-slate-500 font-mono font-bold uppercase">1. Maturity</div>
                       <div className="font-bold text-slate-950 text-xs truncate" title={loan.maturity}>
-                        {formatDate(loan.maturity)}
+                        {hasActiveMaturity ? formatDate(loan.maturity) : 'Pending Activation'}
                       </div>
                       <div className="text-[10px] font-mono">
-                        {isPastMaturity ? (
+                        {!hasActiveMaturity ? (
+                          <span className="text-slate-500 font-medium">Pending Activation</span>
+                        ) : isPastMaturity ? (
                           <span className="text-rose-700 font-bold">Past Due</span>
                         ) : (
                           <span className="text-slate-500 font-medium">Within Term</span>

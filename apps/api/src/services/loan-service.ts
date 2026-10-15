@@ -91,7 +91,7 @@ export class LoanService {
       aprBps: Number(await this.chain.publicClient.readContract({ address: pool, abi: [{ type: 'function', name: 'aprBps', stateMutability: 'view', inputs: [], outputs: [{ type: 'uint256' }] }] as const, functionName: 'aprBps' })),
       durationSeconds: Number(await this.chain.publicClient.readContract({ address: pool, abi: [{ type: 'function', name: 'durationSeconds', stateMutability: 'view', inputs: [], outputs: [{ type: 'uint256' }] }] as const, functionName: 'durationSeconds' })),
       fundingDeadline: fundingDeadline ? new Date(Number(fundingDeadline) * 1000).toISOString() : undefined,
-      maturity: new Date(Number(maturity) * 1000).toISOString(),
+      maturity: maturity && Number(maturity) > 0 ? new Date(Number(maturity) * 1000).toISOString() : '',
       totalRepaidWei: repaid.toString(),
       totalRepayableWei: repayable.toString(),
       totalSpentWei: spent.toString(),

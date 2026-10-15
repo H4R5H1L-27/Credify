@@ -62,9 +62,23 @@ export function truncateAddress(address: string, chars = 4): string {
 
 export const formatAddress = truncateAddress;
 
-export function formatDate(isoString: string): string {
+export function isValidDate(isoString?: string | null): boolean {
+  if (!isoString) return false;
   try {
     const date = new Date(isoString);
+    return !isNaN(date.getTime()) && date.getFullYear() > 1970;
+  } catch {
+    return false;
+  }
+}
+
+export function formatDate(isoString?: string | null, fallback = 'Pending Activation'): string {
+  if (!isoString) return fallback;
+  try {
+    const date = new Date(isoString);
+    if (isNaN(date.getTime()) || date.getFullYear() <= 1970) {
+      return fallback;
+    }
     return date.toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric',
@@ -73,11 +87,12 @@ export function formatDate(isoString: string): string {
       minute: '2-digit'
     });
   } catch {
-    return isoString;
+    return fallback;
   }
 }
 
-export function timeAgo(isoString: string): string {
+export function timeAgo(isoString?: string | null): string {
+  if (!isoString || !isValidDate(isoString)) return '';
   try {
     const diffMs = Date.now() - new Date(isoString).getTime();
     const diffSec = Math.floor(diffMs / 1000);

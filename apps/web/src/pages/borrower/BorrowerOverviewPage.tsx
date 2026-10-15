@@ -18,6 +18,7 @@ import {
   formatEtherNum,
   formatApr,
   formatDate,
+  isValidDate,
   timeAgo,
 } from '../../lib/utils';
 import {
@@ -124,10 +125,13 @@ export const BorrowerOverviewPage: React.FC = () => {
         };
       }
       if (remainingDebtNum > 0) {
+        const maturityMsg = isValidDate(primaryLoan.maturity)
+          ? `before maturity (${formatDate(primaryLoan.maturity)})`
+          : 'once facility is activated';
         return {
           type: 'warning' as const,
           title: 'Repayment Obligation Active',
-          message: `${remainingDebtNum.toFixed(2)} ETH balance due before maturity (${formatDate(primaryLoan.maturity)}).`,
+          message: `${remainingDebtNum.toFixed(2)} ETH balance due ${maturityMsg}.`,
           actionLabel: 'Make Repayment',
           actionTo: '/app/borrower/repayments',
         };

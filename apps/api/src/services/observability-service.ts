@@ -20,6 +20,7 @@ import type {
 } from '@credify/shared';
 
 function isoFromTimestamp(value: bigint | number): string {
+  if (!value || Number(value) <= 0) return '';
   return new Date(Number(value) * 1000).toISOString();
 }
 

@@ -20,6 +20,7 @@ import {
   formatApr,
   formatDuration,
   formatDate,
+  isValidDate,
   timeAgo,
 } from '../../lib/utils';
 import {
@@ -369,7 +370,7 @@ export const LenderExplorePage: React.FC = () => {
                     <TableCell className="text-xs text-slate-800 font-bold">
                       <div>{formatDuration(loan.durationSeconds)}</div>
                       <div className="text-[10px] text-slate-500 font-mono font-medium">
-                        Due {formatDate(loan.maturity)}
+                        {isValidDate(loan.maturity) ? `Due ${formatDate(loan.maturity)}` : 'Locks on Activation'}
                       </div>
                     </TableCell>
 
@@ -478,7 +479,9 @@ export const LenderExplorePage: React.FC = () => {
                     </div>
                     <div>
                       <span className="text-slate-600 text-[11px] font-medium">Maturity:</span>
-                      <div className="font-bold text-slate-900 font-mono">{formatDate(loan.maturity)}</div>
+                      <div className="font-bold text-slate-900 font-mono">
+                        {isValidDate(loan.maturity) ? formatDate(loan.maturity) : 'Pending Activation'}
+                      </div>
                     </div>
                   </div>
                 </div>
