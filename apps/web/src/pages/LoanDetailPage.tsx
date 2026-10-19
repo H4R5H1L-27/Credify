@@ -194,7 +194,7 @@ export const LoanDetailPage: React.FC = () => {
   const isCancelled = loan.status === 'CANCELLED';
 
   const fundingDeadlineTime = loan.fundingDeadline ? new Date(loan.fundingDeadline).getTime() : 0;
-  const isPastFundingDeadline = fundingDeadlineTime > 0 && Date.now() > fundingDeadlineTime;
+  const isPastFundingDeadline = isCancelled || (fundingDeadlineTime > 0 && Date.now() > fundingDeadlineTime);
 
   // Governance Derived Metrics (7 Mandatory Metrics)
   const hasActiveMaturity = Boolean(loan.maturity && new Date(loan.maturity).getFullYear() > 1970 && !isFunding);
@@ -225,6 +225,17 @@ export const LoanDetailPage: React.FC = () => {
   const handleContribute = async () => {
     if (!loanId) return;
     setPolicyRejection(null);
+
+    if (isPastFundingDeadline || isCancelled || !isFunding) {
+      setPolicyRejection({
+        title: 'Funding Window Closed (FundingClosed)',
+        message: 'Under LoanPool.sol rules, the funding window for this facility has closed or expired. Further syndicate contributions are rejected.',
+        errorCode: 'FUNDING_CLOSED',
+        attemptedRole: role || 'LENDER',
+        callerAddress: currentAddress || '',
+      });
+      return;
+    }
 
     if (isBorrowerOfLoan) {
       setPolicyRejection({
@@ -954,13 +965,16 @@ export const LoanDetailPage: React.FC = () => {
                   disabled={
                     isExecuting ||
                     contributeAmountNum <= 0 ||
-                    isOverCapacity
+                    isOverCapacity ||
+                    isPastFundingDeadline ||
+                    isCancelled ||
+                    !isFunding
                   }
                   loading={isExecuting}
                   onClick={handleContribute}
                   className="text-xs shrink-0 font-bold"
                 >
-                  Contribute ETH
+                  {isPastFundingDeadline || isCancelled || !isFunding ? 'Funding Closed' : 'Contribute ETH'}
                 </Button>
               </div>
 

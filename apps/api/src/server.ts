@@ -44,7 +44,8 @@ export function buildServer(ctx: AppContext) {
   void agreementStore.load();
   const app = Fastify({ logger: { level: 'info' } });
   app.addHook('onRequest', async (req, reply) => {
-    reply.header('Access-Control-Allow-Origin', config.corsOrigin);
+    const allowOrigin = config.corsOrigin === '*' ? (req.headers.origin || '*') : config.corsOrigin;
+    reply.header('Access-Control-Allow-Origin', allowOrigin);
     reply.header('Access-Control-Allow-Headers', 'content-type, x-demo-principal');
     reply.header('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
     if (req.method === 'OPTIONS') return reply.code(204).send();
@@ -375,6 +376,18 @@ export function buildServer(ctx: AppContext) {
       const body = req.body as { seconds?: number };
       const seconds = Number(body?.seconds) || 15 * 24 * 60 * 60;
       const res = await chain.increaseTime(seconds);
+      try {
+        const pools = await chain.getPools();
+        for (const pool of pools) {
+          try {
+            const raw = await chain.readLoan(pool);
+            const [st, , , , , , , , , deadline] = raw.summary as readonly any[];
+            if (Number(st) === 0 && Number(deadline) > 0 && res.currentTimestamp >= Number(deadline)) {
+              await chain.cancelUnfunded('operator', pool);
+            }
+          } catch {}
+        }
+      } catch {}
       await indexer.indexOnce();
       return { success: true, warpedSeconds: seconds, currentTimestamp: res.currentTimestamp };
     }, reply);

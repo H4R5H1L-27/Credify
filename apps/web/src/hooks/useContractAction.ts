@@ -352,7 +352,7 @@ export function useContractAction() {
       setTxState({
         step: 'preparing',
         title: `Preparing ${operationName}`,
-        description: 'Validating inputs, parameters, and nonce on local node...',
+        description: 'Validating inputs and preparing transaction parameters...',
         isMetaMask: true,
       });
 
@@ -478,7 +478,6 @@ export function useContractAction() {
     const outcome = await runLifecycle(
       'Loan Deployment',
       async () => {
-        const nonce = await publicClient!.getTransactionCount({ address: address as Address });
         const terms = {
           borrower: address as Address,
           targetWei: BigInt(args.terms.targetWei),
@@ -499,7 +498,6 @@ export function useContractAction() {
           abi: factoryAbi,
           functionName: 'createLoan',
           args: [terms],
-          nonce,
         });
       },
       (receipt, hash) => {
@@ -560,13 +558,11 @@ export function useContractAction() {
             account: address as Address,
           });
         }
-        const nonce = await publicClient!.getTransactionCount({ address: address as Address });
         return writeContractAsync({
           address: poolAddress as Address,
           abi: poolAbi,
           functionName: 'contribute',
           value: BigInt(amountWei),
-          nonce,
         });
       },
       () => {
@@ -602,13 +598,11 @@ export function useContractAction() {
       'Policy-Restricted Spend',
       async () => {
         const categoryBytes32 = pad(stringToHex(category.slice(0, 32)), { size: 32 });
-        const nonce = await publicClient!.getTransactionCount({ address: address as Address });
         return writeContractAsync({
           address: poolAddress as Address,
           abi: poolAbi,
           functionName: 'spend',
           args: [merchantAddress as Address, BigInt(amountWei), categoryBytes32],
-          nonce,
           gas: 500000n,
         });
       },
@@ -639,13 +633,11 @@ export function useContractAction() {
     const outcome = await runLifecycle(
       'Loan Repayment',
       async () => {
-        const nonce = await publicClient!.getTransactionCount({ address: address as Address });
         return writeContractAsync({
           address: poolAddress as Address,
           abi: poolAbi,
           functionName: 'repay',
           value: BigInt(amountWei),
-          nonce,
         });
       },
       () => {
@@ -675,13 +667,11 @@ export function useContractAction() {
     const outcome = await runLifecycle(
       'Repayment Pull Claim',
       async () => {
-        const nonce = await publicClient!.getTransactionCount({ address: address as Address });
         return writeContractAsync({
           address: poolAddress as Address,
           abi: poolAbi,
           functionName: 'claimRepayment',
           args: [],
-          nonce,
         });
       },
       () => {
@@ -711,13 +701,11 @@ export function useContractAction() {
     const outcome = await runLifecycle(
       'Lender Refund Claim',
       async () => {
-        const nonce = await publicClient!.getTransactionCount({ address: address as Address });
         return writeContractAsync({
           address: poolAddress as Address,
           abi: poolAbi,
           functionName: 'claimFundingRefund',
           args: [],
-          nonce,
         });
       },
       () => {
@@ -747,13 +735,11 @@ export function useContractAction() {
     const outcome = await runLifecycle(
       'Default Consensus Vote',
       async () => {
-        const nonce = await publicClient!.getTransactionCount({ address: address as Address });
         return writeContractAsync({
           address: poolAddress as Address,
           abi: poolAbi,
           functionName: 'voteDefault',
           args: [],
-          nonce,
         });
       },
       () => {
@@ -783,13 +769,11 @@ export function useContractAction() {
     const outcome = await runLifecycle(
       'Pool Cancellation',
       async () => {
-        const nonce = await publicClient!.getTransactionCount({ address: address as Address });
         return writeContractAsync({
           address: poolAddress as Address,
           abi: poolAbi,
           functionName: 'cancelUnfunded',
           args: [],
-          nonce,
         });
       },
       () => {

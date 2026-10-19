@@ -80,11 +80,21 @@ export class LoanService {
       }
     }
 
+    let resolvedStatus: typeof statusMap[number] = statusMap[Number(status)];
+    if (Number(status) === 0 && fundingDeadline) {
+      try {
+        const block = await this.chain.publicClient.getBlock();
+        if (Number(block.timestamp) >= Number(fundingDeadline)) {
+          resolvedStatus = 'CANCELLED';
+        }
+      } catch {}
+    }
+
     return {
       id: pool,
       address: pool,
       borrower,
-      status: statusMap[Number(status)],
+      status: resolvedStatus,
       targetWei: target.toString(),
       contributedWei: contributed.toString(),
       fundedBps: target === 0n ? 0 : Number((contributed * 10000n) / target),
@@ -168,6 +178,14 @@ export class LoanService {
     const raw = await this.chain.readLoan(pool);
     if (raw.borrower && (raw.borrower as string).toLowerCase() === principal.walletAddress.toLowerCase()) {
       throw new Error('BORROWER_CANNOT_CONTRIBUTE');
+    }
+    const [status, , , , , , , , , fundingDeadline] = raw.summary as readonly any[];
+    if (Number(status) !== 0) throw new Error('FUNDING_CLOSED');
+    if (fundingDeadline) {
+      const block = await this.chain.publicClient.getBlock();
+      if (Number(block.timestamp) >= Number(fundingDeadline)) {
+        throw new Error('FUNDING_CLOSED');
+      }
     }
     return this.chain.contribute(input.lenderId, pool, BigInt(input.amountWei));
   }

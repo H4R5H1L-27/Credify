@@ -106,7 +106,7 @@ contract LoanPool is ReentrancyGuard {
     }
 
     function contribute() external payable nonReentrant {
-        if (status != Status.Funding) revert FundingClosed();
+        if (status != Status.Funding || block.timestamp >= fundingDeadline) revert FundingClosed();
         if (msg.sender == borrower) revert BorrowerCannotContribute();
         if (!IKYCRegistry(kycRegistry).isVerified(msg.sender, IKYCRegistry.Role.Lender)) revert NotVerifiedLender();
         if (msg.value == 0) revert ContributionIsZero();

@@ -339,6 +339,8 @@ export const LenderExplorePage: React.FC = () => {
                       <div className="text-[10px] text-slate-600 font-medium">
                         {loan.status === 'FUNDING'
                           ? `${remaining.toFixed(2)} ETH remaining`
+                          : loan.status === 'CANCELLED'
+                          ? 'Funding window expired'
                           : 'Target reached'}
                       </div>
                     </TableCell>
@@ -458,6 +460,8 @@ export const LenderExplorePage: React.FC = () => {
                       <span className="font-bold text-slate-900">
                         {loan.status === 'FUNDING'
                           ? `${remaining.toFixed(2)} ETH capacity`
+                          : loan.status === 'CANCELLED'
+                          ? 'Funding Expired'
                           : 'Fully Subscribed'}
                       </span>
                     </div>

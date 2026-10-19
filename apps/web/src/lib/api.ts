@@ -24,7 +24,8 @@ import type {
 } from '@credify/shared';
 
 
-const API_BASE = '/api/v1';
+const rawBase = import.meta.env.VITE_API_URL || '';
+const API_BASE = rawBase ? `${rawBase.replace(/\/$/, '')}/api/v1` : '/api/v1';
 
 export class ApiError extends Error {
   code: string;

@@ -6,6 +6,7 @@ const envSchema = z.object({
   NETWORK: z.enum(['localhost', 'local', 'hardhat', 'sepolia']).default('localhost'),
   CHAIN_RPC_URL: z.string().url().optional(),
   SEPOLIA_RPC_URL: z.string().url().optional(),
+  PORT: z.coerce.number().int().positive().optional(),
   API_PORT: z.coerce.number().int().positive().default(4100),
   CORS_ORIGIN: z.string().default('http://localhost:5173'),
   DEMO_MODE: z.string().default('true'),
@@ -59,7 +60,7 @@ export const config = {
     (network === 'sepolia'
       ? env.SEPOLIA_RPC_URL || 'https://ethereum-sepolia-rpc.publicnode.com'
       : 'http://127.0.0.1:8545'),
-  port: env.API_PORT,
+  port: env.PORT || env.API_PORT || 4100,
   corsOrigin: env.CORS_ORIGIN,
   demoMode: env.DEMO_MODE === 'true',
   deploymentFile,
