@@ -1,5 +1,17 @@
 import { defineConfig } from 'hardhat/config';
 import hardhatToolboxMochaEthers from '@nomicfoundation/hardhat-toolbox-mocha-ethers';
+import { existsSync } from 'node:fs';
+import { resolve } from 'node:path';
+
+// Automatically load root or local .env if available
+for (const p of [resolve(process.cwd(), '.env'), resolve(process.cwd(), '../.env')]) {
+  if (existsSync(p)) {
+    try {
+      process.loadEnvFile(p);
+      break;
+    } catch {}
+  }
+}
 
 const demoMnemonic = process.env.DEMO_MNEMONIC ?? 'test test test test test test test test test test test junk';
 

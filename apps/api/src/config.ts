@@ -2,6 +2,16 @@ import { resolve } from 'node:path';
 import { existsSync } from 'node:fs';
 import { z } from 'zod';
 
+// Automatically load root or local .env if available
+for (const p of [resolve(process.cwd(), '.env'), resolve(process.cwd(), '../../.env'), resolve(process.cwd(), '../.env')]) {
+  if (existsSync(p)) {
+    try {
+      process.loadEnvFile(p);
+      break;
+    } catch {}
+  }
+}
+
 const envSchema = z.object({
   NETWORK: z.enum(['localhost', 'local', 'hardhat', 'sepolia']).default('localhost'),
   CHAIN_RPC_URL: z.string().url().optional(),
