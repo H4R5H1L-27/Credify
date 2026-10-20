@@ -18,7 +18,8 @@
     "noFallthroughCasesInSwitch": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": ["src/*"],
+      "@credify/shared": ["../../packages/shared/src/index.ts"]
     }
   },
   "include": ["src"]

@@ -6,7 +6,8 @@ export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, './src')
+      '@': path.resolve(__dirname, './src'),
+      '@credify/shared': path.resolve(__dirname, '../../packages/shared/src/index.ts')
     }
   },
   server: {
