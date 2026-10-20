@@ -1,0 +1,37 @@
+{
+  "network": "sepolia",
+  "chainId": 11155111,
+  "deploymentBlock": "11954224",
+  "deployedAt": "2026-10-20T08:52:37.619Z",
+  "contracts": {
+    "kycRegistry": "0xdf8d6C4b9a982a4c7a557686cb0A6dF6ECab0236",
+    "reputationRegistry": "0xA989eeBcBe4A850D591c3678A3c9Cb84f18DC0ca",
+    "loanFactory": "0xD5230D26a83E15da5b4F22b9b06054F96FB47c89",
+    "sampleLoanPool": "0x35af7C36B06342e172049e6859e7D58Eb9b420A1"
+  },
+  "accounts": {
+    "deployer": "0x448920c465158b78A694460E96E022b82B35C6e2",
+    "borrower": "0xa69380a4E44B6084205A3B721d7Cdff582EB7793",
+    "lenders": [
+      "0x37cAd16DC6A03862205fe630c0B4B3520e4c8A1b",
+      "0x2CffA35ca3a1854b596871f279f812cFA7aEc1F2",
+      "0x5045393a1495d83E79fce8aea4eb500B08A57084"
+    ],
+    "merchants": [
+      "0x921D30Fa5E257a3f527cc325Be117A5e66165F3A",
+      "0x8538A473C611a0199728A5f63372279EFA005722"
+    ]
+  },
+  "demo": {
+    "borrower": "Demo Borrower",
+    "lenders": [
+      "Lender Alpha",
+      "Lender Beta",
+      "Lender Gamma"
+    ],
+    "merchants": [
+      "Merchant A",
+      "Merchant B"
+    ]
+  }
+}

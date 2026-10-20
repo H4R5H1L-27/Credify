@@ -17,4 +17,5 @@ Thumbs.db
 apps/api/data/
 data/
 contracts/deployments/*.json
+!contracts/deployments/sepolia.json
 !contracts/deployments/sepolia.example.json
