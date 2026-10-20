@@ -15,10 +15,10 @@
     "@credify/shared": "file:../../packages/shared",
     "fastify": "^5.12.5",
     "viem": "^2.56.3",
-    "zod": "^4.6.5"
+    "zod": "^4.6.5",
+    "tsx": "^4.20.5"
   },
   "devDependencies": {
-    "tsx": "^4.20.5",
     "typescript": "^5.9.2",
     "@types/node": "^22.15.3"
   }
