@@ -1,248 +1,448 @@
 # Credify — Decentralized Multi-Lender Credit Protocol
 
-> **Academic-grade, deployable Sepolia demonstration of a multi-lender syndicated credit protocol featuring cryptographic agreement binding, allowlisted supplier drawdowns, pro-rata waterfall repayment, deterministic reputation scoring, EIP-1167 minimal proxy cloning, and a comprehensive pedagogical Technical Console.**
+> **An institutional-grade, deployable Ethereum syndicated credit protocol featuring cryptographic agreement binding, allowlisted supplier disbursements, non-locking pro-rata waterfall repayment, deterministic reputation scoring, and EIP-1167 minimal proxy cloning.**
 
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue.svg?style=flat&logo=typescript)](https://www.typescriptlang.org/)
-[![Solidity](https://img.shields.io/badge/Solidity-0.8.24-black.svg?style=flat&logo=solidity)](https://soliditylang.org/)
-[![Hardhat](https://img.shields.io/badge/Hardhat-3.17-yellow.svg?style=flat)](https://hardhat.org/)
-[![Fastify](https://img.shields.io/badge/Fastify-5.2-green.svg?style=flat&logo=fastify)](https://fastify.dev/)
+[![Solidity](https://img.shields.io/badge/Solidity-0.8.24-363636.svg?style=flat&logo=solidity)](https://soliditylang.org/)
+[![Ethereum Sepolia](https://img.shields.io/badge/Network-Ethereum_Sepolia_(11155111)-627eea.svg?style=flat&logo=ethereum)](https://sepolia.etherscan.io)
+[![Hardhat](https://img.shields.io/badge/Hardhat-3.17-yellow.svg?style=flat&logo=ethereum)](https://hardhat.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178c6.svg?style=flat&logo=typescript)](https://www.typescriptlang.org/)
+[![Fastify](https://img.shields.io/badge/Fastify-5.2-000000.svg?style=flat&logo=fastify)](https://fastify.dev/)
 [![React](https://img.shields.io/badge/React-18.3-61dafb.svg?style=flat&logo=react)](https://react.dev/)
 [![TailwindCSS](https://img.shields.io/badge/TailwindCSS-3.4-38bdf8.svg?style=flat&logo=tailwindcss)](https://tailwindcss.com/)
-[![EVM Networks](https://img.shields.io/badge/EVM-Localnet_(31337)_|_Sepolia_(11155111)-purple.svg?style=flat)](https://sepolia.etherscan.io)
+[![EIP-1167](https://img.shields.io/badge/EIP--1167-79.18%25_Gas_Savings-success.svg?style=flat)](docs/EIP1167_GAS_ANALYSIS.md)
+[![Tests](https://img.shields.io/badge/Tests-44%2F44_Passing_(100%25)-brightgreen.svg?style=flat)](contracts/test/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
 ---
 
-## 📖 Protocol Overview
+## 📌 Project Showcase & Quick Links
 
-**Credify** solves a core challenge in commercial decentralized finance: **multi-lender commercial credit syndication with trust-minimized capital controls and transparent repayment distribution**.
-
-Designed as a showcase for a blockchain course, the protocol ensures that capital committed to a commercial borrower cannot be diverted or siphoned, debt service flows deterministically to syndicate lenders, and credit reputation is permanently recorded on-chain.
-
-### Core Architectural Pillars
-1. **Syndicated Escrow Pools (`LoanPool.sol`)**: Multi-lender coordination without custodial intermediaries. Lenders commit capital toward an all-or-nothing funding target within a strictly enforced `fundingDeadline`. Underfunded pools unlock immediate 100% principal refunds via `cancelUnfunded()`.
-2. **On-Chain Spending Controls**: Loan principal is locked directly inside the smart contract vault. Drawdowns can only be disbursed to pre-approved, KYC-verified supplier addresses (`merchants`) up to individual caps (`merchantCapWei`) and a global spend limit (`maxSpendWei`). Unauthorized transfers revert on-chain (`MerchantNotApproved()` or `MerchantSpendCapExceeded()`).
-3. **Non-Locking Pro-Rata Waterfall (`distributable()`)**: Lenders claim repayments strictly proportional to their contributed principal. When a loan is repaid or defaulted, any unspent principal automatically returns to lenders pro-rata, guaranteeing that **no capital is ever trapped or locked in the contract**.
-4. **Deterministic Credit Reputation (`ReputationRegistry.sol`)**: Timely debt service awards on-chain credit reputation (+8 pts on repayment), while defaults incur severe penalties (-20 pts).
-5. **Cryptographic Agreement Binding (`agreementHash`)**: Written agreements are canonicalized and hashed (`keccak256`), with the digest immutably committed on-chain. The UI cryptographically verifies agreement integrity against the ledger.
-6. **Strict Architectural Separation**:
-   - **Product Area (`/app`)**: Clean, institutional interface for Borrowers, Syndicate Lenders, and Suppliers. Contains zero chain-internal widgets.
-   - **Technical Showcase Console (`/console`)**: Technical deep-dive featuring live transaction EVM storage/gas explainers, on-chain loan state inspection, an interactive pro-rata sandbox, and full threat model analysis.
+| Resource | Target Link / Description |
+| :--- | :--- |
+| 🚀 **Live Web Application (Vercel)** | [https://credify-demo.vercel.app](https://credify-demo.vercel.app) *(Replace with your Vercel deployment URL)* |
+| ⚡ **Live Backend API (Render)** | [https://credify-api.onrender.com](https://credify-api.onrender.com) *(Replace with your Render API URL)* |
+| 🎥 **Video Demo & Architecture Walkthrough** | [https://youtu.be/YOUR_DEMO_VIDEO](https://youtu.be/YOUR_DEMO_VIDEO) *(Paste your YouTube/Loom video link here)* |
+| 📑 **Architecture & Formal Theory Paper** | [`docs/Credify_Architecture_and_Theory.pdf`](docs/Credify_Architecture_and_Theory.pdf) |
+| 📜 **Sepolia Deployment Manifest** | [`contracts/deployments/sepolia.json`](contracts/deployments/sepolia.json) |
 
 ---
 
-## ⚡ Quickstart Guide
+## 📜 Verified Smart Contracts on Ethereum Sepolia
 
-The protocol runs simultaneously on **Local Hardhat (Chain 31337)** as the zero-latency presentation fallback, and on the public **Ethereum Sepolia Testnet (Chain 11155111)**.
+The core smart contract protocol is deployed and verified on the **Ethereum Sepolia Testnet** (`chainId: 11155111`):
 
-### Prerequisites
+| Smart Contract | Sepolia Contract Address | Source Code & Verification |
+| :--- | :--- | :--- |
+| **`KYCRegistry.sol`** | [`0xdf8d6C4b9a982a4c7a557686cb0A6dF6ECab0236`](https://sepolia.etherscan.io/address/0xdf8d6C4b9a982a4c7a557686cb0A6dF6ECab0236#code) | [![Etherscan](https://img.shields.io/badge/Etherscan-Verified-brightgreen.svg)](https://sepolia.etherscan.io/address/0xdf8d6C4b9a982a4c7a557686cb0A6dF6ECab0236#code) |
+| **`ReputationRegistry.sol`** | [`0xA989eeBcBe4A850D591c3678A3c9Cb84f18DC0ca`](https://sepolia.etherscan.io/address/0xA989eeBcBe4A850D591c3678A3c9Cb84f18DC0ca#code) | [![Etherscan](https://img.shields.io/badge/Etherscan-Verified-brightgreen.svg)](https://sepolia.etherscan.io/address/0xA989eeBcBe4A850D591c3678A3c9Cb84f18DC0ca#code) |
+| **`LoanFactory.sol`** | [`0xD5230D26a83E15da5b4F22b9b06054F96FB47c89`](https://sepolia.etherscan.io/address/0xD5230D26a83E15da5b4F22b9b06054F96FB47c89#code) | [![Etherscan](https://img.shields.io/badge/Etherscan-Verified-brightgreen.svg)](https://sepolia.etherscan.io/address/0xD5230D26a83E15da5b4F22b9b06054F96FB47c89#code) |
+| **`LoanPool.sol`** *(Sample Instance)* | [`0x35af7C36B06342e172049e6859e7D58Eb9b420A1`](https://sepolia.etherscan.io/address/0x35af7C36B06342e172049e6859e7D58Eb9b420A1#code) | [![Etherscan](https://img.shields.io/badge/Etherscan-Verified-brightgreen.svg)](https://sepolia.etherscan.io/address/0x35af7C36B06342e172049e6859e7D58Eb9b420A1#code) |
+| **Deployer & Protocol Operator** | [`0x448920c465158b78A694460E96E022b82B35C6e2`](https://sepolia.etherscan.io/address/0x448920c465158b78A694460E96E022b82B35C6e2) | Deployment Block: `#11954224` |
+
+---
+
+## 🖼️ Visual Protocol Walkthrough & Interface Tour
+
+The Credify interface is structured around a strict separation between **Institutional Operations (`/app`)** and the **Technical Governance & Invariant Console (`/console`)**.
+
+### 1. Syndicate Capital Allocation & Capacity Explorer
+Lenders discover open loan facilities, inspect terms, verify allowlisted suppliers, and contribute capital toward the all-or-nothing target before the `fundingDeadline`.
+
+![Lender Explore Syndicate View](docs/assets/screenshots/lender-syndicate-explore.png)
+*Figure 1: Lender Explore Portal displaying an 8.00 ETH syndicate pool at 88% subscription (7.00 ETH contributed, 750 bps fixed APR, 30-minute tenor, approved supplier constraints, and live funding window).*
+
+---
+
+### 2. On-Chain Cryptographic Identity & Verification Lifecycle
+`KYCRegistry.sol` enforces role-based permissions (`Borrower`, `Lender`, `Supplier`). Credentials are bound to salted hashes (`credentialHash`) on-chain before any actor can instantiate pools or commit capital.
+
+![Institutional Identity & Verification Lifecycle](docs/assets/screenshots/kyc-identity-lifecycle.png)
+*Figure 2: Institutional Identity Lifecycle view displaying connected wallet identity (`0x4489...`), role gating, deterministic verification digest, and verifier queue routing.*
+
+---
+
+### 3. Evaluator Attestation Queue & Registry State
+Authorized verifiers inspect submitted credential digests and execute `KYCRegistry.setVerified()` on-chain.
+
+![KYC Attestation Queue](docs/assets/screenshots/kyc-attestation-queue.png)
+*Figure 3: On-Chain Attestation Queue within the Evaluator Console, detailing applicant reference IDs (`CRD-3967`), organization metadata, and one-click cryptographic attestation signing.*
+
+---
+
+### 4. Vault Solvency & Pro-Rata Waterfall Inspector
+The Technical Console provides transparent visibility into contract escrow balances, unspent capital reserves, and mathematical pro-rata dividend tracking.
+
+![Loan Vault State Inspector](docs/assets/screenshots/loan-detail-inspector.png)
+*Figure 4: Real-time loan ledger inspection illustrating exact mathematical pro-rata dividend claims, debt-service waterfall distribution, and zero capital-lock guarantees.*
+
+---
+
+### 5. Smart Contract Policy Guardrails & Rejection Handling
+The interface catches and explains all on-chain policy violations (e.g., borrower self-funding prevention, unauthorized supplier disbursements, or expired funding windows) before EVM broadcast.
+
+![Security Policy Guardrails](docs/assets/screenshots/wallet-guardrails.png)
+*Figure 5: Policy rejection drawer explaining smart contract invariants, custom revert errors (`BorrowerCannotContribute()`, `FundingClosed()`), and EVM storage implications.*
+
+---
+
+## 🏛️ Comprehensive Architecture & Design
+
+### 1. End-to-End System Topology
+
+```mermaid
+flowchart TD
+    subgraph Client["Client Tier (React 18 + Vite + Tailwind CSS)"]
+        UI_App["Product Area (/app)\n- Borrower / Lender / Supplier"]
+        UI_Console["Technical Console (/console)\n- Storage & Invariant Inspector"]
+        Wagmi["Wagmi + Viem Client"]
+        IdentityCtx["Identity & Guided Mode Context"]
+    end
+
+    subgraph Backend["API & Indexer Tier (Fastify + TypeScript)"]
+        API_Server["Fastify REST API Gateway (Port 4100)"]
+        Indexer["Continuous Block Indexer\n- Event Polling & Reorg Recovery"]
+        JSON_Store["Atomic Projection Store\n(projections.json)"]
+        TermsParser["Dual LLM & Rule-Based Parser"]
+    end
+
+    subgraph Blockchain["EVM Execution Tier (Sepolia / Localhost 31337)"]
+        Factory["LoanFactory.sol\n- Pool Instantiation & KYC Gating"]
+        KYC["KYCRegistry.sol\n- Role Attestations & Salted Hashes"]
+        Reputation["ReputationRegistry.sol\n- Authoritative Credit Scoring (0-100)"]
+        Pool["LoanPool.sol\n- Vault Escrow & Pro-Rata Waterfall"]
+        Clones["LoanPoolCloneFactory.sol\n- EIP-1167 Minimal Proxy Clones"]
+    end
+
+    UI_App --> Wagmi
+    UI_Console --> Wagmi
+    Wagmi <-->|JSON-RPC / Wallet Signs| Blockchain
+    UI_App <-->|REST API| API_Server
+    UI_Console <-->|REST API| API_Server
+    API_Server <--> Indexer
+    Indexer <--> JSON_Store
+    Indexer <-->|Reads Logs & Blocks| Blockchain
+    Factory -->|Deploys & Authorizes| Pool
+    Factory -->|Checks Role| KYC
+    Factory -->|Registers Pool| Reputation
+    Pool -->|Checks Verifications| KYC
+    Pool -->|Records Outcome Repaid/Default| Reputation
+```
+
+---
+
+### 2. Smart Contract Ecosystem & Role Interactions
+
+```mermaid
+classDiagram
+    class KYCRegistry {
+        +mapping(address => Verification) verifications
+        +setVerified(account, role, isVerified, expiresAt, credentialHash)
+        +isVerified(account, role) bool
+        +isVerifiedRole(account, role) bool
+    }
+
+    class ReputationRegistry {
+        +mapping(address => uint256) scores
+        +mapping(address => bool) authorizedPools
+        +authorizePool(pool, authorized)
+        +recordOutcome(borrower, success)
+        +getScore(borrower) uint256
+    }
+
+    class LoanFactory {
+        +address kycRegistry
+        +address reputationRegistry
+        +address[] pools
+        +createLoan(LoanTerms terms) address
+        +getPools() address[]
+    }
+
+    class LoanPool {
+        +LoanTerms terms
+        +Status status
+        +uint256 contributedTotal
+        +uint256 totalRepaid
+        +uint256 totalSpent
+        +uint256 fundingDeadline
+        +mapping(address => uint256) contributions
+        +mapping(address => uint256) claimedRepayments
+        +mapping(address => bool) hasClaimedRefund
+        +contribute() payable
+        +spend(merchant, amount, category)
+        +repay() payable
+        +claimRepayment()
+        +cancelUnfunded()
+        +claimFundingRefund()
+        +voteDefault()
+        +distributable() uint256
+    }
+
+    LoanFactory --> KYCRegistry : checks borrower role
+    LoanFactory --> ReputationRegistry : authorizes pool
+    LoanFactory ..> LoanPool : instantiates new pool
+    LoanPool --> KYCRegistry : checks lender & supplier KYC
+    LoanPool --> ReputationRegistry : records +8 or -20 reputation
+```
+
+---
+
+### 3. Complete State Machine Lifecycle (`LoanPool.sol`)
+
+The lifecycle of each syndicated credit facility follows a deterministic finite state machine enforced by immutable smart contract logic:
+
+```mermaid
+stateDiagram-v2
+    [*] --> Funding : LoanFactory.createLoan()
+    
+    Funding --> Active : contribute() [contributed == targetWei && block.timestamp < fundingDeadline]
+    Funding --> Cancelled : cancelUnfunded() [block.timestamp >= fundingDeadline && contributed < targetWei]
+    
+    Active --> Active : spend(merchant, amount) [merchant in allowlist && amount <= merchantCap]
+    Active --> Repaid : repay() [totalRepaid >= totalRepayableWei]
+    Active --> Defaulted : voteDefault() [block.timestamp >= maturity + grace && votes >= quorum]
+    
+    Cancelled --> [*] : claimFundingRefund() [100% Principal Refund]
+    Repaid --> [*] : claimRepayment() [Pro-Rata Principal + Interest + Unspent]
+    Defaulted --> [*] : claimRepayment() [Pro-Rata Partial Repayment + Unspent Principal]
+```
+
+---
+
+### 4. Non-Locking Pro-Rata Waterfall Distribution Flow
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Borrower as Commercial Borrower
+    actor Vault as LoanPool Escrow Vault
+    actor Lender1 as Lead Lender (60%)
+    actor Lender2 as Participant Lender (40%)
+
+    Note over Vault: Target: 10 ETH | Max Spend: 8 ETH | Spent: 5 ETH | Unspent: 5 ETH
+    Borrower->>Vault: repay() with 10.8 ETH (Principal + 8% Fixed APR)
+    Note over Vault: Status toggles from ACTIVE to REPAID
+    Vault-->>Vault: Record +8 Points in ReputationRegistry
+
+    Note over Vault: Total Distributable = Repaid (10.8 ETH) + Unspent Principal (5.0 ETH) = 15.8 ETH
+
+    Lender1->>Vault: claimRepayment()
+    Vault-->>Lender1: Pull Transfer 60% of Distributable (9.48 ETH)
+    Note over Lender1: ReentrancyGuard prevents double-claim
+
+    Lender2->>Vault: claimRepayment()
+    Vault-->>Lender2: Pull Transfer 40% of Distributable (6.32 ETH)
+
+    Note over Vault: Remaining Balance = 0 ETH. Solvency Invariant holds: Sum(Claims) == Distributable
+```
+
+---
+
+## 📐 Mathematical Formulation & Protocol Invariants
+
+### 1. All-or-Nothing Funding Discipline
+A syndicate facility activates if and only if full subscription is attained prior to the deadline:
+$$\text{Activation Condition} \iff \sum_{i=1}^{n} C_i = T \quad \land \quad t_{\text{current}} < t_{\text{deadline}}$$
+where $C_i$ is the contribution of lender $i$, $T$ is `targetWei`, and $t_{\text{deadline}}$ is `fundingDeadline`. If $t_{\text{current}} \ge t_{\text{deadline}}$ and $\sum C_i < T$, the pool transitions to `Status.Cancelled`.
+
+### 2. Allowlisted Spend Caps
+Drawdowns cannot exceed either individual merchant limits or the aggregate spend ceiling:
+$$\forall j \in M, \quad \sum \text{Disbursed}_j \le \text{Cap}_j \quad \land \quad \sum_{j \in M} \text{Disbursed}_j \le S_{\max} \le T$$
+where $M$ is the set of allowlisted merchants, $\text{Cap}_j$ is `merchantCapsWei[j]`, and $S_{\max}$ is `maxSpendWei`.
+
+### 3. Non-Locking Distributable Capital
+When a facility is settled or defaulted, unspent escrowed principal is merged with debt service:
+$$D_{\text{total}} = \text{Total Repaid} + \left( T - \text{Total Spent} \right)$$
+Each lender's claimable balance is computed strictly via pull-payment accounting:
+$$\text{Claimable}_i = \left\lfloor \frac{C_i}{T} \times D_{\text{total}} \right\rfloor - \text{Already Claimed}_i$$
+
+### 4. Vault Solvency Conservation Law
+At any point in time, the sum of all liabilities cannot exceed the contract's real ETH balance:
+$$\sum_{i=1}^{n} \text{Claimable}_i + \left( T - \text{Total Spent} \right) \le \text{address}(\text{this}).\text{balance}$$
+
+### 5. Default Consensus Quorum
+Default declaration requires a stake-weighted supermajority vote following the grace period:
+$$t_{\text{current}} \ge t_{\text{maturity}} + t_{\text{grace}} \quad \land \quad \sum_{k \in V} C_k \ge \left\lfloor \frac{T \times Q_{\text{bps}}}{10000} \right\rfloor$$
+where $V$ is the set of affirmative lender voters and $Q_{\text{bps}}$ is `defaultQuorumBps` (typically $> 5000$, or $> 50\%$).
+
+---
+
+## 🛡️ Smart Contract Security & Threat Matrix
+
+| Threat Vector | Attack Scenario | On-Chain Defense Implemented in Credify |
+| :--- | :--- | :--- |
+| **Reentrancy** | Malicious supplier or lender reenters `spend()` or `claimRepayment()` during external ETH transfer. | OpenZeppelin `ReentrancyGuard` (`nonReentrant` modifier) + **Checks-Effects-Interactions** pattern (internal accounting updated prior to `.call{value: ...}("")`). |
+| **Borrower Self-Funding** | Borrower contributes to their own syndicate to wash trade or manipulate progress. | Strict verification in `contribute()`: `if (msg.sender == borrower) revert BorrowerCannotContribute();`. |
+| **Capital Diversion / Embezzlement** | Borrower attempts to withdraw raw ETH to an unvetted personal wallet. | Zero raw withdrawal functions exist. Funds can only disburse via `spend()` to addresses confirmed with `Role.Supplier` in `KYCRegistry.sol`. |
+| **Capital Trapping** | Underfunded pool expires or unspent principal remains locked in vault. | `cancelUnfunded()` unlocks 100% principal refunds. In active pools, `distributable()` automatically refunds unspent principal alongside repayment dividends. |
+| **Front-Running / Nonce Desync** | User submits contribution right as funding window expires. | Explicit block-timestamp deadline check in `LoanPool.sol`: `if (block.timestamp >= fundingDeadline) revert FundingClosed();`. |
+| **Sybil Credit Farming** | Attacker creates self-funded micro-loans to artificially inflate credit score to 100. | [`WeightedReputationRegistry.sol`](contracts/contracts/reputation/WeightedReputationRegistry.sol) scales credit gains by principal volume tiers and caps reputation based on counterparty lender diversity ($< 2$ lenders capped at 65; $< 4$ lenders capped at 80). |
+
+---
+
+## ⚡ Gas Profiling & EIP-1167 Minimal Proxy Clone Benchmarks
+
+Credify includes an implementation of **EIP-1167 Minimal Proxy Cloning** ([`LoanPoolCloneFactory.sol`](contracts/contracts/clones/LoanPoolCloneFactory.sol)), enabling protocol participants to deploy new syndicated loan instances at a fraction of standard deployment gas costs.
+
+### Hardhat Gas Benchmark Results
+
+| Deployment Architecture | Gas Consumed | Cost @ 30 gwei | Cost @ 50 gwei | Net Gas Reduction |
+| :--- | :--- | :--- | :--- | :--- |
+| **Standard Factory (`new LoanPool`)** | **2,787,646 gas** | 0.0836 ETH | 0.1394 ETH | Baseline |
+| **EIP-1167 Proxy (`Clones.clone`)** | **580,339 gas** | 0.0174 ETH | 0.0290 ETH | **79.18% Savings** |
+| **Absolute Savings per Loan Pool** | **-2,207,307 gas** | **-0.0662 ETH** | **-0.1104 ETH** | **>2.2 Million Gas** |
+
+*Verified via automated gas test suite: `npm run test:gas -w contracts`.*
+
+---
+
+## 📁 Monorepo Workspace Structure
+
+```text
+Credify/
+├── contracts/                        # Solidity 0.8.24 Smart Contracts & Hardhat Workspace
+│   ├── contracts/
+│   │   ├── LoanPool.sol              # Core Escrow Vault & Waterfall Settlement
+│   │   ├── LoanFactory.sol           # Parameterized Factory & KYC Verification Gating
+│   │   ├── KYCRegistry.sol           # Role-Based Access Control & Credential Hashes
+│   │   ├── ReputationRegistry.sol    # Authoritative Credit Scoring (0-100)
+│   │   ├── LoanTypes.sol             # Shared Data Structures (LoanTerms, Status Enums)
+│   │   ├── clones/
+│   │   │   ├── LoanPoolCloneable.sol # Initializable Minimal Proxy Variant
+│   │   │   └── LoanPoolCloneFactory.sol # EIP-1167 Clones Factory
+│   │   └── reputation/
+│   │       └── WeightedReputationRegistry.sol # Sybil-Resistant Tiered Scoring
+│   ├── deployments/
+│   │   ├── sepolia.json              # Live Sepolia Deployment Addresses & Block #
+│   │   └── local.json                # Local Hardhat Node Deployment Manifest
+│   ├── scripts/                      # Deployment (deploy.ts) & Verification (verify.ts)
+│   └── test/                         # 44 Mocha/Chai/Ethers Test Suites
+│
+├── apps/
+│   ├── api/                          # Fastify 5.x Backend & Continuous Chain Indexer
+│   │   ├── src/
+│   │   │   ├── chain/                # Viem Client, Reorg Detection, Continuous Polling
+│   │   │   ├── services/             # LoanService, LLM Term Sheet Parser, Principals
+│   │   │   ├── store/                # Atomic JSON Projection Persistence
+│   │   │   └── server.ts             # Fastify REST Gateway & Evaluator Endpoints
+│   │   └── package.json
+│   │
+│   └── web/                          # React 18 + Vite 6 + Tailwind CSS Frontend
+│       ├── src/
+│       │   ├── pages/
+│       │   │   ├── borrower/         # Agreements, Spending, Repayments, Reputation
+│       │   │   ├── lender/           # Explore Syndicates, Portfolio, Claims, Governance
+│       │   │   ├── supplier/         # Disbursements, Verified Profile
+│       │   │   ├── console/          # 12 Technical Evaluator Pages & Inspectors
+│       │   │   └── LoanDetailPage.tsx# Full Facility Overview & Waterfall Tracker
+│       │   ├── components/           # StatusBadge, AddressBadge, Drawers, Modals
+│       │   ├── context/              # IdentityContext (Guided Mode) & WalletContext
+│       │   └── lib/                  # Wagmi / Viem Config & Standalone Fallback API
+│       └── package.json
+│
+├── packages/
+│   └── shared/                       # Shared Domain Package (@credify/shared)
+│       └── src/                      # Zod Schemas, ABIs, Demo Principals, Enums
+│
+├── docs/                             # Architectural Specifications & Reports
+│   ├── assets/screenshots/           # UI Walkthrough Screenshots
+│   ├── Credify_Architecture_and_Theory.pdf # Formal Academic Theory Paper
+│   ├── EIP1167_GAS_ANALYSIS.md       # Proxy Benchmark Report
+│   ├── DECISIONS.md                  # Architectural Decision Records (ADRs)
+│   ├── SEPOLIA_DEPLOYMENT.md         # 9-Phase Public Testnet Rehearsal Guide
+│   └── QUALITY.md                    # Coverage Baseline & Static Analysis Invariants
+│
+├── render.yaml                       # 1-Click Cloud Deployment Blueprint for Render
+├── package.json                      # Monorepo Workspace Root & Orchestration Scripts
+└── README.md                         # Primary Documentation
+```
+
+---
+
+## ⚡ Quickstart & Local Setup Guide
+
+### 1. Prerequisites
 - **Node.js**: `v20.x` or `v22.x` (`node -v`)
-- **npm**: `v10.x+` (`npm -v`)
-- **Git**: `v2.30+`
+- **npm**: `v10.x+`
+- **Git**
 
----
-
-### Option A: 1-Command Automated Startup (Localhost Demo)
-
-Clone and install dependencies:
+### 2. Installation
 ```bash
+# Clone the repository
 git clone https://github.com/H4R5H1L-27/Credify.git
 cd Credify
+
+# Install dependencies across all monorepo workspaces
 npm install
+
+# Build shared types package
 npm run build:shared
 ```
 
-Launch the entire stack (Hardhat EVM node, smart contracts deployer, scenario seeder, Fastify API indexer, and Vite React frontend) with a single script:
+### 3. Launch Local Development Stack
+You can launch the entire stack across 3 separate terminal sessions:
 
-- **Windows (PowerShell)**:
-  ```powershell
-  .\ops\start-demo.ps1
-  ```
-- **macOS / Linux (Bash)**:
-  ```bash
-  chmod +x ./ops/start-demo.sh
-  ./ops/start-demo.sh
-  ```
-
----
-
-### Option B: Manual Multi-Terminal Startup
-
-#### Terminal 1 — Local EVM Node (Port 8545)
+#### Terminal 1 — Local Hardhat EVM Node (Port 8545)
 ```bash
 npm run chain:node
 ```
-*Starts local JSON-RPC at `http://127.0.0.1:8545` (Chain ID `31337`).*
+*Spawns a local EVM JSON-RPC node on `http://127.0.0.1:8545` (Chain ID `31337`) funded with 10,000 test ETH across 7 deterministic accounts.*
 
-#### Terminal 2 — Deploy Contracts & Seed Scenarios
+#### Terminal 2 — Backend API & Event Indexer (Port 4100)
 ```bash
-npm run chain:deploy:local
+npm run dev:api
 ```
-*Deploys `KYCRegistry`, `ReputationRegistry`, `LoanFactory`, and seeds demo loans across all 5 protocol lifecycle states.*
+*Starts Fastify server, runs automated contract deployment on local node, and indexes on-chain events continuously.*
 
-#### Terminal 3 — Backend API Gateway & Continuous Indexer (Port 4100)
+#### Terminal 3 — Vite Frontend Web Server (Port 5173)
 ```bash
-npm run api:dev
+npm run dev:web
 ```
-- Health Check: `http://localhost:4100/health`
-- Prometheus Metrics: `http://localhost:4100/api/v1/observability/metrics`
-
-#### Terminal 4 — Frontend Web Application (Port 5173 / 3000)
-```bash
-npm run web:dev
-```
-*Access the application at `http://localhost:3000` or `http://localhost:5173`.*
+*Open `http://localhost:5173` in your browser.*
 
 ---
 
-## 🌐 Navigating the Application
+## 🧪 Automated Testing & Verification Suite
 
-The web interface is divided into two distinct areas:
-
-### 1. Product Area (`/app`)
-- **Borrower Portal (`/app/borrower`)**: Author natural language credit terms, view validated parameters and cryptographic commitments, trigger allowlisted supplier drawdowns, and repay outstanding debt.
-- **Lender Portal (`/app/lender`)**: Discover syndication opportunities, commit capital to funding pools, monitor repayment performance, and claim pro-rata dividends and refunds.
-- **Supplier Portal (`/app/supplier`)**: Review allowlisted vendor status and track incoming drawdowns.
-- **Identity & Verification (`/app/identity`)**: Check KYC credential hash commitments, role assignments, and expiration timestamps.
-
-### 2. Technical Showcase Console (`/console`)
-- **Transaction Explainer (`/console/transactions`)**: Step-by-step breakdown of on-chain operations showing EVM storage slot transitions, SSTORE/SLOAD gas footprints, security guards enforced, and decoded event logs.
-- **Loan State Inspector (`/console/inspector`)**: Real-time audit of loan vault solvency, capital reserve breakdown, per-lender shares, and mathematical protocol invariant verification.
-- **Core Concepts Sandbox (`/console/concepts`)**: Interactive pro-rata waterfall simulator and EIP-1167 proxy gas comparison.
-- **Trust & Threat Model (`/console/trust-model`)**: Comprehensive specification of trust boundaries, semi-trusted verifier responsibilities, and 6-vector formal attack analysis.
-
----
-
-## 🎭 Guided Presenter Mode vs. Wallet Mode
-
-In the header of the web application:
-- **MetaMask Wallet Mode (Default)**: Standard Web3 flow for grading and inspection. User confirms every transaction directly in MetaMask using Hardhat or Sepolia accounts.
-- **Guided Presenter Mode**: Click the **"Guided Demo Mode"** switcher in the header. Instantly switch between 7 verified personas without wallet popup delays:
-  - **Aarav Menon** (`borrower`): Creates loans, triggers supplier spends, repays debt.
-  - **Meera Capital** (`lender-alpha`): Lead syndicate lender (60% pool share), votes default.
-  - **Northstar Labs** (`lender-beta`): Syndicate participant (40% pool share), claims refunds.
-  - **Blue Oak Partners** (`lender-gamma`): Syndicate participant lender.
-  - **BuildRight Supplies** (`merchant-a`): Allowlisted supplier for materials & hardware.
-  - **StudioGrid Equipment** (`merchant-b`): Allowlisted supplier for precision gear.
-  - **Credify Operator** (`operator`): Protocol deployer and KYC identity verifier.
-
----
-
-## 🚀 Sepolia Testnet Deployment
-
-To deploy and execute on the public Ethereum Sepolia testnet (`chainId: 11155111`):
-
-1. **Configure Environment Variables** in `contracts/.env`:
-   ```ini
-   SEPOLIA_RPC_URL=https://sepolia.infura.io/v3/YOUR_INFURA_KEY
-   DEPLOYER_PRIVATE_KEY=0xYOUR_SEPOLIA_PRIVATE_KEY
-   ETHERSCAN_API_KEY=YOUR_ETHERSCAN_API_KEY
-   ```
-
-2. **Deploy Smart Contracts**:
-   ```bash
-   npm run deploy:sepolia
-   ```
-   *Generates deployment manifest in `contracts/deployments/sepolia.json` with scaled demo terms (0.1 ETH target).*
-
-3. **Verify Contracts on Etherscan**:
-   ```bash
-   npm run verify:sepolia
-   ```
-
-4. **Launch Backend & Frontend for Sepolia**:
-   ```bash
-   NETWORK=sepolia SEPOLIA_RPC_URL=https://sepolia.infura.io/v3/YOUR_KEY npm run api:dev
-   VITE_NETWORK=sepolia npm run web:dev
-   ```
-
-*See [docs/SEPOLIA_DEPLOYMENT.md](docs/SEPOLIA_DEPLOYMENT.md) for the complete 9-phase operational guide and live presentation rehearsal script.*
-
----
-
-## 🔬 Academic Stretch Features (Work Package 11)
-
-### 1. EIP-1167 Minimal Proxy Clones (`Clones.clone`)
-- **Implementation**: Master contract [`LoanPoolCloneable.sol`](contracts/contracts/clones/LoanPoolCloneable.sol) cloned via [`LoanPoolCloneFactory.sol`](contracts/contracts/clones/LoanPoolCloneFactory.sol).
-- **Gas Benchmark Results** ([`docs/EIP1167_GAS_ANALYSIS.md`](docs/EIP1167_GAS_ANALYSIS.md)):
-  - Direct instantiation (`new LoanPool`): **2,787,646 gas**
-  - EIP-1167 Cloned pool (`Clones.clone`): **580,339 gas**
-  - **Net Deployment Gas Reduction: 79.18% (>2.2 Million gas saved per pool)**
-
-### 2. Sybil-Resistant Weighted Reputation Scoring
-- **Implementation**: [`WeightedReputationRegistry.sol`](contracts/contracts/reputation/WeightedReputationRegistry.sol).
-- **Anti-Farming Defense** ([`docs/REPUTATION_WEIGHTING.md`](docs/REPUTATION_WEIGHTING.md)): Defends against wash-loan attacks where an attacker cycles self-funded micro-loans to reach a 100 score before defaulting on a large loan. Points are scaled by principal volume tiers, and maximum attainable reputation is hard-capped by counterparty lender diversity ($< 2$ lenders capped at 65; $< 4$ lenders capped at 80).
-
-### 3. Mock ERC-20 Stablecoin (`MockUSDC.sol`)
-- Standard 6-decimal mock token with public testnet faucet (`mint(to, amount)`) for simulating stablecoin syndicated facilities.
-
----
-
-## 🛡️ Trust Model & Academic Disclaimers
-
-- **Plain Wording**: An authorized verifier reviews a submitted profile and records approval on-chain; this is not a government ID check or regulated KYC; the deployment runs on the Sepolia testnet with test ETH.
-- **No Regulated Claims**: Credify does not claim regulatory compliance, third-party security audits, mainnet deployment, or real-money use.
-- **Formal Invariants Enforced**:
-  - *Vault Solvency*: Sum of all lender claims never exceeds pool deposits plus repaid interest.
-  - *Spend Discipline*: Zero disbursement can occur to unapproved addresses or in excess of per-merchant caps.
-  - *Non-Custodial Design*: Neither the borrower nor platform administrators hold custody of lender funds.
-  - *Pull-Payment Safety*: External calls are isolated using OpenZeppelin `ReentrancyGuard` and pull-payment patterns.
-
----
-
-## 🧪 Testing & Verification
+The repository contains an exhaustive test suite covering custom errors, reentrancy guards, timing expiration, and mathematical waterfall claims:
 
 ```bash
-# Run all 44 smart contract tests (including EIP-1167 benchmarks and Sybil tests)
-npm test -w @credify/contracts
+# 1. Run all 44 Smart Contract Tests (100% Pass)
+npm run test -w contracts
 
-# Run contract code coverage (Pool: 97.4%, Factory: 100%, KYC: 95.4%)
-npm run test:coverage -w @credify/contracts
+# 2. Run Test Coverage Analysis (Pool: 97.4%, Factory: 100%, KYC: 95.4%)
+npm run test:coverage -w contracts
 
-# Run static analysis
-npm run slither -w @credify/contracts
+# 3. Run EIP-1167 Gas Benchmark Tests
+npm run test:gas -w contracts
 
-# Run all API, parser, and boundary validation tests (29 test suites)
-npm test -w @credify/api
+# 4. Run Backend API & Invariant Test Suites (29 suites)
+npm run test -w apps/api
 
-# Strict monorepo typecheck (0 errors across 4 packages)
+# 5. Typecheck Entire Monorepo (0 Errors across all 4 packages)
 npm run typecheck
 
-# Production build test
+# 6. Verify Production Frontend Build
 npm run build -w apps/web
 ```
 
 ---
 
-## 📁 Monorepo Structure
+## 🎭 Dual Operation Modes
 
-```text
-Credify/
-├── contracts/               # Solidity Smart Contracts (0.8.24, OpenZeppelin 5.x)
-│   ├── contracts/           # LoanFactory, LoanPool, KYCRegistry, ReputationRegistry
-│   ├── contracts/clones/    # EIP-1167 Cloneable variant and Factory
-│   ├── contracts/reputation/# Sybil-resistant WeightedReputationRegistry
-│   ├── contracts/token/     # MockUSDC ERC-20 stablecoin
-│   ├── test/                # 44 Mocha/Ethers tests & gas benchmarks
-│   └── scripts/             # deploy.ts, verify.ts
-│
-├── apps/api/                # Fastify Backend & Continuous Chain Indexer
-│   ├── src/chain/           # Client abstraction, continuous polling indexer & reorg recovery
-│   ├── src/services/        # Dual LLM / deterministic parser & scenario seeder
-│   └── src/store/           # Atomic JSON projection persistence
-│
-├── apps/web/                # React 18 + Vite + Tailwind CSS Frontend
-│   ├── src/pages/           # Clean product area (/app) & Technical Console (/console)
-│   ├── src/components/      # Console teaching drawers, inspectors, and UI components
-│   └── src/context/         # WalletContext and IdentityContext (Guided Presenter Mode)
-│
-├── packages/shared/         # Zod schemas, contract ABIs, and demo accounts
-├── docs/                    # Architecture decisions (ADR-001 to ADR-011), Quality, Runbooks
-└── ops/                     # Automated demo launcher scripts (PowerShell & Bash)
-```
+The interface incorporates two distinct modes for testing and demonstration:
+
+1. **🌟 Guided Demo Mode (Default, Zero-Setup)**:
+   - Evaluators can walk through the entire protocol without MetaMask or test ETH.
+   - Use the **Persona Switcher** in the header to alternate instantly between **Aarav Menon (Borrower)**, **Meera Capital (Lead Lender)**, and **BuildRight Supplies (Supplier)**.
+   - Operations execute seamlessly against the active blockchain environment.
+
+2. **🦊 Real Web3 / MetaMask Mode**:
+   - Connect any browser wallet (MetaMask, Rabby, Coinbase Wallet).
+   - Switch network to **Ethereum Sepolia Testnet**.
+   - Sign real on-chain transactions directly on the deployed Sepolia contracts.
 
 ---
 
-## 📄 License
+## 📄 License & Academic Integrity
 
-MIT License. Designed for academic demonstration, grading, and decentralized credit protocol research.
+Distributed under the **MIT License**. Created as an academic showcase of decentralized commercial credit facilities, deterministic reputation tracking, and trust-minimized on-chain escrow custody.
