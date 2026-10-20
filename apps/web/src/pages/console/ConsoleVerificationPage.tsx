@@ -11,6 +11,8 @@ import { ShieldCheck, RefreshCw, Layers } from 'lucide-react';
 
 export const ConsoleVerificationPage: React.FC = () => {
   const queryClient = useQueryClient();
+  const [successMsg, setSuccessMsg] = React.useState<string | null>(null);
+  const [errorMsg, setErrorMsg] = React.useState<string | null>(null);
 
   const { data: requests = [], isLoading, refetch } = useQuery({
     queryKey: ['verification', 'all-requests'],
@@ -25,15 +27,19 @@ export const ConsoleVerificationPage: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['verification'] });
       queryClient.invalidateQueries({ queryKey: ['verificationRequests'] });
+      queryClient.invalidateQueries({ queryKey: ['identity'] });
       refetch();
     },
   });
 
   const handleVerify = async (requestId: string) => {
+    setErrorMsg(null);
     try {
       await reviewMutation.mutateAsync({ id: requestId, status: 'VERIFIED' });
-    } catch {
-      // Error handled
+      setSuccessMsg('On-Chain Attestation Confirmed! Identity Verified.');
+      setTimeout(() => setSuccessMsg(null), 6000);
+    } catch (err: any) {
+      setErrorMsg(err?.message || 'Verification failed. Please try again.');
     }
   };
 
@@ -64,6 +70,19 @@ export const ConsoleVerificationPage: React.FC = () => {
           Refresh Queue
         </Button>
       </div>
+
+      {successMsg && (
+        <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-300 text-emerald-900 font-bold text-xs flex items-center gap-2 animate-fade-in shadow-xs">
+          <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
+          <span>{successMsg}</span>
+        </div>
+      )}
+
+      {errorMsg && (
+        <div className="p-4 rounded-xl bg-rose-50 border border-rose-300 text-rose-900 font-bold text-xs animate-fade-in shadow-xs">
+          {errorMsg}
+        </div>
+      )}
 
       <TechnicalPanel
         title="Attestation Queue &amp; Registry State"

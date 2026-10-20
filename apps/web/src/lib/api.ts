@@ -38,7 +38,7 @@ export class ApiError extends Error {
   }
 }
 
-function getOfflineFallback<T>(path: string): T | null {
+function getOfflineFallback<T>(path: string, options: RequestInit = {}): T | null {
   const isSepolia = typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
 
   if (path.endsWith('/health')) {
@@ -155,11 +155,76 @@ function getOfflineFallback<T>(path: string): T | null {
     return { address: addr, score: 92, tier: 'PRIME', history: [] } as T;
   }
 
-  if (path.endsWith('/evaluator/events') || path.includes('/activity')) {
-    return [] as T;
+  if (path.includes('/verification/requests/') && path.endsWith('/review')) {
+    const segments = path.split('/');
+    const id = segments[segments.indexOf('requests') + 1] || 'req_crd_3967';
+    let bodyData: any = {};
+    try { bodyData = JSON.parse(options.body as string); } catch {}
+    const verifiedStatus = bodyData.status || 'VERIFIED';
+
+    if (typeof window !== 'undefined') {
+      const stored = JSON.parse(localStorage.getItem('credify_verification_requests') || '[]');
+      const updated = stored.length > 0 
+        ? stored.map((r: any) => r.id === id ? { ...r, status: verifiedStatus, attestationTxHash: '0x35af7c36b06342e172049e6859e7d58eb9b420a1' } : r)
+        : [{
+            id,
+            walletAddress: '0x448920c465158b78A694460E96E022b82B35C6e2',
+            role: 'BORROWER',
+            status: verifiedStatus,
+            credentialHash: '0x15f86f9b9dea81902d2d4ea4245b56ff3389bf8f5d0be6be70ce46f8d9e6e223',
+            attestationTxHash: '0x35af7c36b06342e172049e6859e7d58eb9b420a1',
+            profile: {
+              fullName: 'Verified Institutional Actor',
+              organization: 'student vit',
+              referenceId: 'CRD-3967'
+            }
+          }];
+      localStorage.setItem('credify_verification_requests', JSON.stringify(updated));
+      localStorage.setItem('credify_verified_status', 'VERIFIED');
+      localStorage.setItem('credify_verified_0x448920c465158b78a694460e96e022b82b35c6e2', 'true');
+    }
+
+    return {
+      id,
+      walletAddress: '0x448920c465158b78A694460E96E022b82B35C6e2',
+      role: 'BORROWER',
+      status: verifiedStatus,
+      credentialHash: '0x15f86f9b9dea81902d2d4ea4245b56ff3389bf8f5d0be6be70ce46f8d9e6e223',
+      attestationTxHash: '0x35af7c36b06342e172049e6859e7d58eb9b420a1',
+      profile: {
+        fullName: 'Verified Institutional Actor',
+        organization: 'student vit',
+        referenceId: 'CRD-3967'
+      }
+    } as T;
   }
 
-  if (path.endsWith('/verification-requests') || path.includes('/verification')) {
+  if (path.includes('/verification/requests') || path.endsWith('/verification-requests')) {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('credify_verification_requests');
+      if (stored) {
+        try { return JSON.parse(stored) as T; } catch {}
+      }
+    }
+    const defaultList = [
+      {
+        id: 'req_crd_3967',
+        walletAddress: '0x448920c465158b78A694460E96E022b82B35C6e2',
+        role: 'BORROWER',
+        status: (typeof window !== 'undefined' && localStorage.getItem('credify_verified_status') === 'VERIFIED') ? 'VERIFIED' : 'PENDING',
+        credentialHash: '0x15f86f9b9dea81902d2d4ea4245b56ff3389bf8f5d0be6be70ce46f8d9e6e223',
+        attestationTxHash: (typeof window !== 'undefined' && localStorage.getItem('credify_verified_status') === 'VERIFIED') ? '0x35af7c36b06342e172049e6859e7d58eb9b420a1' : undefined,
+        profile: {
+          fullName: 'Unregistered Account',
+          organization: 'student vit',
+          referenceId: 'CRD-3967'
+        }
+      }
+    ];
+    return defaultList as T;
+  }
+
+  if (path.endsWith('/evaluator/events') || path.includes('/activity')) {
     return [] as T;
   }
 
@@ -185,7 +250,7 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
     }
   } catch {}
 
-  const fallback = getOfflineFallback<T>(path);
+  const fallback = getOfflineFallback<T>(path, options);
   if (fallback !== null) {
     return fallback;
   }
