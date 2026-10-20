@@ -44,12 +44,12 @@ export const IdentityProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const queryClient = useQueryClient();
   const prevAddressRef = useRef<`0x${string}` | undefined>(undefined);
 
-  // Guided Demo Mode state (persisted to localStorage, enabled if DEMO_MODE env is true)
+  // Guided Demo Mode state (defaults to true for zero-friction demo walkthrough)
   const [isGuidedMode, setIsGuidedModeState] = useState<boolean>(() => {
-    if (typeof window === 'undefined') return false;
+    if (typeof window === 'undefined') return true;
     const stored = localStorage.getItem('credify_guided_mode');
     if (stored !== null) return stored === 'true';
-    return (import.meta as any).env?.VITE_DEMO_MODE === 'true';
+    return true;
   });
 
   // Active persona in Guided Mode (defaults to borrower: Aarav Menon)

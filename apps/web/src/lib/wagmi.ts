@@ -10,7 +10,11 @@ import {
   SEPOLIA_EXPLORER_URL
 } from '@credify/shared';
 
-export const targetNetwork = (import.meta.env.VITE_NETWORK || 'localhost').toLowerCase() === 'sepolia' ? 'sepolia' : 'localhost';
+const isBrowser = typeof window !== 'undefined';
+const isRemoteHost = isBrowser && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
+const defaultNetwork = isRemoteHost ? 'sepolia' : 'localhost';
+
+export const targetNetwork = (import.meta.env.VITE_NETWORK || defaultNetwork).toLowerCase() === 'sepolia' ? 'sepolia' : 'localhost';
 export const targetChainId = targetNetwork === 'sepolia' ? SEPOLIA_CHAIN_ID : HARDHAT_CHAIN_ID;
 
 export const hardhatChain = {
