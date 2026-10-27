@@ -132,7 +132,14 @@ export const VerificationWorkflowPage: React.FC = () => {
       await queryClient.invalidateQueries({ queryKey: ['verificationRequest', targetAccount] });
       await queryClient.invalidateQueries({ queryKey: ['identity'] });
       await refetchIdentity();
-      setAttestStatusMessage('✅ Account successfully attested on Sepolia KYCRegistry!');
+      
+      const isSelf = targetAccount.toLowerCase() === address?.toLowerCase();
+      if (isSelf) {
+        setAttestStatusMessage(`✅ Active wallet (${targetAccount.slice(0, 6)}...${targetAccount.slice(-4)}) successfully attested as Borrower on Sepolia! You can now deploy credit agreements.`);
+      } else {
+        setAttestStatusMessage(`✅ Target wallet (${targetAccount.slice(0, 6)}...${targetAccount.slice(-4)}) successfully attested on Sepolia! Switch to that account in MetaMask to deploy credit agreements.`);
+        setCustomAttestAddress('');
+      }
       setShowMilestone(true);
     } catch (err: any) {
       setAttestStatusMessage(`Attestation failed: ${err?.message || 'Transaction rejected'}`);

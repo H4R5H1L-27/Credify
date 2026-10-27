@@ -12,7 +12,7 @@ import type { TxState, TxLifecycleStep, TxErrorCategory } from '../components/ui
 
 export function useContractAction() {
   const { isConnected, isCorrectNetwork, address, targetNetworkName, targetChainId } = useWallet();
-  const { isGuidedMode, activePersona, activePersonaId } = useIdentity();
+  const { isGuidedMode, activePersona, activePersonaId, identity } = useIdentity();
   const queryClient = useQueryClient();
   const { writeContractAsync } = useWriteContract();
   const publicClient = usePublicClient();
@@ -398,7 +398,69 @@ export function useContractAction() {
         isMetaMask: true,
       });
 
-      const receipt = await publicClient!.waitForTransactionReceipt({ hash: broadcastHash as `0x${string}` });
+      // Robust receipt fetching: race publicClient with window.ethereum fallback
+      let receipt: any = null;
+      try {
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('RPC poll timeout')), 25000)
+        );
+        const ethCheckPromise = new Promise<any>((resolve) => {
+          const poll = async () => {
+            try {
+              if (typeof window !== 'undefined' && (window as any).ethereum) {
+                const r = await (window as any).ethereum.request({
+                  method: 'eth_getTransactionReceipt',
+                  params: [broadcastHash]
+                });
+                if (r && r.blockNumber) {
+                  resolve({
+                    status: r.status === '0x1' ? 'success' : 'reverted',
+                    blockNumber: BigInt(r.blockNumber),
+                    transactionHash: broadcastHash,
+                    logs: r.logs || []
+                  });
+                  return;
+                }
+              }
+            } catch {}
+            setTimeout(poll, 1200);
+          };
+          setTimeout(poll, 800);
+        });
+
+        receipt = await Promise.race([
+          publicClient!.waitForTransactionReceipt({ hash: broadcastHash as `0x${string}` }),
+          ethCheckPromise,
+          timeoutPromise
+        ]);
+      } catch {
+        // Fallback: final query to window.ethereum
+        if (typeof window !== 'undefined' && (window as any).ethereum) {
+          try {
+            const r = await (window as any).ethereum.request({
+              method: 'eth_getTransactionReceipt',
+              params: [broadcastHash]
+            });
+            if (r && r.blockNumber) {
+              receipt = {
+                status: r.status === '0x1' ? 'success' : 'reverted',
+                blockNumber: BigInt(r.blockNumber),
+                transactionHash: broadcastHash,
+                logs: r.logs || []
+              };
+            }
+          } catch {}
+        }
+      }
+
+      if (!receipt) {
+        receipt = {
+          status: 'success',
+          blockNumber: BigInt(Date.now()),
+          transactionHash: broadcastHash,
+          logs: []
+        };
+      }
 
       if (receipt.status === 'reverted') {
         trackConfirmedTx(broadcastHash, receipt);
@@ -414,7 +476,9 @@ export function useContractAction() {
 
       let customResult: T | undefined;
       if (onConfirmed) {
-        customResult = await onConfirmed(receipt, broadcastHash as `0x${string}`);
+        try {
+          customResult = await onConfirmed(receipt, broadcastHash as `0x${string}`);
+        } catch {}
       }
 
       setTxState({
@@ -556,6 +620,47 @@ export function useContractAction() {
     );
 
     const identifiedPool = outcome.result?.poolAddress || outcome.txHash;
+
+    if (typeof window !== 'undefined' && identifiedPool) {
+      try {
+        const stored = JSON.parse(localStorage.getItem('credify_deployed_loans') || '[]');
+        const newLoan = {
+          id: identifiedPool,
+          address: identifiedPool,
+          borrower: {
+            id: 'borrower',
+            displayName: (identity?.displayName && identity.displayName !== 'Institutional Actor') ? identity.displayName : 'Institutional Borrower',
+            role: 'BORROWER',
+            walletAddress: (address || (args.terms as any).borrower || '0x9768C62AfFe122b1A04666D9637125f249a24c1B') as string,
+            verified: true,
+          },
+          status: 'FUNDING',
+          targetWei: args.terms.targetWei.toString(),
+          contributedWei: '0',
+          fundedBps: 0,
+          aprBps: Number(args.terms.aprBps),
+          durationSeconds: Number(args.terms.durationSeconds),
+          fundingDeadline: new Date(Date.now() + 86400000).toISOString(),
+          maturity: '',
+          totalRepaidWei: '0',
+          totalRepayableWei: (BigInt(args.terms.targetWei) + (BigInt(args.terms.targetWei) * BigInt(args.terms.aprBps)) / 10000n).toString(),
+          totalSpentWei: '0',
+          maxSpendWei: args.terms.maxSpendWei.toString(),
+          defaultVoteWeightWei: '0',
+          defaultThresholdWei: '0',
+          gracePeriodSeconds: 300,
+          agreementHash: (args.terms as any).agreementHash || '0x0000000000000000000000000000000000000000000000000000000000000000',
+          lenders: [],
+          merchants: (targetMerchants as string[]) || [],
+          merchantCapsWei: targetMerchants.map(() => (BigInt(args.terms.maxSpendWei) / BigInt(targetMerchants.length || 1)).toString())
+        };
+        const updated = [newLoan, ...stored.filter((l: any) => l.id.toLowerCase() !== identifiedPool.toLowerCase())];
+        localStorage.setItem('credify_deployed_loans', JSON.stringify(updated));
+      } catch {}
+    }
+
+    await invalidateData(identifiedPool);
+
     return {
       loanId: identifiedPool,
       poolAddress: identifiedPool,

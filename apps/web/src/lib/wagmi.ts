@@ -31,7 +31,11 @@ export const sepoliaChain = {
   ...sepolia,
   rpcUrls: {
     default: {
-      http: [import.meta.env.VITE_SEPOLIA_RPC_URL || SEPOLIA_DEFAULT_RPC_URL]
+      http: [
+        import.meta.env.VITE_SEPOLIA_RPC_URL || 'https://ethereum-sepolia-rpc.publicnode.com',
+        'https://1rpc.io/sepolia',
+        'https://rpc.sepolia.org'
+      ]
     }
   }
 } as const;
@@ -41,7 +45,7 @@ export const wagmiConfig = createConfig({
   connectors: [injected()],
   transports: {
     [hardhatChain.id]: http(import.meta.env.VITE_HARDHAT_RPC_URL || HARDHAT_RPC_URL),
-    [sepoliaChain.id]: http(import.meta.env.VITE_SEPOLIA_RPC_URL || SEPOLIA_DEFAULT_RPC_URL),
+    [sepoliaChain.id]: http(import.meta.env.VITE_SEPOLIA_RPC_URL || 'https://ethereum-sepolia-rpc.publicnode.com'),
   },
 });
 

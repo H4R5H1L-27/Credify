@@ -170,18 +170,46 @@ function getOfflineFallback<T>(path: string, options: RequestInit = {}): T | nul
     } as T;
   }
 
-  if (path.endsWith('/loans')) {
-    const pool = isSepolia ? '0x35af7C36B06342e172049e6859e7D58Eb9b420A1' : '0x61ef99673A65BeE0512b8d1eB1aA656866D24296';
-    const borrowerAddr = isSepolia ? '0xa69380a4E44B6084205A3B721d7Cdff582EB7793' : '0x70997970C51812dc3A010C7d01b50e0d17dc79C8';
-    return [
+  if (path.endsWith('/loans') || (path.includes('/loans/') && !path.includes('/activity') && !path.includes('/contribute') && !path.includes('/spend') && !path.includes('/repay') && !path.includes('/claim') && !path.includes('/cancel') && !path.includes('/refund') && !path.includes('/default-vote'))) {
+    const defaultSepoliaLoans: any[] = [
       {
-        id: pool,
-        address: pool,
+        id: '0x9D6Cc64ab1f01a74F07aaA220670102a6bf49551',
+        address: '0x9D6Cc64ab1f01a74F07aaA220670102a6bf49551',
         borrower: {
           id: 'borrower',
+          displayName: 'Institutional Borrower',
+          role: 'BORROWER',
+          walletAddress: '0x9768C62AfFe122b1A04666D9637125f249a24c1B',
+          verified: true
+        },
+        status: 'FUNDING',
+        targetWei: '8000000000000000000',
+        contributedWei: '0',
+        fundedBps: 0,
+        aprBps: 800,
+        durationSeconds: 600,
+        fundingDeadline: new Date(Date.now() + 86400000).toISOString(),
+        maturity: '',
+        totalRepaidWei: '0',
+        totalRepayableWei: '8640000000000000000',
+        totalSpentWei: '0',
+        maxSpendWei: '6000000000000000000',
+        defaultVoteWeightWei: '0',
+        defaultThresholdWei: '4001000000000000000',
+        gracePeriodSeconds: 300,
+        agreementHash: '0x3333333333333333333333333333333333333333333333333333333333333333',
+        lenders: [],
+        merchants: ['0x921D30Fa5E257a3f527cc325Be117A5e66165F3A'],
+        merchantCapsWei: ['6000000000000000000']
+      },
+      {
+        id: '0x35af7C36B06342e172049e6859e7D58Eb9b420A1',
+        address: '0x35af7C36B06342e172049e6859e7D58Eb9b420A1',
+        borrower: {
+          id: 'borrower-sample',
           displayName: 'Aarav Menon',
           role: 'BORROWER',
-          walletAddress: borrowerAddr,
+          walletAddress: isSepolia ? '0xa69380a4E44B6084205A3B721d7Cdff582EB7793' : '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
           verified: true
         },
         status: 'FUNDING',
@@ -216,7 +244,33 @@ function getOfflineFallback<T>(path: string, options: RequestInit = {}): T | nul
           ? ['0x921D30Fa5E257a3f527cc325Be117A5e66165F3A', '0x8538A473C611a0199728A5f63372279EFA005722']
           : ['0x9965507D1a55bcC2695C58ba16FB37d819B0A4dc', '0x976EA74026E726554dB657fA54763abd0C3a0aa9']
       }
-    ] as T;
+    ];
+
+    let storedLoans: any[] = [];
+    if (typeof window !== 'undefined') {
+      try {
+        const item = localStorage.getItem('credify_deployed_loans');
+        if (item) storedLoans = JSON.parse(item);
+      } catch {}
+    }
+
+    const merged = [...storedLoans, ...defaultSepoliaLoans];
+    const seen = new Set<string>();
+    const allLoans = merged.filter((l) => {
+      const lower = (l.id || l.address || '').toLowerCase();
+      if (!lower || seen.has(lower)) return false;
+      seen.add(lower);
+      return true;
+    });
+
+    if (path.includes('/loans/')) {
+      const parts = path.split('/');
+      const targetPool = parts[parts.length - 1].toLowerCase();
+      const match = allLoans.find((l) => (l.id || l.address || '').toLowerCase() === targetPool);
+      return (match || allLoans[0]) as T;
+    }
+
+    return allLoans as T;
   }
 
   if (path.includes('/identity/')) {
