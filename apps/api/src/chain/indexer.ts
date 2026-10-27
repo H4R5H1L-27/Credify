@@ -143,10 +143,73 @@ export class ChainIndexer {
 
   async indexOnce(): Promise<number> {
     this.indexPromise = this.indexPromise.then(
-      () => this.doIndexOnce(),
-      () => this.doIndexOnce()
+      () => this.doIndexOnce().catch((err) => {
+        this.lastError = err?.message || String(err);
+        console.warn('[indexer] Index cycle failed:', this.lastError);
+        return 0;
+      }),
+      () => this.doIndexOnce().catch((err) => {
+        this.lastError = err?.message || String(err);
+        console.warn('[indexer] Index cycle failed:', this.lastError);
+        return 0;
+      })
     );
     return this.indexPromise;
+  }
+
+  private async safeGetLogs(params: {
+    address?: Address | Address[];
+    event?: any;
+    fromBlock: bigint;
+    toBlock: bigint;
+  }): Promise<any[]> {
+    if (params.fromBlock > params.toBlock) return [];
+    const MAX_CHUNK = 20000n;
+    if (params.toBlock - params.fromBlock <= MAX_CHUNK) {
+      try {
+        return (await this.chain.publicClient.getLogs(params as any)) || [];
+      } catch (err: any) {
+        if (
+          (err?.message?.includes('block range') || err?.shortMessage?.includes('block range')) &&
+          params.toBlock > params.fromBlock
+        ) {
+          const mid = params.fromBlock + (params.toBlock - params.fromBlock) / 2n;
+          const left = await this.safeGetLogs({ ...params, toBlock: mid });
+          const right = await this.safeGetLogs({ ...params, fromBlock: mid + 1n });
+          return [...left, ...right];
+        }
+        console.warn(`[indexer] safeGetLogs failed for range ${params.fromBlock}..${params.toBlock}:`, err?.shortMessage || err?.message || err);
+        return [];
+      }
+    }
+
+    const allLogs: any[] = [];
+    let curFrom = params.fromBlock;
+    while (curFrom <= params.toBlock) {
+      const curTo = curFrom + MAX_CHUNK - 1n < params.toBlock ? curFrom + MAX_CHUNK - 1n : params.toBlock;
+      try {
+        const chunkLogs = await this.chain.publicClient.getLogs({
+          ...params,
+          fromBlock: curFrom,
+          toBlock: curTo
+        } as any);
+        if (chunkLogs && chunkLogs.length > 0) {
+          allLogs.push(...chunkLogs);
+        }
+      } catch (err: any) {
+        if (
+          (err?.message?.includes('block range') || err?.shortMessage?.includes('block range')) &&
+          curTo > curFrom
+        ) {
+          const subLogs = await this.safeGetLogs({ ...params, fromBlock: curFrom, toBlock: curTo });
+          allLogs.push(...subLogs);
+        } else {
+          console.warn(`[indexer] safeGetLogs chunk ${curFrom}..${curTo} failed:`, err?.shortMessage || err?.message || err);
+        }
+      }
+      curFrom = curTo + 1n;
+    }
+    return allLogs;
   }
 
   private async doIndexOnce(): Promise<number> {
@@ -191,7 +254,24 @@ export class ChainIndexer {
     }
 
     const to = latest;
-    const from = this.store.lastIndexedBlock + 1n;
+    const rawDepBlock = this.chain.deployment.deploymentBlock;
+    const deploymentBlock = rawDepBlock ? BigInt(rawDepBlock) : 0n;
+
+    let from: bigint;
+    if (this.store.lastIndexedBlock > 0n) {
+      from = this.store.lastIndexedBlock + 1n;
+    } else if (deploymentBlock > 0n) {
+      from = deploymentBlock;
+    } else if (this.chain.deployment.chainId === 11155111) {
+      from = 11954224n;
+    } else {
+      from = 1n;
+    }
+
+    if (deploymentBlock > 0n && from < deploymentBlock) {
+      from = deploymentBlock;
+    }
+
     if (from > latest) return 0;
 
     const out: ActivityEvent[] = [];
@@ -226,7 +306,7 @@ export class ChainIndexer {
 
     // 1. LoanFactory: LoanCreated
     const loanCreatedEvent = factoryAbi.find((x) => x.type === 'event' && x.name === 'LoanCreated')!;
-    const factoryLogs = await this.chain.publicClient.getLogs({
+    const factoryLogs = await this.safeGetLogs({
       address: this.chain.deployment.contracts.loanFactory,
       event: loanCreatedEvent as any,
       fromBlock: from,
@@ -262,7 +342,7 @@ export class ChainIndexer {
     // 2. LoanPool: All pool events
     const pools = await this.chain.getPools();
     for (const pool of pools) {
-      const logs = await this.chain.publicClient.getLogs({ address: pool, fromBlock: from, toBlock: to });
+      const logs = await this.safeGetLogs({ address: pool, fromBlock: from, toBlock: to });
       for (const log of logs as any[]) {
         let decoded: any;
         try {
@@ -311,7 +391,7 @@ export class ChainIndexer {
 
     // 3. ReputationRegistry: ReputationUpdated
     const reputationUpdatedEvent = reputationAbi.find((x) => x.type === 'event' && x.name === 'ReputationUpdated')!;
-    const reputationLogs = await this.chain.publicClient.getLogs({
+    const reputationLogs = await this.safeGetLogs({
       address: this.chain.deployment.contracts.reputationRegistry,
       event: reputationUpdatedEvent as any,
       fromBlock: from,
@@ -340,7 +420,7 @@ export class ChainIndexer {
     // 4. KYCRegistry: VerificationUpdated
     const verificationUpdatedEvent = kycAbi.find((x) => x.type === 'event' && x.name === 'VerificationUpdated');
     if (verificationUpdatedEvent) {
-      const kycLogs = await this.chain.publicClient.getLogs({
+      const kycLogs = await this.safeGetLogs({
         address: this.chain.deployment.contracts.kycRegistry,
         event: verificationUpdatedEvent as any,
         fromBlock: from,
@@ -370,7 +450,7 @@ export class ChainIndexer {
     // 5. KYCRegistry: VerificationRevoked
     const verificationRevokedEvent = kycAbi.find((x) => x.type === 'event' && x.name === 'VerificationRevoked');
     if (verificationRevokedEvent) {
-      const revokeLogs = await this.chain.publicClient.getLogs({
+      const revokeLogs = await this.safeGetLogs({
         address: this.chain.deployment.contracts.kycRegistry,
         event: verificationRevokedEvent as any,
         fromBlock: from,

@@ -48,10 +48,19 @@ export function formatApr(bps: number): string {
 }
 
 export function formatDuration(seconds: number): string {
-  const days = Math.round(seconds / 86400);
-  if (days >= 1) return `${days} day${days > 1 ? 's' : ''}`;
-  const hours = Math.round(seconds / 3600);
-  return `${hours} hour${hours > 1 ? 's' : ''}`;
+  if (!seconds || seconds <= 0) return '0 mins';
+  const days = Math.floor(seconds / 86400);
+  if (days >= 1) {
+    const remHours = Math.round((seconds % 86400) / 3600);
+    return remHours > 0 ? `${days}d ${remHours}h` : `${days} day${days > 1 ? 's' : ''}`;
+  }
+  const hours = Math.floor(seconds / 3600);
+  if (hours >= 1) {
+    const remMins = Math.round((seconds % 3600) / 60);
+    return remMins > 0 ? `${hours}h ${remMins}m` : `${hours} hour${hours > 1 ? 's' : ''}`;
+  }
+  const mins = Math.max(1, Math.round(seconds / 60));
+  return `${mins} min${mins > 1 ? 's' : ''}`;
 }
 
 export function truncateAddress(address: string, chars = 4): string {

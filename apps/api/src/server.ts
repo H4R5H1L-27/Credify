@@ -955,7 +955,14 @@ export function buildServer(ctx: AppContext) {
   app.get('/api/v1/config', async () => getConfigPayload());
   app.get('/api/v1/evaluator/contracts', async () => getConfigPayload());
 
-  app.get('/api/v1/evaluator/events', async () => { await indexer.indexOnce(); return store.allEvents(); });
+  app.get('/api/v1/evaluator/events', async () => {
+    try {
+      await indexer.indexOnce();
+    } catch (err) {
+      app.log.warn({ err }, 'Indexer sync failed in /api/v1/evaluator/events');
+    }
+    return store.allEvents();
+  });
 
   // Technical Console Observability Endpoints
   const registerConsoleRoutes = (prefix: string) => {
