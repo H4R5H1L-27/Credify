@@ -75,6 +75,7 @@ export const CreateLoanPage: React.FC = () => {
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [agreementText, setAgreementText] = useState(PRESETS[0].text);
   const [showMilestone, setShowMilestone] = useState(false);
+  const [customAttestAddress, setCustomAttestAddress] = useState<string>('');
 
   // Server-parsed state (replaces client-side regex heuristics)
   const [parseResult, setParseResult] = useState<AgreementParseResult | null>(null);
@@ -595,34 +596,89 @@ export const CreateLoanPage: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className="pt-2 border-t border-amber-200 flex flex-wrap items-center justify-between gap-2">
+                  <div className="pt-2 border-t border-amber-200 space-y-2">
                     {isVerifierOnChain || address?.toLowerCase() === '0x448920c465158b78a694460e96e022b82b35c6e2' ? (
-                      <Button
-                        size="sm"
-                        variant="primary"
-                        onClick={async () => {
-                          if (!address) return;
-                          try {
-                            if (executeAttestOnChain) {
-                              await executeAttestOnChain(address as `0x${string}`, 1);
-                            }
-                            if (typeof refetchOnChainKyc === 'function') {
-                              await (refetchOnChainKyc as any)();
-                            }
-                          } catch {}
-                        }}
-                        disabled={isExecuting}
-                        className="text-xs font-bold"
-                      >
-                        Attest Active Wallet as Borrower on Sepolia (1-Click)
-                      </Button>
+                      <div className="space-y-2">
+                        <div className="font-bold text-amber-950 text-xs">
+                          Verifier Control: Attest Any Address as Borrower on Sepolia
+                        </div>
+                        <div className="flex gap-2">
+                          <input
+                            type="text"
+                            value={customAttestAddress || address || ''}
+                            onChange={(e) => setCustomAttestAddress(e.target.value)}
+                            placeholder="0x..."
+                            className="flex-1 font-mono text-xs px-2.5 py-1.5 rounded-lg border border-amber-300 bg-white"
+                          />
+                          <Button
+                            size="sm"
+                            variant="primary"
+                            onClick={async () => {
+                              const target = (customAttestAddress || address) as `0x${string}`;
+                              if (!target) return;
+                              try {
+                                if (executeAttestOnChain) {
+                                  await executeAttestOnChain(target, 1);
+                                }
+                                if (typeof refetchOnChainKyc === 'function') {
+                                  await (refetchOnChainKyc as any)();
+                                }
+                              } catch {}
+                            }}
+                            disabled={isExecuting}
+                            className="text-xs font-bold shrink-0"
+                          >
+                            Sign Attestation in MetaMask
+                          </Button>
+                        </div>
+                        <div className="flex flex-wrap gap-2 text-[10px] items-center">
+                          <span className="text-slate-500 font-medium">Quick fill:</span>
+                          <button
+                            type="button"
+                            onClick={() => setCustomAttestAddress('0x9768C62AfFe122b1A04666D9637125f249a24c1B')}
+                            className="underline text-amber-900 hover:text-black font-mono cursor-pointer"
+                          >
+                            Account 3 (0x9768...4c1B)
+                          </button>
+                          <span>·</span>
+                          <button
+                            type="button"
+                            onClick={() => setCustomAttestAddress('0x70997970C51812dc3A010C7d01b50e0d17dc79C8')}
+                            className="underline text-amber-900 hover:text-black font-mono cursor-pointer"
+                          >
+                            Aarav Menon (0x7099...79C8)
+                          </button>
+                          {address && (
+                            <>
+                              <span>·</span>
+                              <button
+                                type="button"
+                                onClick={() => setCustomAttestAddress(address)}
+                                className="underline text-amber-900 hover:text-black font-mono cursor-pointer"
+                              >
+                                Active Wallet ({address.slice(0, 6)}...{address.slice(-4)})
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      </div>
                     ) : (
-                      <div className="text-[11px] text-amber-800 space-y-1">
-                        <span className="font-bold block">How to proceed:</span>
-                        <ul className="list-disc list-inside space-y-0.5 text-slate-700">
-                          <li>Switch to <strong>Evaluator (Guided)</strong> mode in the top right to simulate transactions with pre-verified demo keys.</li>
-                          <li>Or switch in MetaMask to the deployer/verifier account (<code className="font-mono text-xs">0x4489...C6e2</code>) to attest your address on-chain.</li>
-                          <li>Or connect with the pre-attested Sepolia borrower account (<code className="font-mono text-xs">0xa69380a4E44B6084205A3B721d7Cdff582EB7793</code>).</li>
+                      <div className="text-[11px] text-amber-800 space-y-1.5">
+                        <span className="font-bold block">Why did the previous transaction fail?</span>
+                        <p className="text-slate-700">
+                          Sepolia smart contract <code className="bg-amber-100 font-mono px-1 rounded">LoanFactory.sol</code> strictly checks on-chain KYC before creating any loan. Un-attested addresses revert on-chain with custom error <code className="bg-amber-200 font-mono px-1 rounded font-bold text-amber-950">0xee8fb9be (BorrowerNotVerified)</code>.
+                        </p>
+                        <span className="font-bold block pt-1">Recommended actions:</span>
+                        <ul className="list-disc list-inside space-y-1 text-slate-700">
+                          <li>
+                            <strong>Switch to Evaluator (Guided) mode:</strong> Click the <span className="font-bold">Guided Mode</span> button in the top bar to run frictionless, zero-gas interactive presentations.
+                          </li>
+                          <li>
+                            <strong>Attest this account on Sepolia:</strong> Switch in MetaMask to the Deployer/Verifier account (<code className="font-mono text-xs">0x448920c465158b78A694460E96E022b82B35C6e2</code>) to attest your wallet address on-chain.
+                          </li>
+                          <li>
+                            <strong>Ensure sufficient gas:</strong> In MetaMask, make sure your account has Sepolia ETH (see Faucet button in header).
+                          </li>
                         </ul>
                       </div>
                     )}
