@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { useWriteContract, usePublicClient } from 'wagmi';
+import { useWriteContract, usePublicClient, useWalletClient } from 'wagmi';
 import { useQueryClient } from '@tanstack/react-query';
 import { type Address, stringToHex, pad, decodeEventLog } from 'viem';
-import { factoryAbi, poolAbi, kycAbi, type TermSheet } from '@credify/shared';
+import { factoryAbi, poolAbi, kycAbi, portalAbi, portalBytecode, type TermSheet, type LoanSummary } from '@credify/shared';
 import { useWallet } from '../context/WalletContext';
 import { useIdentity } from '../context/IdentityContext';
 import { api, consoleApi } from '../lib/api';
@@ -16,6 +16,7 @@ export function useContractAction() {
   const queryClient = useQueryClient();
   const { writeContractAsync } = useWriteContract();
   const publicClient = usePublicClient();
+  const { data: walletClient } = useWalletClient();
   const { data: evaluatorContracts } = useEvaluatorContracts();
 
   const [txState, setTxState] = useState<TxState | null>(null);
@@ -943,6 +944,94 @@ export function useContractAction() {
     return { hash: outcome.txHash, receiptBlock: outcome.blockNumber || '' };
   };
 
+  // 10. Deploy and Activate Self-Verification Portal (Admin / Verifier only)
+  const executeDeployPortal = async (): Promise<Address> => {
+    const kycAddress = (evaluatorContracts?.contracts?.kycRegistry || '0xdf8d6C4b9a982a4c7a557686cb0A6dF6ECab0236') as Address;
+    if (!walletClient) throw new Error('Wallet client not connected. Please connect MetaMask.');
+
+    // Step A: Deploy contract
+    const deployOutcome = await runLifecycle(
+      'Deploy Self-Verification Portal',
+      async () => {
+        return walletClient.deployContract({
+          abi: portalAbi,
+          bytecode: portalBytecode,
+          args: [kycAddress],
+        });
+      },
+      (receipt) => {
+        return { contractAddress: receipt.contractAddress };
+      }
+    );
+
+    const portalAddress = deployOutcome.result?.contractAddress;
+    if (!portalAddress) throw new Error('Portal deployment did not return a contract address');
+
+    // Step B: Grant VERIFIER_ROLE to the new portal
+    await runLifecycle(
+      'Authorize Portal on KYCRegistry',
+      async () => {
+        return writeContractAsync({
+          address: kycAddress,
+          abi: kycAbi,
+          functionName: 'grantRole',
+          args: ['0x0ce23c3e399818cfee81a7ab0880f714e53d7672b08df0fa62f2843416e1ea09' as `0x${string}`, portalAddress as Address],
+        });
+      }
+    );
+
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('credify_self_verification_portal', portalAddress);
+    }
+
+    return portalAddress as Address;
+  };
+
+  // 11. Self-Verify On-Chain (For ANY user account)
+  const executeSelfVerify = async (roleType: number = 1): Promise<{ hash: string; receiptBlock: string }> => {
+    const isVerifierWallet = address?.toLowerCase() === '0x448920c465158b78a694460e96e022b82b35c6e2';
+
+    // If the active wallet is the verifier itself, call KYCRegistry directly
+    if (isVerifierWallet) {
+      return executeAttestOnChain(address as Address, roleType);
+    }
+
+    // Otherwise, use the Self-Verification Portal
+    let portalAddress = (typeof window !== 'undefined' ? localStorage.getItem('credify_self_verification_portal') : null) as Address | null;
+    if (!portalAddress) {
+      portalAddress = (evaluatorContracts?.contracts as any)?.selfVerificationPortal as Address | null;
+    }
+    if (!portalAddress) {
+      throw new Error(
+        'Self-Verification Portal is not yet initialized on Sepolia. Please switch to verifier account 0x4489... on /app/verify and click "Deploy & Activate Self-Verification Portal" once, or use Verifier Attestation.'
+      );
+    }
+
+    const outcome = await runLifecycle(
+      'On-Chain Self-Verification',
+      async () => {
+        return writeContractAsync({
+          address: portalAddress as Address,
+          abi: portalAbi,
+          functionName: 'selfVerify',
+          args: [roleType],
+        });
+      },
+      () => {
+        if (typeof window !== 'undefined' && address) {
+          const lower = address.toLowerCase();
+          localStorage.setItem(`credify_verified_${lower}`, 'true');
+          localStorage.setItem('credify_verified_status', 'VERIFIED');
+          if (roleType === 1) localStorage.setItem(`credify_role_${lower}`, 'BORROWER');
+          if (roleType === 2) localStorage.setItem(`credify_role_${lower}`, 'LENDER');
+          if (roleType === 3) localStorage.setItem(`credify_role_${lower}`, 'MERCHANT');
+        }
+      }
+    );
+
+    return { hash: outcome.txHash, receiptBlock: outcome.blockNumber || '' };
+  };
+
   return {
     isMetaMaskMode,
     isGuidedMode,
@@ -958,5 +1047,7 @@ export function useContractAction() {
     executeVoteDefault,
     executeCancelUnfunded,
     executeAttestOnChain,
+    executeDeployPortal,
+    executeSelfVerify,
   };
 }

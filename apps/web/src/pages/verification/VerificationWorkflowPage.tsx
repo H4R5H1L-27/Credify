@@ -22,13 +22,15 @@ import {
   KeyRound,
   RotateCcw,
   Sparkles,
+  Rocket,
+  Globe2,
 } from 'lucide-react';
 
 export const VerificationWorkflowPage: React.FC = () => {
   const { address, identity, isVerified: localVerified, verificationStatus, refetchIdentity, isGuidedMode } = useIdentity();
   const { targetChainId } = useWallet();
   const { data: evaluatorContracts } = useEvaluatorContracts();
-  const { executeAttestOnChain, isExecuting } = useContractAction();
+  const { executeAttestOnChain, executeDeployPortal, executeSelfVerify, isExecuting } = useContractAction();
   const queryClient = useQueryClient();
 
   const isSepolia = targetChainId === 11155111 || evaluatorContracts?.network === 'sepolia';
@@ -43,6 +45,13 @@ export const VerificationWorkflowPage: React.FC = () => {
   const [customAttestAddress, setCustomAttestAddress] = useState('');
   const [customAttestRole, setCustomAttestRole] = useState<number>(1); // 1 = Borrower, 2 = Lender, 3 = Supplier
   const [attestStatusMessage, setAttestStatusMessage] = useState<string | null>(null);
+  const [isDeployingPortal, setIsDeployingPortal] = useState(false);
+  const [portalAddressState, setPortalAddressState] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('credify_self_verification_portal') || '';
+    }
+    return '';
+  });
 
   // Read on-chain verification from KYCRegistry (Role 1 = Borrower)
   const { data: onChainBorrowerVerified, refetch: refetchOnChainKyc } = useReadContract({
@@ -146,6 +155,53 @@ export const VerificationWorkflowPage: React.FC = () => {
     }
   };
 
+  // Self-verification for ANY account via MetaMask transaction
+  const handleSelfVerifyTransaction = async () => {
+    setAttestStatusMessage(null);
+    const roleNum = role === 'BORROWER' ? 1 : role === 'LENDER' ? 2 : 3;
+    try {
+      if (isVerifier) {
+        await handleOnChainAttest(address as `0x${string}`, roleNum);
+        return;
+      }
+      setAttestStatusMessage('Please confirm the self-verification transaction in MetaMask...');
+      const res = await executeSelfVerify(roleNum);
+      setAttestStatusMessage(`Transaction submitted: ${res.hash.slice(0, 10)}... Mining on Sepolia.`);
+      
+      if (typeof window !== 'undefined' && address) {
+        const lower = address.toLowerCase();
+        localStorage.setItem(`credify_verified_${lower}`, 'true');
+        localStorage.setItem('credify_verified_status', 'VERIFIED');
+        localStorage.setItem(`credify_role_${lower}`, role);
+        if (fullName) localStorage.setItem(`credify_name_${lower}`, fullName);
+      }
+
+      await refetchOnChainKyc();
+      await queryClient.invalidateQueries({ queryKey: ['verificationRequest', address] });
+      await queryClient.invalidateQueries({ queryKey: ['identity'] });
+      await refetchIdentity();
+      setAttestStatusMessage('✅ Your account is successfully verified on the Sepolia blockchain! You can now deploy loan agreements.');
+      setShowMilestone(true);
+    } catch (err: any) {
+      setAttestStatusMessage(`Self-verification failed: ${err?.message || 'Transaction rejected'}`);
+    }
+  };
+
+  // Admin one-time action: deploy and authorize the public self-verification portal
+  const handleDeployPortalAction = async () => {
+    setIsDeployingPortal(true);
+    setAttestStatusMessage('Deploying public Self-Verification Portal contract via MetaMask...');
+    try {
+      const pAddr = await executeDeployPortal();
+      setPortalAddressState(pAddr);
+      setAttestStatusMessage(`✅ Self-Verification Portal successfully deployed and authorized on Sepolia at ${pAddr}! Any new wallet can now verify itself.`);
+    } catch (err: any) {
+      setAttestStatusMessage(`Portal initialization failed: ${err?.message || 'Transaction rejected'}`);
+    } finally {
+      setIsDeployingPortal(false);
+    }
+  };
+
   const handleResetCache = async () => {
     if (typeof window !== 'undefined' && address) {
       const lower = address.toLowerCase();
@@ -203,7 +259,7 @@ export const VerificationWorkflowPage: React.FC = () => {
           </CardHeader>
           <CardContent className="space-y-4 text-xs text-amber-950">
             <p className="leading-relaxed font-medium">
-              Your connected wallet (<code className="bg-amber-100 font-bold px-1 rounded">{address}</code>) holds the cryptographic <code className="font-bold">VERIFIER_ROLE</code> on the Sepolia <code className="font-bold">KYCRegistry</code> contract. You have direct authority to sign on-chain attestations in MetaMask.
+              Your connected wallet (<code className="bg-amber-100 font-bold px-1 rounded">{address}</code>) holds the cryptographic <code className="font-bold">VERIFIER_ROLE</code> and <code className="font-bold">DEFAULT_ADMIN_ROLE</code> on the Sepolia <code className="font-bold">KYCRegistry</code> contract.
             </p>
 
             {/* Self-Attestation Action */}
@@ -252,6 +308,47 @@ export const VerificationWorkflowPage: React.FC = () => {
                   </Link>
                 </div>
               )}
+            </div>
+
+            {/* PUBLIC SELF-VERIFICATION PORTAL INITIALIZATION (1-Time Setup) */}
+            <div className="p-4 rounded-xl bg-white border border-amber-200 space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Globe2 className="w-4 h-4 text-amber-700" />
+                  <span className="font-bold text-slate-950 text-sm">
+                    Public Self-Verification Gateway for Any New Wallet
+                  </span>
+                </div>
+                {portalAddressState ? (
+                  <span className="flex items-center gap-1 text-emerald-800 font-bold font-mono text-xs bg-emerald-50 px-2 py-0.5 rounded border border-emerald-300">
+                    Portal Active: {portalAddressState.slice(0, 6)}...{portalAddressState.slice(-4)}
+                  </span>
+                ) : (
+                  <span className="text-slate-600 font-mono text-xs bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
+                    Not Initialized
+                  </span>
+                )}
+              </div>
+              <p className="text-slate-700 text-xs font-medium">
+                Deploy the public <code className="font-bold">SelfVerificationPortal</code> contract. Once authorized, <strong>any new user or wallet</strong> can verify itself directly on the Sepolia blockchain by sending a single MetaMask transaction without needing you to manually attest them.
+              </p>
+              <div className="flex items-center gap-3">
+                <Button
+                  size="sm"
+                  variant="primary"
+                  loading={isDeployingPortal || isExecuting}
+                  onClick={handleDeployPortalAction}
+                  className="font-bold text-xs bg-[#ffe600] text-black border border-yellow-400 hover:bg-yellow-400"
+                  icon={<Rocket className="w-4 h-4" />}
+                >
+                  {portalAddressState ? 'Re-Deploy Public Portal' : '🚀 Deploy & Activate Public Self-Verification Portal (MetaMask)'}
+                </Button>
+                {portalAddressState && (
+                  <span className="text-[11px] text-emerald-800 font-semibold">
+                    ✓ All accounts can now self-verify on-chain!
+                  </span>
+                )}
+              </div>
             </div>
 
             {/* Attest Any Address Action */}
@@ -426,10 +523,10 @@ export const VerificationWorkflowPage: React.FC = () => {
             <form onSubmit={handleSubmit} className="space-y-4 pt-2 border-t border-slate-200">
               <div className="space-y-1">
                 <h3 className="font-bold text-slate-950 text-sm">
-                  {status === 'REJECTED' ? 'Resubmit Updated Credentials' : 'Submit Institutional Credentials'}
+                  {status === 'REJECTED' ? 'Resubmit Updated Credentials' : 'Submit Institutional Credentials & Verify'}
                 </h3>
                 <p className="text-xs text-slate-600 font-medium">
-                  Enter credentials representing your institution, lab, or merchant facility to register for protocol evaluation.
+                  Enter credentials representing your institution, lab, or merchant facility to verify on-chain.
                 </p>
               </div>
 
@@ -507,27 +604,41 @@ export const VerificationWorkflowPage: React.FC = () => {
                 )}
               </div>
 
+              {/* PRIMARY ACTION BUTTONS */}
               <div className="pt-2 space-y-2">
+                {/* On-Chain Self-Verification via MetaMask Transaction */}
                 <Button
-                  type="submit"
+                  type="button"
                   variant="primary"
-                  className="w-full font-bold bg-[#ffe600] text-black border border-yellow-400 hover:bg-yellow-400"
-                  loading={submitMutation.isPending}
-                  icon={<FileCheck2 className="w-4 h-4" />}
+                  onClick={handleSelfVerifyTransaction}
+                  loading={isExecuting}
+                  className="w-full font-bold bg-[#ffe600] text-black border border-yellow-400 hover:bg-yellow-400 py-3 text-sm shadow-sm"
+                  icon={<Sparkles className="w-4 h-4" />}
                 >
-                  {status === 'REJECTED' ? 'Resubmit Verification' : 'Submit & Register Verification'}
+                  ⚡ Verify My Account on Sepolia Blockchain (MetaMask)
                 </Button>
-                <div className="text-[11px] text-slate-600 bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-center font-medium">
-                  {isVerifier ? (
-                    <span>
-                      ⚡ <strong>Instant On-Chain Verifier:</strong> As an authorized verifier on Sepolia, you can also use the control panel above to sign the on-chain attestation directly in MetaMask.
-                    </span>
-                  ) : (
-                    <span>
-                      ⚡ <strong>Sepolia Verification Note:</strong> Submitting registers your profile. For live on-chain evaluation without simulated demo mode, an authorized verifier wallet (<code className="font-mono font-bold">0x4489...</code>) signs the on-chain record in MetaMask.
-                    </span>
-                  )}
+
+                <div className="flex items-center justify-between gap-2 pt-1">
+                  <Button
+                    type="submit"
+                    variant="outline"
+                    className="text-xs font-semibold text-slate-700 bg-white border-slate-300 hover:bg-slate-50"
+                    loading={submitMutation.isPending}
+                    icon={<FileCheck2 className="w-3.5 h-3.5" />}
+                  >
+                    Save Registration Details
+                  </Button>
+
+                  <span className="text-[11px] text-slate-500 font-medium">
+                    Signs on-chain attestation directly via your wallet
+                  </span>
                 </div>
+
+                {attestStatusMessage && (
+                  <div className="p-3 rounded-lg bg-emerald-50 border border-emerald-300 text-emerald-950 font-mono text-xs font-semibold">
+                    {attestStatusMessage}
+                  </div>
+                )}
               </div>
             </form>
           )}
