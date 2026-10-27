@@ -150,13 +150,28 @@ export class ObservabilityService {
     }
   }
 
+  private readonly ingestedHashes = new Set<string>();
+
+  registerTransactionHash(hash: string) {
+    if (hash && hash.startsWith('0x')) {
+      this.ingestedHashes.add(hash.toLowerCase());
+    }
+  }
+
   async getTransactions(limit = 20, address?: string, pool?: string): Promise<TransactionObservability[]> {
     const allEvents = this.store.allEvents();
     const targetAddress = address?.toLowerCase();
     const targetPool = pool?.toLowerCase();
 
-    // Collect distinct transaction hashes from indexed events
-    const txMap = new Map<string, ActivityEvent>();
+    // Collect distinct transaction hashes from both ingested transactions AND indexed events
+    const txMap = new Map<string, ActivityEvent | null>();
+
+    // Ingested / recent transactions take priority at the top
+    const recentList = Array.from(this.ingestedHashes).reverse();
+    for (const h of recentList) {
+      txMap.set(h, null);
+    }
+
     for (const evt of allEvents) {
       if (targetPool && evt.loanId.toLowerCase() !== targetPool) continue;
       if (targetAddress && evt.actor?.toLowerCase() !== targetAddress) continue;
@@ -170,7 +185,12 @@ export class ObservabilityService {
 
     for (const h of hashes) {
       const full = await this.getTransaction(h);
-      if (full) txs.push(full);
+      if (full) {
+        if (targetAddress && full.from.toLowerCase() !== targetAddress && full.to?.toLowerCase() !== targetAddress) {
+          continue;
+        }
+        txs.push(full);
+      }
     }
 
     return txs;

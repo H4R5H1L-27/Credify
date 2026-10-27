@@ -5,7 +5,8 @@ import { type Address, stringToHex, pad, decodeEventLog } from 'viem';
 import { factoryAbi, poolAbi, type TermSheet } from '@credify/shared';
 import { useWallet } from '../context/WalletContext';
 import { useIdentity } from '../context/IdentityContext';
-import { api } from '../lib/api';
+import { api, consoleApi } from '../lib/api';
+import { trackSubmittedTx, trackConfirmedTx } from '../lib/clientTxTracker';
 import { queryKeys, useEvaluatorContracts } from './useCredify';
 import type { TxState, TxLifecycleStep, TxErrorCategory } from '../components/ui/TransactionLifecycle';
 
@@ -344,6 +345,7 @@ export function useContractAction() {
     onConfirmed?: (receipt: any, txHash: `0x${string}`) => Promise<T> | T
   ): Promise<{ txHash: string; blockNumber?: string; result?: T }> => {
     setIsExecuting(true);
+    let broadcastHash: string | undefined;
 
     try {
       assertWalletReady();
@@ -366,14 +368,24 @@ export function useContractAction() {
         isMetaMask: true,
       });
 
-      const hash = await action();
+      broadcastHash = await action();
+
+      // Immediately register in client transaction tracker so console displays it instantly
+      if (broadcastHash) {
+        trackSubmittedTx({
+          hash: broadcastHash,
+          operationName,
+          from: address || '',
+        });
+        consoleApi.ingestTransaction(broadcastHash).catch(() => {});
+      }
 
       // Step 3: Submitted
       setTxState({
         step: 'submitted',
         title: 'Transaction Submitted',
-        description: 'Broadcast to local blockchain node. Awaiting block inclusion...',
-        txHash: hash,
+        description: 'Broadcast to EVM network. Awaiting block inclusion...',
+        txHash: broadcastHash,
         isMetaMask: true,
       });
 
@@ -382,15 +394,19 @@ export function useContractAction() {
         step: 'confirming',
         title: 'Waiting for Block Confirmation',
         description: 'Mining transaction into next block...',
-        txHash: hash,
+        txHash: broadcastHash,
         isMetaMask: true,
       });
 
-      const receipt = await publicClient!.waitForTransactionReceipt({ hash });
+      const receipt = await publicClient!.waitForTransactionReceipt({ hash: broadcastHash as `0x${string}` });
 
       if (receipt.status === 'reverted') {
+        trackConfirmedTx(broadcastHash, receipt);
         throw new Error('Transaction execution reverted during block inclusion');
       }
+
+      // Update client transaction tracker with confirmed block and receipt
+      trackConfirmedTx(broadcastHash, receipt);
 
       // Step 5: Confirmed & Refresh Authoritative State
       await api.reindex().catch(() => {});
@@ -398,24 +414,27 @@ export function useContractAction() {
 
       let customResult: T | undefined;
       if (onConfirmed) {
-        customResult = await onConfirmed(receipt, hash);
+        customResult = await onConfirmed(receipt, broadcastHash as `0x${string}`);
       }
 
       setTxState({
         step: 'confirmed',
         title: `${operationName} Confirmed On-Chain`,
         description: `Successfully included in block #${receipt.blockNumber}. Authoritative state refreshed.`,
-        txHash: hash,
+        txHash: broadcastHash,
         blockNumber: receipt.blockNumber.toString(),
         isMetaMask: true,
       });
 
       return {
-        txHash: hash,
+        txHash: broadcastHash,
         blockNumber: receipt.blockNumber.toString(),
         result: customResult,
       };
     } catch (err) {
+      if (typeof broadcastHash === 'string') {
+        trackConfirmedTx(broadcastHash, { status: 'reverted' });
+      }
       const { error, code, category } = classifyError(err);
       if (category === 'user_rejected') {
         setTxState({

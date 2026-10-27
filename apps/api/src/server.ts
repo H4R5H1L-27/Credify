@@ -981,6 +981,15 @@ export function buildServer(ctx: AppContext) {
       return observability.getTransactions(limit, req.query?.address, req.query?.pool);
     }, reply));
 
+    app.post<{ Body: { hash: string } }>(`${prefix}/transactions/ingest`, async (req, reply) => result(async () => {
+      const hash = req.body?.hash;
+      if (hash) {
+        observability.registerTransactionHash(hash);
+        void indexer.indexOnce();
+      }
+      return { success: true, hash };
+    }, reply));
+
     app.get<{ Params: { hash: string } }>(`${prefix}/transactions/:hash`, async (req, reply) => result(async () => {
       const tx = await observability.getTransaction(req.params.hash);
       if (!tx) {

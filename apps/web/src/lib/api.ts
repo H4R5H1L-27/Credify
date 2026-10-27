@@ -25,6 +25,8 @@ import type {
 } from '@credify/shared';
 
 
+import { getClientTransactions } from './clientTxTracker';
+
 const rawBase = import.meta.env.VITE_API_URL || '';
 const API_BASE = rawBase ? `${rawBase.replace(/\/$/, '')}/api/v1` : '/api/v1';
 
@@ -310,6 +312,84 @@ function getOfflineFallback<T>(path: string, options: RequestInit = {}): T | nul
     return defaultList as T;
   }
 
+  if (path.includes('/console/transactions/ingest')) {
+    return { success: true } as T;
+  }
+
+  if (path.includes('/console/transactions')) {
+    const clientTxs = typeof window !== 'undefined' ? getClientTransactions() : [];
+    const defaultTx: TransactionObservability = {
+      hash: isSepolia ? '0x35af7c36b06342e172049e6859e7d58eb9b420a1' : '0x61ef99673a65bee0512b8d1eb1aa656866d24296',
+      blockNumber: isSepolia ? '11954224' : '42',
+      blockHash: '0x1111111111111111111111111111111111111111111111111111111111111111',
+      from: isSepolia ? '0x448920c465158b78A694460E96E022b82B35C6e2' : '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
+      to: isSepolia ? '0xD5230D26a83E15da5b4F22b9b06054F96FB47c89' : '0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0',
+      valueWei: '0',
+      gas: '250000',
+      gasPriceWei: '1000000000',
+      nonce: 1,
+      input: '0x',
+      status: 'SUCCESS',
+      gasUsed: '142850',
+      effectiveGasPriceWei: '1000000000',
+      contractAddress: isSepolia ? '0x35af7C36B06342e172049e6859e7D58Eb9b420A1' : '0x61ef99673A65BeE0512b8d1eB1aA656866D24296',
+      logsCount: 1,
+      decodedEvents: [{
+        eventName: 'LoanCreated',
+        contractAddress: isSepolia ? '0xD5230D26a83E15da5b4F22b9b06054F96FB47c89' : '0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0',
+        args: { agreement: 'Syndicated Agreement', status: 'ACTIVE' }
+      }],
+      provenance: {
+        chain: { chainId: isSepolia ? 11155111 : 31337, network: isSepolia ? 'sepolia' : 'localhost' },
+        block: { number: isSepolia ? '11954224' : '42' },
+        transaction: { hash: isSepolia ? '0x35af7c36b06342e172049e6859e7d58eb9b420a1' : '0x61ef99673a65bee0512b8d1eb1aa656866d24296' },
+        origin: 'BLOCKCHAIN' as const,
+      }
+    };
+    return (clientTxs.length > 0 ? clientTxs : [defaultTx]) as T;
+  }
+
+  if (path.includes('/console/network')) {
+    return {
+      network: isSepolia ? 'sepolia' : 'localhost',
+      chainId: isSepolia ? 11155111 : 31337,
+      blockNumber: isSepolia ? '11954224' : '42',
+      gasPriceWei: '1000000000',
+      peerCount: 12,
+      mining: true,
+      syncLag: 0,
+      rpcUrl: isSepolia ? 'https://ethereum-sepolia-rpc.publicnode.com' : 'http://127.0.0.1:8545'
+    } as T;
+  }
+
+  if (path.includes('/console/indexer')) {
+    return {
+      running: true,
+      lastIndexedBlock: isSepolia ? '11954224' : '42',
+      lastIndexedAt: new Date().toISOString(),
+      lastError: null,
+      syncLag: 0,
+      totalEvents: 18
+    } as T;
+  }
+
+  if (path.includes('/console/blocks')) {
+    return [
+      {
+        number: isSepolia ? '11954224' : '42',
+        hash: '0x1111111111111111111111111111111111111111111111111111111111111111',
+        parentHash: '0x0000000000000000000000000000000000000000000000000000000000000000',
+        timestamp: new Date().toISOString(),
+        miner: '0x0000000000000000000000000000000000000000',
+        transactionCount: 1,
+        gasUsed: '142850',
+        gasLimit: '30000000',
+        baseFeePerGasWei: '1000000000',
+        transactions: []
+      }
+    ] as T;
+  }
+
   if (path.endsWith('/evaluator/events') || path.includes('/activity')) {
     return [] as T;
   }
@@ -571,13 +651,35 @@ export const api = {
     getNetwork: () => request<NetworkObservability>(`${API_BASE}/console/network`),
     getBlocks: (limit = 10) => request<BlockObservability[]>(`${API_BASE}/console/blocks?limit=${limit}`),
     getBlock: (numberOrHash: string) => request<BlockObservability>(`${API_BASE}/console/blocks/${numberOrHash}`),
-    getTransactions: (params?: { limit?: number; address?: string; pool?: string }) => {
+    ingestTransaction: (hash: string) =>
+      request<{ success: boolean; hash: string }>(`${API_BASE}/console/transactions/ingest`, {
+        method: 'POST',
+        body: JSON.stringify({ hash }),
+      }),
+    getTransactions: async (params?: { limit?: number; address?: string; pool?: string }) => {
       const q = new URLSearchParams();
       if (params?.limit) q.set('limit', params.limit.toString());
       if (params?.address) q.set('address', params.address);
       if (params?.pool) q.set('pool', params.pool);
       const qs = q.toString();
-      return request<TransactionObservability[]>(`${API_BASE}/console/transactions${qs ? `?${qs}` : ''}`);
+      let serverTxs: TransactionObservability[] = [];
+      try {
+        serverTxs = await request<TransactionObservability[]>(`${API_BASE}/console/transactions${qs ? `?${qs}` : ''}`);
+      } catch {
+        serverTxs = [];
+      }
+      const clientTxs = typeof window !== 'undefined' ? getClientTransactions() : [];
+      const txMap = new Map<string, TransactionObservability>();
+      for (const stx of serverTxs) {
+        txMap.set(stx.hash.toLowerCase(), stx);
+      }
+      for (const ctx of clientTxs) {
+        const existing = txMap.get(ctx.hash.toLowerCase());
+        if (!existing || existing.status === 'PENDING') {
+          txMap.set(ctx.hash.toLowerCase(), existing?.status === 'SUCCESS' ? existing : ctx);
+        }
+      }
+      return Array.from(txMap.values()).slice(0, params?.limit || 50);
     },
     getTransaction: (hash: string) => request<TransactionObservability>(`${API_BASE}/console/transactions/${hash}`),
     getContracts: () => request<ContractObservability[]>(`${API_BASE}/console/contracts`),

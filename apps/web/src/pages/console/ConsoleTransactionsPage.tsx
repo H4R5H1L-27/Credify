@@ -1,7 +1,9 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useSearchParams, useNavigate } from 'react-router-dom';
+import { usePublicClient } from 'wagmi';
 import { consoleApi } from '../../lib/api';
+import { trackConfirmedTx } from '../../lib/clientTxTracker';
 import {
   TechnicalPanel,
   TechnicalValue,
@@ -34,8 +36,9 @@ export const ConsoleTransactionsPage: React.FC = () => {
 
   const [selectedTx, setSelectedTx] = useState<string | null>(initialTx);
   const [selectedBlock, setSelectedBlock] = useState<string | null>(null);
-  const [statusFilter, setStatusFilter] = useState<'ALL' | 'CONFIRMED' | 'REVERTED'>('ALL');
+  const [statusFilter, setStatusFilter] = useState<'ALL' | 'CONFIRMED' | 'PENDING' | 'REVERTED'>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
+  const publicClient = usePublicClient();
 
   // Sync URL search param when selectedTx changes
   useEffect(() => {
@@ -57,9 +60,33 @@ export const ConsoleTransactionsPage: React.FC = () => {
     refetchInterval: 3000,
   });
 
+  // Active RPC polling for any pending MetaMask transactions (resolves blockchain mining latency)
+  useEffect(() => {
+    if (!publicClient) return;
+    const pendingTxs = transactions.filter((t) => t.status === 'PENDING');
+    if (pendingTxs.length === 0) return;
+
+    let cancelled = false;
+    for (const p of pendingTxs) {
+      publicClient.getTransactionReceipt({ hash: p.hash as `0x${string}` })
+        .then((receipt) => {
+          if (!cancelled && receipt) {
+            trackConfirmedTx(p.hash, receipt);
+            refetch();
+          }
+        })
+        .catch(() => {});
+    }
+
+    return () => {
+      cancelled = true;
+    };
+  }, [transactions, publicClient, refetch]);
+
   // Calculate counts for filters
   const confirmedCount = transactions.filter((t) => t.status === 'SUCCESS').length;
   const revertedCount = transactions.filter((t) => t.status === 'REVERTED').length;
+  const pendingCount = transactions.filter((t) => t.status === 'PENDING').length;
 
   // Filtered transactions
   const filteredTransactions = useMemo(() => {
@@ -67,6 +94,7 @@ export const ConsoleTransactionsPage: React.FC = () => {
       // Status filter
       if (statusFilter === 'CONFIRMED' && tx.status !== 'SUCCESS') return false;
       if (statusFilter === 'REVERTED' && tx.status !== 'REVERTED') return false;
+      if (statusFilter === 'PENDING' && tx.status !== 'PENDING') return false;
 
       // Search query filter
       if (searchQuery.trim()) {
@@ -143,6 +171,21 @@ export const ConsoleTransactionsPage: React.FC = () => {
             <span>Confirmed ({confirmedCount})</span>
           </button>
 
+          {pendingCount > 0 && (
+            <button
+              type="button"
+              onClick={() => setStatusFilter('PENDING')}
+              className={`px-3.5 py-1.5 rounded-xl border transition-all duration-micro cursor-pointer font-bold flex items-center gap-1.5 ${
+                statusFilter === 'PENDING'
+                  ? 'bg-amber-100 text-amber-950 border-amber-400 shadow-xs'
+                  : 'bg-slate-50 text-slate-700 border-slate-200 hover:text-black hover:bg-slate-100'
+              }`}
+            >
+              <Clock className="w-3.5 h-3.5 text-amber-700 animate-spin" />
+              <span>Pending ({pendingCount})</span>
+            </button>
+          )}
+
           <button
             type="button"
             onClick={() => setStatusFilter('REVERTED')}
@@ -169,6 +212,29 @@ export const ConsoleTransactionsPage: React.FC = () => {
           />
         </div>
       </div>
+
+      {pendingCount > 0 && (
+        <div className="p-4 rounded-xl bg-amber-50 border border-amber-300 text-xs text-amber-950 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+          <div className="flex items-center gap-2.5">
+            <Clock className="w-4 h-4 text-amber-700 shrink-0 animate-spin" />
+            <div>
+              <span className="font-bold">Mining in Progress ({pendingCount} pending transaction{pendingCount > 1 ? 's' : ''}):</span>{' '}
+              <span className="text-amber-900">
+                MetaMask broadcast confirmed. Active RPC client is monitoring block inclusion in real-time.
+              </span>
+            </div>
+          </div>
+          <Button
+            size="xs"
+            variant="outline"
+            onClick={() => refetch()}
+            loading={isLoading}
+            className="text-xs bg-white border-amber-300 text-amber-950 hover:bg-amber-100 font-bold shrink-0"
+          >
+            Check Receipts
+          </Button>
+        </div>
+      )}
 
       {/* Transaction Feed Panel */}
       <TechnicalPanel
