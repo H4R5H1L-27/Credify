@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useWriteContract, usePublicClient } from 'wagmi';
 import { useQueryClient } from '@tanstack/react-query';
 import { type Address, stringToHex, pad, decodeEventLog } from 'viem';
-import { factoryAbi, poolAbi, type TermSheet } from '@credify/shared';
+import { factoryAbi, poolAbi, kycAbi, type TermSheet } from '@credify/shared';
 import { useWallet } from '../context/WalletContext';
 import { useIdentity } from '../context/IdentityContext';
 import { api, consoleApi } from '../lib/api';
@@ -494,6 +494,23 @@ export function useContractAction() {
       );
     }
 
+    const isSepolia = factoryAddress.toLowerCase() === '0xd5230d26a83e15da5b4f22b9b06054f96fb47c89' || targetChainId === 11155111;
+
+    // Filter/map merchants to ensure they match verified suppliers on target chain
+    let targetMerchants: readonly `0x${string}`[] = args.terms.merchants as readonly `0x${string}`[];
+    if (isSepolia) {
+      const sepoliaSuppliers = ['0x921D30Fa5E257a3f527cc325Be117A5e66165F3A' as `0x${string}`, '0x8538A473C611a0199728A5f63372279EFA005722' as `0x${string}`];
+      targetMerchants = targetMerchants.map((m) => {
+        const lower = m.toLowerCase();
+        if (lower === '0x9965507d1a55bcc2695c58ba16fb37d819b0a4dc') return sepoliaSuppliers[0];
+        if (lower === '0x976ea74026e726554db657fa54763abd0c3a0aa9') return sepoliaSuppliers[1];
+        return m;
+      }) as readonly `0x${string}`[];
+      if (targetMerchants.length === 0) {
+        targetMerchants = [sepoliaSuppliers[0]];
+      }
+    }
+
     const outcome = await runLifecycle(
       'Loan Deployment',
       async () => {
@@ -501,16 +518,14 @@ export function useContractAction() {
           borrower: address as Address,
           targetWei: BigInt(args.terms.targetWei),
           durationSeconds: BigInt(args.terms.durationSeconds),
-          fundingDurationSeconds: BigInt((args.terms as any).fundingDurationSeconds ?? 7 * 86400),
+          fundingDurationSeconds: BigInt((args.terms as any).fundingDurationSeconds ?? (isSepolia ? 300 : 7 * 86400)),
           aprBps: BigInt(args.terms.aprBps),
           maxSpendWei: BigInt(args.terms.maxSpendWei),
           defaultQuorumBps: BigInt(args.terms.defaultQuorumBps),
-          gracePeriodSeconds: BigInt((args.terms as any).gracePeriodSeconds ?? 3 * 86400),
+          gracePeriodSeconds: BigInt((args.terms as any).gracePeriodSeconds ?? (isSepolia ? 300 : 3 * 86400)),
           agreementHash: ((args.terms as any).agreementHash ?? '0x0000000000000000000000000000000000000000000000000000000000000000') as `0x${string}`,
-          merchants: args.terms.merchants as readonly `0x${string}`[],
-          merchantCapsWei: (args.terms as any).merchantCapsWei
-            ? (args.terms as any).merchantCapsWei.map((c: any) => BigInt(c))
-            : (args.terms.merchants as readonly `0x${string}`[]).map(() => BigInt(args.terms.maxSpendWei) / BigInt((args.terms.merchants as readonly `0x${string}`[]).length || 1)),
+          merchants: targetMerchants,
+          merchantCapsWei: targetMerchants.map(() => BigInt(args.terms.maxSpendWei) / BigInt(targetMerchants.length || 1)),
         };
         return writeContractAsync({
           address: factoryAddress,
@@ -802,6 +817,27 @@ export function useContractAction() {
     return { hash: outcome.txHash, receiptBlock: outcome.blockNumber || '' };
   };
 
+  // 9. Attest Account On-Chain (KYCRegistry)
+  const executeAttestOnChain = async (
+    targetAccount: Address,
+    roleType: number = 1
+  ) => {
+    const kycAddress = evaluatorContracts?.contracts?.kycRegistry as Address;
+    if (!kycAddress) throw new Error('KYCRegistry contract address not configured.');
+    const expiresAt = BigInt(Math.floor(Date.now() / 1000) + 365 * 86400);
+    const credentialHash = `0x${Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join('')}` as `0x${string}`;
+
+    const outcome = await runLifecycle('KYC Attestation', async () => {
+      return writeContractAsync({
+        address: kycAddress,
+        abi: kycAbi,
+        functionName: 'setVerification',
+        args: [targetAccount, roleType, expiresAt, credentialHash],
+      });
+    });
+    return { hash: outcome.txHash, receiptBlock: outcome.blockNumber || '' };
+  };
+
   return {
     isMetaMaskMode,
     isGuidedMode,
@@ -816,5 +852,6 @@ export function useContractAction() {
     executeClaimRefund,
     executeVoteDefault,
     executeCancelUnfunded,
+    executeAttestOnChain,
   };
 }

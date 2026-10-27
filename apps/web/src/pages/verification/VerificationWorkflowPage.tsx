@@ -37,8 +37,11 @@ export const VerificationWorkflowPage: React.FC = () => {
     mutationFn: (data: any) => api.createVerificationRequest(data),
     onSuccess: async () => {
       if (address && typeof window !== 'undefined') {
-        localStorage.setItem(`credify_verified_${address.toLowerCase()}`, 'true');
+        const lower = address.toLowerCase();
+        localStorage.setItem(`credify_verified_${lower}`, 'true');
         localStorage.setItem('credify_verified_status', 'VERIFIED');
+        localStorage.setItem(`credify_role_${lower}`, role);
+        localStorage.setItem(`credify_name_${lower}`, fullName);
       }
       await queryClient.invalidateQueries({ queryKey: ['verificationRequest', address] });
       await queryClient.invalidateQueries({ queryKey: ['identity'] });
@@ -139,14 +142,25 @@ export const VerificationWorkflowPage: React.FC = () => {
                     </p>
                   </div>
                 </div>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => setShowMilestone(true)}
-                  className="text-xs shrink-0 font-bold bg-white border-slate-300 text-slate-900 hover:bg-slate-50"
-                >
-                  View Attestation
-                </Button>
+                <div className="flex items-center gap-2 shrink-0">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setShowMilestone(true)}
+                    className="text-xs font-bold bg-white border-slate-300 text-slate-900 hover:bg-slate-50"
+                  >
+                    View Attestation
+                  </Button>
+                  <Link to="/app/borrower/overview">
+                    <Button
+                      size="sm"
+                      variant="primary"
+                      className="text-xs font-bold"
+                    >
+                      Borrower Workspace →
+                    </Button>
+                  </Link>
+                </div>
               </div>
 
               {request && (

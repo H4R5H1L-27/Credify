@@ -90,6 +90,86 @@ function getOfflineFallback<T>(path: string, options: RequestInit = {}): T | nul
     } as T;
   }
 
+  if (path.endsWith('/loans') && options.method === 'POST') {
+    const pool = isSepolia ? '0x35af7C36B06342e172049e6859e7D58Eb9b420A1' : '0x61ef99673A65BeE0512b8d1eB1aA656866D24296';
+    const txHash = '0x' + Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join('');
+    return {
+      loanId: pool,
+      transactionHash: txHash,
+      parsed: {
+        terms: {
+          borrower: isSepolia ? '0xa69380a4E44B6084205A3B721d7Cdff582EB7793' : '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
+          targetWei: isSepolia ? '100000000000000000' : '10000000000000000000',
+          durationSeconds: isSepolia ? 600 : 1209600,
+          fundingDurationSeconds: isSepolia ? 300 : 604800,
+          aprBps: 800,
+          maxSpendWei: isSepolia ? '80000000000000000' : '8000000000000000000',
+          defaultQuorumBps: 5001,
+          gracePeriodSeconds: isSepolia ? 300 : 259200,
+          agreementHash: '0x3333333333333333333333333333333333333333333333333333333333333333',
+          merchants: isSepolia ? ['0x921D30Fa5E257a3f527cc325Be117A5e66165F3A'] : ['0x9965507D1a55bcC2695C58ba16FB37d819B0A4dc'],
+          merchantCapsWei: [isSepolia ? '80000000000000000' : '8000000000000000000']
+        },
+        source: 'provided-terms',
+        assumptions: []
+      }
+    } as T;
+  }
+
+  if (path.includes('/agreements/parse')) {
+    let bodyData: any = {};
+    try { bodyData = JSON.parse(options.body as string); } catch {}
+    const text = bodyData.agreementText || '';
+    const borrower = bodyData.borrowerAddress || (isSepolia ? '0xa69380a4E44B6084205A3B721d7Cdff582EB7793' : '0x70997970C51812dc3A010C7d01b50e0d17dc79C8');
+    const merchants = isSepolia
+      ? ['0x921D30Fa5E257a3f527cc325Be117A5e66165F3A' as const]
+      : ['0x9965507D1a55bcC2695C58ba16FB37d819B0A4dc' as const];
+    const targetEth = isSepolia ? 0.1 : 10;
+    const maxSpendEth = isSepolia ? 0.08 : 8;
+    const targetWei = isSepolia ? '100000000000000000' : '10000000000000000000';
+    const maxSpendWei = isSepolia ? '80000000000000000' : '8000000000000000000';
+
+    return {
+      rawText: text,
+      canonicalText: text.trim(),
+      agreementHash: '0x3333333333333333333333333333333333333333333333333333333333333333',
+      summary: 'Parsed academic credit agreement',
+      parser: 'deterministic',
+      isValid: true,
+      missingFields: [],
+      fields: {
+        targetEth: { value: targetEth, source: 'text', quote: `${targetEth} ETH` },
+        aprPercent: { value: 8, source: 'text', quote: '8% APR' },
+        durationDays: { value: 14, source: 'text', quote: '14 days' },
+        fundingDays: { value: 7, source: 'default' },
+        spendCapEth: { value: maxSpendEth, source: 'text', quote: `${maxSpendEth} ETH spending cap` },
+        defaultQuorumPercent: { value: 50.01, source: 'default' },
+        gracePeriodDays: { value: 3, source: 'default' }
+      },
+      resolvedMerchants: [
+        {
+          name: isSepolia ? 'Merchant A' : 'BuildRight Supplies',
+          address: merchants[0],
+          capEth: maxSpendEth
+        }
+      ],
+      unsupportedClauses: [],
+      terms: {
+        borrower,
+        targetWei,
+        durationSeconds: isSepolia ? 600 : 1209600,
+        fundingDurationSeconds: isSepolia ? 300 : 604800,
+        aprBps: 800,
+        maxSpendWei,
+        defaultQuorumBps: 5001,
+        gracePeriodSeconds: isSepolia ? 300 : 259200,
+        agreementHash: '0x3333333333333333333333333333333333333333333333333333333333333333',
+        merchants,
+        merchantCapsWei: [maxSpendWei]
+      }
+    } as T;
+  }
+
   if (path.endsWith('/loans')) {
     const pool = isSepolia ? '0x35af7C36B06342e172049e6859e7D58Eb9b420A1' : '0x61ef99673A65BeE0512b8d1eB1aA656866D24296';
     const borrowerAddr = isSepolia ? '0xa69380a4E44B6084205A3B721d7Cdff582EB7793' : '0x70997970C51812dc3A010C7d01b50e0d17dc79C8';
@@ -149,14 +229,18 @@ function getOfflineFallback<T>(path: string, options: RequestInit = {}): T | nul
 
     if (typeof window !== 'undefined') {
       const isStoredVerified = localStorage.getItem(`credify_verified_${lower}`) === 'true';
+      const storedRole = localStorage.getItem(`credify_role_${lower}`) as Role | null;
+      const storedName = localStorage.getItem(`credify_name_${lower}`);
       const stored = JSON.parse(localStorage.getItem('credify_verification_requests') || '[]');
       const match = stored.find((r: any) => r.walletAddress?.toLowerCase() === lower);
       if (match) {
-        displayName = match.profile?.fullName || displayName;
-        role = match.role || role;
+        displayName = match.profile?.fullName || storedName || displayName;
+        role = match.role || storedRole || role;
         isVerified = match.status === 'VERIFIED';
-      } else if (isStoredVerified) {
+      } else if (isStoredVerified || storedRole) {
         isVerified = true;
+        if (storedRole) role = storedRole;
+        if (storedName) displayName = storedName;
       } else if (lower === '0x448920c465158b78a694460e96e022b82b35c6e2') {
         isVerified = true;
       }
@@ -252,6 +336,10 @@ function getOfflineFallback<T>(path: string, options: RequestInit = {}): T | nul
       localStorage.setItem('credify_verification_requests', JSON.stringify(filtered));
       localStorage.setItem(`credify_verified_${addr.toLowerCase()}`, 'true');
       localStorage.setItem('credify_verified_status', 'VERIFIED');
+      localStorage.setItem(`credify_role_${addr.toLowerCase()}`, role);
+      if (bodyData.profile?.fullName) {
+        localStorage.setItem(`credify_name_${addr.toLowerCase()}`, bodyData.profile.fullName);
+      }
     }
     return newReq as T;
   }
@@ -607,6 +695,10 @@ export const api = {
       const addr = data.walletAddress.toLowerCase();
       localStorage.setItem(`credify_verified_${addr}`, 'true');
       localStorage.setItem('credify_verified_status', 'VERIFIED');
+      localStorage.setItem(`credify_role_${addr}`, data.role || 'BORROWER');
+      if (data.profile?.fullName) {
+        localStorage.setItem(`credify_name_${addr}`, data.profile.fullName);
+      }
     }
     return res;
   },

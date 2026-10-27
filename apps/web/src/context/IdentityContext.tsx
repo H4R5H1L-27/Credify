@@ -159,30 +159,78 @@ export const IdentityProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     : false;
 
   const storedRole = typeof window !== 'undefined' && address
-    ? (JSON.parse(localStorage.getItem('credify_verification_requests') || '[]').find((r: any) => r.walletAddress?.toLowerCase() === address.toLowerCase())?.role as Role | undefined)
+    ? (localStorage.getItem(`credify_role_${address.toLowerCase()}`) as Role | null) ||
+      (JSON.parse(localStorage.getItem('credify_verification_requests') || '[]').find((r: any) => r.walletAddress?.toLowerCase() === address.toLowerCase())?.role as Role | undefined) ||
+      (storedVerified ? 'BORROWER' : undefined)
     : undefined;
 
-  const role: Role | 'UNREGISTERED' = isGuidedMode
-    ? activePersona.role
-    : (identity?.role || storedRole || 'UNREGISTERED');
+  const storedName = typeof window !== 'undefined' && address
+    ? localStorage.getItem(`credify_name_${address.toLowerCase()}`) ||
+      (JSON.parse(localStorage.getItem('credify_verification_requests') || '[]').find((r: any) => r.walletAddress?.toLowerCase() === address.toLowerCase())?.profile?.fullName as string | undefined)
+    : undefined;
 
-  const isVerified: boolean = isGuidedMode ? true : (identity?.isVerified || storedVerified || false);
+  const effectiveRole: Role | 'UNREGISTERED' = isGuidedMode
+    ? activePersona.role
+    : (identity?.role && identity.role !== 'UNREGISTERED'
+        ? identity.role
+        : (storedRole || 'UNREGISTERED'));
+
+  const isVerified: boolean = isGuidedMode
+    ? true
+    : Boolean(identity?.isVerified || storedVerified || effectiveRole !== 'UNREGISTERED');
+
   const verificationStatus: VerificationStatus = isGuidedMode
     ? 'VERIFIED'
-    : (identity?.verificationStatus === 'VERIFIED' || storedVerified ? 'VERIFIED' : (identity?.verificationStatus || 'NOT_STARTED'));
+    : (identity?.verificationStatus === 'VERIFIED' || storedVerified || isVerified
+        ? 'VERIFIED'
+        : (identity?.verificationStatus || (effectiveRole !== 'UNREGISTERED' ? 'VERIFIED' : 'NOT_STARTED')));
 
+  const role = effectiveRole;
   const isBorrower = role === 'BORROWER';
   const isLender = role === 'LENDER';
   const isMerchant = role === 'MERCHANT';
   const isOperator = role === 'DEMO_OPERATOR' || role === 'EVALUATOR';
   const isUnregistered = role === 'UNREGISTERED';
 
+  const contextualIdentity: WalletIdentity | null = useMemo(() => {
+    if (isGuidedMode && activePersona) {
+      return {
+        address: activePersona.address,
+        displayName: activePersona.displayName,
+        role: activePersona.role,
+        verificationStatus: 'VERIFIED',
+        isVerified: true,
+        balanceWei: '100000000000000000000',
+      };
+    }
+    const base = identity || (address ? {
+      address,
+      displayName: storedName || 'Verified Institutional Actor',
+      role: effectiveRole,
+      verificationStatus,
+      isVerified,
+      balanceWei: '0',
+    } : null);
+
+    if (!base) return null;
+
+    return {
+      ...base,
+      displayName: (base.displayName && base.displayName !== 'Unregistered Account')
+        ? base.displayName
+        : (storedName || 'Verified Institutional Actor'),
+      role: effectiveRole,
+      isVerified,
+      verificationStatus,
+    };
+  }, [identity, isGuidedMode, activePersona, address, storedName, effectiveRole, verificationStatus, isVerified]);
+
   return (
     <IdentityContext.Provider
       value={{
         isConnected,
         address,
-        identity: identity || null,
+        identity: contextualIdentity,
         role,
         verificationStatus,
         isVerified,

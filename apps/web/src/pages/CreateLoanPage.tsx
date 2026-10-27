@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { useReadContract } from 'wagmi';
 import { useIdentity } from '../context/IdentityContext';
+import { useWallet } from '../context/WalletContext';
 import { useContractAction } from '../hooks/useContractAction';
+import { useEvaluatorContracts } from '../hooks/useCredify';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Alert } from '../components/ui/Alert';
@@ -9,7 +12,7 @@ import { TransactionLifecycle } from '../components/ui/TransactionLifecycle';
 import { MilestoneCelebration } from '../components/ui/MilestoneCelebration';
 import { formatEther, formatApr, formatDuration } from '../lib/utils';
 import { api } from '../lib/api';
-import type { AgreementParseResult, TermSheet } from '@credify/shared';
+import { type AgreementParseResult, type TermSheet, kycAbi } from '@credify/shared';
 import {
   FileText,
   ArrowRight,
@@ -41,8 +44,33 @@ const PRESETS = [
 
 export const CreateLoanPage: React.FC = () => {
   const navigate = useNavigate();
-  const { isConnected, isBorrower, isVerified, identity, address } = useIdentity();
-  const { executeCreateLoan, txState: contractTxState, isExecuting } = useContractAction();
+  const { isConnected, isBorrower, isVerified, identity, address, isGuidedMode } = useIdentity();
+  const { targetChainId } = useWallet();
+  const { executeCreateLoan, executeAttestOnChain, txState: contractTxState, isExecuting } = useContractAction();
+  const { data: evaluatorContracts } = useEvaluatorContracts();
+
+  const isSepolia = targetChainId === 11155111 || evaluatorContracts?.network === 'sepolia';
+  const kycAddress = evaluatorContracts?.contracts?.kycRegistry as `0x${string}` | undefined;
+
+  const { data: onChainVerified, refetch: refetchOnChainKyc } = useReadContract({
+    address: kycAddress,
+    abi: kycAbi as any,
+    functionName: 'isVerified',
+    args: address ? [address as `0x${string}`, 1] : undefined,
+    query: {
+      enabled: Boolean(address && !isGuidedMode && kycAddress),
+    }
+  });
+
+  const { data: isVerifierOnChain } = useReadContract({
+    address: kycAddress,
+    abi: kycAbi as any,
+    functionName: 'hasRole',
+    args: address ? ['0x0ce23c3e399818cfee81a7ab0880f714e53d7672b08df0fa62f2843416e1ea09' as `0x${string}`, address as `0x${string}`] : undefined,
+    query: {
+      enabled: Boolean(address && !isGuidedMode && kycAddress),
+    }
+  });
 
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [agreementText, setAgreementText] = useState(PRESETS[0].text);
@@ -551,6 +579,57 @@ export const CreateLoanPage: React.FC = () => {
                 )}
               </div>
 
+              {/* On-Chain KYC Warning for Sepolia Live Chain Mode */}
+              {!isGuidedMode && isSepolia && onChainVerified === false && (
+                <div className="p-4 rounded-xl bg-amber-50 border border-amber-300 text-xs text-amber-950 space-y-3">
+                  <div className="flex items-start gap-2.5">
+                    <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+                    <div className="space-y-1">
+                      <div className="font-bold text-amber-950 text-sm">
+                        On-Chain KYC Attestation Required
+                      </div>
+                      <p className="text-amber-900 leading-relaxed font-medium">
+                        Address <code className="bg-amber-100 font-mono px-1 rounded font-bold">{address}</code> has not been attested in the Sepolia <code className="bg-amber-100 font-mono px-1 rounded font-bold">KYCRegistry</code> contract ({kycAddress ? `${kycAddress.slice(0, 6)}...${kycAddress.slice(-4)}` : ''}).
+                        Deploying loans on Sepolia requires on-chain borrower attestation (otherwise the smart contract simulation reverts with <code className="font-mono text-amber-950 bg-amber-200 px-1 rounded">BorrowerNotVerified()</code>).
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="pt-2 border-t border-amber-200 flex flex-wrap items-center justify-between gap-2">
+                    {isVerifierOnChain || address?.toLowerCase() === '0x448920c465158b78a694460e96e022b82b35c6e2' ? (
+                      <Button
+                        size="sm"
+                        variant="primary"
+                        onClick={async () => {
+                          if (!address) return;
+                          try {
+                            if (executeAttestOnChain) {
+                              await executeAttestOnChain(address as `0x${string}`, 1);
+                            }
+                            if (typeof refetchOnChainKyc === 'function') {
+                              await (refetchOnChainKyc as any)();
+                            }
+                          } catch {}
+                        }}
+                        disabled={isExecuting}
+                        className="text-xs font-bold"
+                      >
+                        Attest Active Wallet as Borrower on Sepolia (1-Click)
+                      </Button>
+                    ) : (
+                      <div className="text-[11px] text-amber-800 space-y-1">
+                        <span className="font-bold block">How to proceed:</span>
+                        <ul className="list-disc list-inside space-y-0.5 text-slate-700">
+                          <li>Switch to <strong>Evaluator (Guided)</strong> mode in the top right to simulate transactions with pre-verified demo keys.</li>
+                          <li>Or switch in MetaMask to the deployer/verifier account (<code className="font-mono text-xs">0x4489...C6e2</code>) to attest your address on-chain.</li>
+                          <li>Or connect with the pre-attested Sepolia borrower account (<code className="font-mono text-xs">0xa69380a4E44B6084205A3B721d7Cdff582EB7793</code>).</li>
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
               {/* Actions */}
               <div className="flex items-center justify-between pt-4 border-t border-slate-200">
                 <Button
@@ -564,7 +643,12 @@ export const CreateLoanPage: React.FC = () => {
                 <Button
                   variant="primary"
                   onClick={handleDeploy}
-                  disabled={!parseResult.isValid || !parseResult.terms || isExecuting}
+                  disabled={
+                    !parseResult.isValid ||
+                    !parseResult.terms ||
+                    isExecuting ||
+                    (!isGuidedMode && isSepolia && onChainVerified === false)
+                  }
                   icon={<FileText className="w-4 h-4" />}
                   className="font-bold"
                 >
