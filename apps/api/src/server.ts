@@ -107,6 +107,7 @@ export function buildServer(ctx: AppContext) {
 
   app.get('/api/v1/health', getHealthHandler);
   app.get('/health', getHealthHandler);
+  app.get('/', getHealthHandler);
 
   app.get('/api/v1/observability/metrics', async (req, reply) => {
     const format = (req.query as any)?.format || (req.headers.accept?.includes('text/plain') ? 'prometheus' : 'json');
