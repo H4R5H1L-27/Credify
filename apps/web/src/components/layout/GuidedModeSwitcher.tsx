@@ -74,15 +74,19 @@ export const GuidedModeSwitcher: React.FC = () => {
 
   if (!isGuidedMode) {
     return (
-      <div className="flex items-center">
+      <div className="flex items-center gap-1.5">
+        <span className="hidden sm:inline-flex items-center gap-1 text-[11px] font-mono font-bold text-slate-500 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-md">
+          <span className="h-1.5 w-1.5 rounded-full bg-slate-400" />
+          MetaMask Mode
+        </span>
         <button
           type="button"
           onClick={() => setGuidedMode(true)}
-          className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-yellow-50 hover:text-yellow-950 border border-slate-200 hover:border-yellow-300 rounded-lg transition-colors cursor-pointer shadow-xs"
-          title="Enable Guided Demo Mode for friction-free presenter walkthrough"
+          className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-bold text-amber-950 bg-amber-50 hover:bg-amber-100 border border-amber-300 rounded-lg transition-colors cursor-pointer shadow-xs"
+          title="Switch to Guided Demo Mode for zero-friction demo without MetaMask errors"
         >
-          <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-          <span className="hidden sm:inline">Guided Mode</span>
+          <Sparkles className="w-3.5 h-3.5 text-amber-600" />
+          <span>Switch to Guided Demo</span>
         </button>
       </div>
     );

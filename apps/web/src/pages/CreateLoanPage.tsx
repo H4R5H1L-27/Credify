@@ -44,7 +44,7 @@ const PRESETS = [
 
 export const CreateLoanPage: React.FC = () => {
   const navigate = useNavigate();
-  const { isConnected, isBorrower, isVerified, identity, address, isGuidedMode } = useIdentity();
+  const { isConnected, isBorrower, isVerified, identity, address, isGuidedMode, setGuidedMode } = useIdentity();
   const { targetChainId } = useWallet();
   const { executeCreateLoan, executeAttestOnChain, txState: contractTxState, isExecuting } = useContractAction();
   const { data: evaluatorContracts } = useEvaluatorContracts();
@@ -663,23 +663,30 @@ export const CreateLoanPage: React.FC = () => {
                         </div>
                       </div>
                     ) : (
-                      <div className="text-[11px] text-amber-800 space-y-1.5">
-                        <span className="font-bold block">Why did the previous transaction fail?</span>
-                        <p className="text-slate-700">
-                          Sepolia smart contract <code className="bg-amber-100 font-mono px-1 rounded">LoanFactory.sol</code> strictly checks on-chain KYC before creating any loan. Un-attested addresses revert on-chain with custom error <code className="bg-amber-200 font-mono px-1 rounded font-bold text-amber-950">0xee8fb9be (BorrowerNotVerified)</code>.
+                      <div className="text-[11px] text-amber-800 space-y-2">
+                        <span className="font-bold block text-xs">Why does MetaMask fail on Sepolia?</span>
+                        <p className="text-slate-700 leading-relaxed">
+                          Sepolia smart contract <code className="bg-amber-100 font-mono px-1 rounded">LoanFactory.sol</code> enforces on-chain verification before allowing loan deployments. Un-attested addresses revert on-chain with <code className="bg-amber-200 font-mono px-1 rounded font-bold text-amber-950">0xee8fb9be (BorrowerNotVerified)</code>.
                         </p>
-                        <span className="font-bold block pt-1">Recommended actions:</span>
-                        <ul className="list-disc list-inside space-y-1 text-slate-700">
-                          <li>
-                            <strong>Switch to Evaluator (Guided) mode:</strong> Click the <span className="font-bold">Guided Mode</span> button in the top bar to run frictionless, zero-gas interactive presentations.
-                          </li>
-                          <li>
-                            <strong>Attest this account on Sepolia:</strong> Switch in MetaMask to the Deployer/Verifier account (<code className="font-mono text-xs">0x448920c465158b78A694460E96E022b82B35C6e2</code>) to attest your wallet address on-chain.
-                          </li>
-                          <li>
-                            <strong>Ensure sufficient gas:</strong> In MetaMask, make sure your account has Sepolia ETH (see Faucet button in header).
-                          </li>
-                        </ul>
+                        <div className="p-2.5 bg-amber-100/70 border border-amber-300 rounded-lg space-y-2">
+                          <span className="font-bold text-amber-950 block">Fastest solution for your demo:</span>
+                          <p className="text-amber-900 text-[11px]">
+                            Switch to Guided Demo Mode to create loans instantly with pre-verified protocol demo keys — <strong>no SepoliaETH gas needed, no MetaMask popups or errors</strong>.
+                          </p>
+                          <Button
+                            size="sm"
+                            variant="primary"
+                            onClick={() => {
+                              setGuidedMode(true);
+                              setTimeout(() => {
+                                handleDeploy();
+                              }, 150);
+                            }}
+                            className="text-xs font-bold bg-amber-600 hover:bg-amber-700 text-white"
+                          >
+                            ✨ Switch to Guided Demo &amp; Create Loan Instantly (Zero Gas)
+                          </Button>
+                        </div>
                       </div>
                     )}
                   </div>
