@@ -50,7 +50,7 @@ export const CreateLoanPage: React.FC = () => {
   const { data: evaluatorContracts } = useEvaluatorContracts();
 
   const isSepolia = targetChainId === 11155111 || evaluatorContracts?.network === 'sepolia';
-  const kycAddress = evaluatorContracts?.contracts?.kycRegistry as `0x${string}` | undefined;
+  const kycAddress = (evaluatorContracts?.contracts?.kycRegistry || (isSepolia ? '0xdf8d6C4b9a982a4c7a557686cb0A6dF6ECab0236' : undefined)) as `0x${string}` | undefined;
 
   const { data: onChainVerified, refetch: refetchOnChainKyc } = useReadContract({
     address: kycAddress,

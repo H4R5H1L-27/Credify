@@ -223,8 +223,8 @@ function getOfflineFallback<T>(path: string, options: RequestInit = {}): T | nul
     const parts = path.split('/');
     const addr = parts[parts.length - 1];
     const lower = addr.toLowerCase();
-    let displayName = lower === '0x448920c465158b78a694460e96e022b82b35c6e2' ? 'Credify Deployer' : 'Institutional Actor';
-    let role: Role = 'BORROWER';
+    let displayName = lower === '0x448920c465158b78a694460e96e022b82b35c6e2' ? 'Credify Deployer & Verifier' : 'Institutional Actor';
+    let role: Role = lower === '0x448920c465158b78a694460e96e022b82b35c6e2' ? 'DEMO_OPERATOR' : 'BORROWER';
     let isVerified = false;
 
     if (typeof window !== 'undefined') {
@@ -238,11 +238,9 @@ function getOfflineFallback<T>(path: string, options: RequestInit = {}): T | nul
         role = match.role || storedRole || role;
         isVerified = match.status === 'VERIFIED';
       } else if (isStoredVerified || storedRole) {
-        isVerified = true;
+        isVerified = isStoredVerified;
         if (storedRole) role = storedRole;
         if (storedName) displayName = storedName;
-      } else if (lower === '0x448920c465158b78a694460e96e022b82b35c6e2') {
-        isVerified = true;
       }
     }
 
@@ -254,6 +252,10 @@ function getOfflineFallback<T>(path: string, options: RequestInit = {}): T | nul
       isVerified,
       balanceWei: '100000000000000000000'
     } as T;
+  }
+
+  if (path.includes('/reputation/') && path.endsWith('/history')) {
+    return [] as T;
   }
 
   if (path.endsWith('/reputation') || path.includes('/reputation/')) {
@@ -273,34 +275,21 @@ function getOfflineFallback<T>(path: string, options: RequestInit = {}): T | nul
       const stored = JSON.parse(localStorage.getItem('credify_verification_requests') || '[]');
       const updated = stored.length > 0 
         ? stored.map((r: any) => r.id === id ? { ...r, status: verifiedStatus, attestationTxHash: '0x35af7c36b06342e172049e6859e7d58eb9b420a1' } : r)
-        : [{
-            id,
-            walletAddress: '0x448920c465158b78A694460E96E022b82B35C6e2',
-            role: 'BORROWER',
-            status: verifiedStatus,
-            credentialHash: '0x15f86f9b9dea81902d2d4ea4245b56ff3389bf8f5d0be6be70ce46f8d9e6e223',
-            attestationTxHash: '0x35af7c36b06342e172049e6859e7d58eb9b420a1',
-            profile: {
-              fullName: 'Verified Institutional Actor',
-              organization: 'student vit',
-              referenceId: 'CRD-3967'
-            }
-          }];
+        : [];
       localStorage.setItem('credify_verification_requests', JSON.stringify(updated));
-      localStorage.setItem('credify_verified_status', 'VERIFIED');
-      localStorage.setItem('credify_verified_0x448920c465158b78a694460e96e022b82b35c6e2', 'true');
+      localStorage.setItem('credify_verified_status', verifiedStatus);
     }
 
     return {
       id,
-      walletAddress: '0x448920c465158b78A694460E96E022b82B35C6e2',
+      walletAddress: '0xa69380a4E44B6084205A3B721d7Cdff582EB7793',
       role: 'BORROWER',
       status: verifiedStatus,
       credentialHash: '0x15f86f9b9dea81902d2d4ea4245b56ff3389bf8f5d0be6be70ce46f8d9e6e223',
       attestationTxHash: '0x35af7c36b06342e172049e6859e7d58eb9b420a1',
       profile: {
-        fullName: 'Verified Institutional Actor',
-        organization: 'student vit',
+        fullName: 'Aarav Menon',
+        organization: 'Credify Academic Labs',
         referenceId: 'CRD-3967'
       }
     } as T;
@@ -384,15 +373,15 @@ function getOfflineFallback<T>(path: string, options: RequestInit = {}): T | nul
     }
     const defaultList = [
       {
-        id: 'req_crd_3967',
-        walletAddress: '0x448920c465158b78A694460E96E022b82B35C6e2',
+        id: 'req_crd_sepolia_borrower',
+        walletAddress: '0xa69380a4E44B6084205A3B721d7Cdff582EB7793',
         role: 'BORROWER',
-        status: (typeof window !== 'undefined' && localStorage.getItem('credify_verified_status') === 'VERIFIED') ? 'VERIFIED' : 'VERIFIED',
+        status: 'VERIFIED',
         credentialHash: '0x15f86f9b9dea81902d2d4ea4245b56ff3389bf8f5d0be6be70ce46f8d9e6e223',
         attestationTxHash: '0x35af7c36b06342e172049e6859e7d58eb9b420a1',
         profile: {
-          fullName: 'Credify Deployer',
-          organization: 'Credify Foundation',
+          fullName: 'Aarav Menon',
+          organization: 'Credify Academic Labs',
           referenceId: 'CRD-3967'
         }
       }

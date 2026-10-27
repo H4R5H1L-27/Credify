@@ -94,7 +94,8 @@ export const BorrowerReputationPage: React.FC = () => {
   const repaymentsToTierA = score < 70 ? Math.ceil((70 - score) / 8) : 0;
 
   // Filtered history
-  const filteredHistory = history.filter((entry) => {
+  const safeHistory = Array.isArray(history) ? history : [];
+  const filteredHistory = safeHistory.filter((entry) => {
     if (outcomeFilter === 'ALL') return true;
     return entry.outcome === outcomeFilter;
   });

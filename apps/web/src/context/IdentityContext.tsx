@@ -177,13 +177,13 @@ export const IdentityProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   const isVerified: boolean = isGuidedMode
     ? true
-    : Boolean(identity?.isVerified || storedVerified || effectiveRole !== 'UNREGISTERED');
+    : Boolean(identity?.isVerified || storedVerified);
 
   const verificationStatus: VerificationStatus = isGuidedMode
     ? 'VERIFIED'
-    : (identity?.verificationStatus === 'VERIFIED' || storedVerified || isVerified
+    : (identity?.verificationStatus === 'VERIFIED' || storedVerified
         ? 'VERIFIED'
-        : (identity?.verificationStatus || (effectiveRole !== 'UNREGISTERED' ? 'VERIFIED' : 'NOT_STARTED')));
+        : (identity?.verificationStatus || 'NOT_STARTED'));
 
   const role = effectiveRole;
   const isBorrower = role === 'BORROWER';
