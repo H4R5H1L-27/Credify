@@ -146,13 +146,30 @@ export const IdentityProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       walletAddress: address,
       ...data,
     });
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(`credify_verified_${address.toLowerCase()}`, 'true');
+      localStorage.setItem('credify_verified_status', 'VERIFIED');
+    }
     await refetch();
     return result;
   };
 
-  const role: Role | 'UNREGISTERED' = isGuidedMode ? activePersona.role : (identity?.role || 'UNREGISTERED');
-  const isVerified: boolean = isGuidedMode ? true : (identity?.isVerified || false);
-  const verificationStatus: VerificationStatus = isGuidedMode ? 'VERIFIED' : (identity?.verificationStatus || 'NOT_STARTED');
+  const storedVerified = typeof window !== 'undefined' && address
+    ? localStorage.getItem(`credify_verified_${address.toLowerCase()}`) === 'true'
+    : false;
+
+  const storedRole = typeof window !== 'undefined' && address
+    ? (JSON.parse(localStorage.getItem('credify_verification_requests') || '[]').find((r: any) => r.walletAddress?.toLowerCase() === address.toLowerCase())?.role as Role | undefined)
+    : undefined;
+
+  const role: Role | 'UNREGISTERED' = isGuidedMode
+    ? activePersona.role
+    : (identity?.role || storedRole || 'UNREGISTERED');
+
+  const isVerified: boolean = isGuidedMode ? true : (identity?.isVerified || storedVerified || false);
+  const verificationStatus: VerificationStatus = isGuidedMode
+    ? 'VERIFIED'
+    : (identity?.verificationStatus === 'VERIFIED' || storedVerified ? 'VERIFIED' : (identity?.verificationStatus || 'NOT_STARTED'));
 
   const isBorrower = role === 'BORROWER';
   const isLender = role === 'LENDER';

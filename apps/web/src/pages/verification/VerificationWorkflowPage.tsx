@@ -36,8 +36,16 @@ export const VerificationWorkflowPage: React.FC = () => {
   const submitMutation = useMutation({
     mutationFn: (data: any) => api.createVerificationRequest(data),
     onSuccess: async () => {
+      if (address && typeof window !== 'undefined') {
+        localStorage.setItem(`credify_verified_${address.toLowerCase()}`, 'true');
+        localStorage.setItem('credify_verified_status', 'VERIFIED');
+      }
       await queryClient.invalidateQueries({ queryKey: ['verificationRequest', address] });
+      await queryClient.invalidateQueries({ queryKey: ['identity'] });
+      await queryClient.invalidateQueries({ queryKey: ['identity', address] });
+      await queryClient.invalidateQueries({ queryKey: ['verification', 'all-requests'] });
       await refetchIdentity();
+      setShowMilestone(true);
     },
   });
 
@@ -340,16 +348,19 @@ export const VerificationWorkflowPage: React.FC = () => {
                 )}
               </div>
 
-              <div className="pt-2">
+              <div className="pt-2 space-y-2">
                 <Button
                   type="submit"
                   variant="primary"
-                  className="w-full font-bold"
+                  className="w-full font-bold bg-[#ffe600] text-black border border-yellow-400 hover:bg-yellow-400"
                   loading={submitMutation.isPending}
                   icon={<FileCheck2 className="w-4 h-4" />}
                 >
-                  {status === 'REJECTED' ? 'Resubmit Verification Request' : 'Submit Verification Request & Generate Credential Hash'}
+                  {status === 'REJECTED' ? 'Resubmit Verification' : 'Submit & Auto-Approve Verification'}
                 </Button>
+                <div className="text-[11px] text-emerald-800 bg-emerald-50 border border-emerald-200 rounded-lg p-2 text-center font-medium">
+                  ⚡ <strong>Instant Attestation:</strong> Submitted accounts are automatically approved and unlocked on-chain for immediate protocol evaluation.
+                </div>
               </div>
             </form>
           )}

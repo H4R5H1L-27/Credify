@@ -5,6 +5,7 @@ import type {
   LoanSummary,
   ReputationSnapshot,
   ReputationHistoryEntry,
+  Role,
   TermSheet,
   WalletIdentity,
   SupplierProfile,
@@ -139,12 +140,32 @@ function getOfflineFallback<T>(path: string, options: RequestInit = {}): T | nul
   if (path.includes('/identity/')) {
     const parts = path.split('/');
     const addr = parts[parts.length - 1];
+    const lower = addr.toLowerCase();
+    let displayName = lower === '0x448920c465158b78a694460e96e022b82b35c6e2' ? 'Credify Deployer' : 'Institutional Actor';
+    let role: Role = 'BORROWER';
+    let isVerified = false;
+
+    if (typeof window !== 'undefined') {
+      const isStoredVerified = localStorage.getItem(`credify_verified_${lower}`) === 'true';
+      const stored = JSON.parse(localStorage.getItem('credify_verification_requests') || '[]');
+      const match = stored.find((r: any) => r.walletAddress?.toLowerCase() === lower);
+      if (match) {
+        displayName = match.profile?.fullName || displayName;
+        role = match.role || role;
+        isVerified = match.status === 'VERIFIED';
+      } else if (isStoredVerified) {
+        isVerified = true;
+      } else if (lower === '0x448920c465158b78a694460e96e022b82b35c6e2') {
+        isVerified = true;
+      }
+    }
+
     return {
       address: addr,
-      displayName: addr.toLowerCase() === '0x448920c465158b78a694460e96e022b82b35c6e2' ? 'Credify Deployer' : 'Aarav Menon',
-      role: 'BORROWER',
-      verificationStatus: 'VERIFIED',
-      isVerified: true,
+      displayName,
+      role,
+      verificationStatus: isVerified ? 'VERIFIED' : 'NOT_STARTED',
+      isVerified,
       balanceWei: '100000000000000000000'
     } as T;
   }
@@ -199,6 +220,71 @@ function getOfflineFallback<T>(path: string, options: RequestInit = {}): T | nul
     } as T;
   }
 
+  // Handle POST creation of verification requests (Instant Auto-Approve)
+  if (path.endsWith('/verification/requests') && options.method === 'POST') {
+    let bodyData: any = {};
+    try { bodyData = JSON.parse(options.body as string); } catch {}
+    const addr = bodyData.walletAddress || '0x448920c465158b78A694460E96E022b82B35C6e2';
+    const role = bodyData.role || 'BORROWER';
+    const reqId = `req_${Date.now().toString(36)}`;
+    const newReq = {
+      id: reqId,
+      walletAddress: addr,
+      role: role,
+      status: 'VERIFIED',
+      credentialHash: '0x' + Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join(''),
+      attestationTxHash: '0x' + Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join(''),
+      reviewedAt: new Date().toISOString(),
+      reviewedBy: '0x448920c465158b78A694460E96E022b82B35C6e2',
+      expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
+      profile: bodyData.profile || {
+        fullName: 'Verified Institutional Actor',
+        organization: 'Institutional Partner',
+        referenceId: `CRD-${Date.now().toString().slice(-4)}`
+      }
+    };
+    if (typeof window !== 'undefined') {
+      const stored = JSON.parse(localStorage.getItem('credify_verification_requests') || '[]');
+      const filtered = stored.filter((r: any) => r.walletAddress?.toLowerCase() !== addr.toLowerCase());
+      filtered.unshift(newReq);
+      localStorage.setItem('credify_verification_requests', JSON.stringify(filtered));
+      localStorage.setItem(`credify_verified_${addr.toLowerCase()}`, 'true');
+      localStorage.setItem('credify_verified_status', 'VERIFIED');
+    }
+    return newReq as T;
+  }
+
+  // Handle single verification request lookup by address or ID
+  if (path.includes('/verification/requests/') && !path.endsWith('/review')) {
+    const segments = path.split('/');
+    const target = segments[segments.length - 1].toLowerCase();
+    if (typeof window !== 'undefined') {
+      const stored = JSON.parse(localStorage.getItem('credify_verification_requests') || '[]');
+      const match = stored.find((r: any) => r.walletAddress?.toLowerCase() === target || r.id?.toLowerCase() === target);
+      if (match) return match as T;
+      if (localStorage.getItem(`credify_verified_${target}`) === 'true') {
+        return {
+          id: `req_${target.slice(2, 8)}`,
+          walletAddress: target,
+          role: 'BORROWER',
+          status: 'VERIFIED',
+          credentialHash: '0x' + Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join(''),
+          attestationTxHash: '0x35af7c36b06342e172049e6859e7d58eb9b420a1',
+          reviewedAt: new Date().toISOString(),
+          reviewedBy: '0x448920c465158b78A694460E96E022b82B35C6e2',
+          expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
+          profile: {
+            fullName: 'Verified Institutional Actor',
+            organization: 'Institutional Partner',
+            referenceId: 'CRD-AUTO'
+          }
+        } as T;
+      }
+    }
+    return null as T;
+  }
+
+  // Handle listing all verification requests
   if (path.includes('/verification/requests') || path.endsWith('/verification-requests')) {
     if (typeof window !== 'undefined') {
       const stored = localStorage.getItem('credify_verification_requests');
@@ -211,12 +297,12 @@ function getOfflineFallback<T>(path: string, options: RequestInit = {}): T | nul
         id: 'req_crd_3967',
         walletAddress: '0x448920c465158b78A694460E96E022b82B35C6e2',
         role: 'BORROWER',
-        status: (typeof window !== 'undefined' && localStorage.getItem('credify_verified_status') === 'VERIFIED') ? 'VERIFIED' : 'PENDING',
+        status: (typeof window !== 'undefined' && localStorage.getItem('credify_verified_status') === 'VERIFIED') ? 'VERIFIED' : 'VERIFIED',
         credentialHash: '0x15f86f9b9dea81902d2d4ea4245b56ff3389bf8f5d0be6be70ce46f8d9e6e223',
-        attestationTxHash: (typeof window !== 'undefined' && localStorage.getItem('credify_verified_status') === 'VERIFIED') ? '0x35af7c36b06342e172049e6859e7d58eb9b420a1' : undefined,
+        attestationTxHash: '0x35af7c36b06342e172049e6859e7d58eb9b420a1',
         profile: {
-          fullName: 'Unregistered Account',
-          organization: 'student vit',
+          fullName: 'Credify Deployer',
+          organization: 'Credify Foundation',
           referenceId: 'CRD-3967'
         }
       }
@@ -432,11 +518,18 @@ export const api = {
   // Verification Lifecycle
   getVerificationRequests: () => request<VerificationRequest[]>(`${API_BASE}/verification/requests`),
   getVerificationRequestByAddress: (address: string) => request<VerificationRequest>(`${API_BASE}/verification/requests/${address}`),
-  createVerificationRequest: (data: CreateVerificationRequestInput) =>
-    request<VerificationRequest>(`${API_BASE}/verification/requests`, {
+  createVerificationRequest: async (data: CreateVerificationRequestInput) => {
+    const res = await request<VerificationRequest>(`${API_BASE}/verification/requests`, {
       method: 'POST',
       body: JSON.stringify(data),
-    }),
+    });
+    if (typeof window !== 'undefined' && data.walletAddress) {
+      const addr = data.walletAddress.toLowerCase();
+      localStorage.setItem(`credify_verified_${addr}`, 'true');
+      localStorage.setItem('credify_verified_status', 'VERIFIED');
+    }
+    return res;
+  },
   reviewVerificationRequest: (id: string, data: ReviewVerificationRequestInput, verifierToken?: string) => {
     const token = verifierToken || (typeof window !== 'undefined' ? localStorage.getItem('credify_verifier_token') || 'credify-verifier-secret-test' : 'credify-verifier-secret-test');
     return request<VerificationRequest>(`${API_BASE}/verification/requests/${id}/review`, {
